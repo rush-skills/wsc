@@ -99,9 +99,22 @@ header {
   padding-bottom: 1rem;
 }
 
+/* Update header-left styling to accommodate logo */
 .header-left {
   display: flex;
+  align-items: center;
+}
+
+.header-left > div {
+  display: flex;
   flex-direction: column;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  margin-right: 15px;
+  object-fit: contain;
 }
 
 h1 {
@@ -518,6 +531,35 @@ footer a:hover {
   text-decoration: underline;
 }
 
+.footer-credits {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
+  transition: color 0.2s;
+}
+
+.github-link:hover {
+  color: var(--primary-text);
+}
+
+.github-icon {
+  transition: transform 0.2s;
+}
+
+.github-link:hover .github-icon {
+  transform: scale(1.1);
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
@@ -526,6 +568,17 @@ footer a:hover {
   header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .header-left {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .logo {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
   }
 
   .theme-switcher {
@@ -554,5 +607,10 @@ footer a:hover {
 
   .stat-item {
     width: 100%;
+  }
+
+  .footer-credits {
+    flex-direction: column;
+    gap: 5px;
   }
 }

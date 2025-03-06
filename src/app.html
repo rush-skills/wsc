@@ -1,12 +1,108 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		%sveltekit.head%
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Basic SEO -->
+    <title>Writing Style Checker - Improve Your Writing</title>
+    <meta
+      name="description"
+      content="Detect and fix weasel words, passive voice, and duplicate words to improve your writing clarity and precision."
+    />
+    <meta
+      name="keywords"
+      content="writing, style checker, weasel words, passive voice, duplicate words, editing tool"
+    />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://wsc.anks.in" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://wsc.anks.in" />
+    <meta
+      property="og:title"
+      content="Writing Style Checker - Improve Your Writing"
+    />
+    <meta
+      property="og:description"
+      content="Detect and fix weasel words, passive voice, and duplicate words to improve your writing clarity and precision."
+    />
+    <meta property="og:image" content="https://wsc.anks.in/images/ss.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://wsc.anks.in" />
+    <meta
+      property="twitter:title"
+      content="Writing Style Checker - Improve Your Writing"
+    />
+    <meta
+      property="twitter:description"
+      content="Detect and fix weasel words, passive voice, and duplicate words to improve your writing clarity and precision."
+    />
+    <meta
+      property="twitter:image"
+      content="https://wsc.anks.in/images/ss.png"
+    />
+
+    <!-- Favicons -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="/favicon/favicon-96x96.png"
+      sizes="96x96"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon/favicon.ico" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/favicon/apple-touch-icon.png"
+    />
+    <meta name="apple-mobile-web-app-title" content="Writing Style Checker" />
+    <link rel="manifest" href="/favicon/site.webmanifest" />
+    <meta name="msapplication-TileColor" content="#3498db" />
+    <meta name="theme-color" content="#1a1a1a" />
+
+    <!-- Preconnect to reduce load time -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+
+    <!-- Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Writing Style Checker",
+        "description": "Tool to detect and fix weasel words, passive voice, and duplicate words to improve writing clarity and precision.",
+        "image": "https://wsc.anks.in/images/ss.png",
+        "url": "https://wsc.anks.in",
+        "applicationCategory": "UtilityApplication",
+        "operatingSystem": "Any",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Ankur Singh",
+          "url": "https://anks.in",
+          "email": "hello@anks.in"
+        }
+      }
+    </script>
+
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
 </html>
