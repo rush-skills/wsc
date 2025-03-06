@@ -427,6 +427,12 @@ For example:
           conscious choices about your writing.
         </p>
         <p>
+          <strong>Your privacy is protected</strong>: This tool runs entirely in
+          your browser. Your text is never sent to any server, stored in
+          databases, or shared with third parties. All analysis happens locally
+          in your device.
+        </p>
+        <p>
           This project was built in a single day using Claude and SvelteKit. It
           demonstrates how AI-assisted development can quickly transform useful
           ideas into practical tools.
