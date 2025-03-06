@@ -1,0 +1,32 @@
+name = "writing-style-checker"
+account_id = "b252e906e8575b5d204c9cb99f829814"
+compatibility_date = "2025-01-08"
+workers_dev = true
+
+main = "./workers-site/index.js"
+
+[build]
+command = "npm run build"
+
+[observability.logs]
+enabled = true
+
+# The following is optional if you're using Pages through the Cloudflare dashboard
+# You would include this if using direct Wrangler deployments
+[site]
+bucket = ".svelte-kit/cloudflare"
+
+# Variables for different environments
+# [env.production]
+# route = "wsc.anks.in/*"
+
+# Optional redirects - useful if you want to redirect from apex to www or vice versa
+# [[redirects]]
+# from = "/*"
+# to = "/index.html"
+# status = 200
+
+# Functions - this is where you can define specific routes for serverless functions
+# Likely not needed for this static site deployment
+# [functions]
+# directory = "functions"
