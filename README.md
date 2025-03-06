@@ -1,38 +1,107 @@
-# create-svelte
+# Writing Style Checker
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+A simple web application that helps improve writing by highlighting and fixing common stylistic issues:
 
-## Creating a project
+- **Weasel Words**: Words that sound good without conveying specific information (very, extremely, various, etc.)
+- **Passive Voice**: Constructions where the subject receives the action rather than performing it
+- **Duplicate Words**: Repeated adjacent words that might be missed during proofreading
 
-If you're seeing this, you've probably already done this step. Congrats!
+Based on [Shell scripts for passive voice, weasel words, duplicates](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/) by Matt Might.
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+## Features
 
-# create a new project in my-app
-npm create svelte@latest my-app
+- Real-time detection and highlighting of writing issues
+- Click to fix duplicate words automatically
+- Light/dark/system theme support
+- Responsive design for mobile and desktop
+- Simple, clean interface
+
+## Project Structure
+
+```
+writing-style-checker/
+├── src/
+│   ├── lib/
+│   │   ├── App.svelte         # Main application component
+│   │   └── detector.ts        # Core issue detection logic
+│   ├── routes/
+│   │   └── +page.svelte       # SvelteKit route page
+│   └── app.html               # Main HTML template
+├── static/
+│   └── favicon.png            # Site icon
+├── package.json               # Project dependencies
+└── vite.config.js             # Vite configuration
 ```
 
-## Developing
+## Setup Instructions
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+1. Clone this repository
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Run the development server:
 
 ```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+4. Open your browser and navigate to `http://localhost:5173/`
 
-To create a production version of your app:
+## Building for Production
+
+To create a production version of the app:
 
 ```bash
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+You can preview the production build with:
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+```bash
+npm run preview
+```
+
+## Deployment to Cloudflare Pages
+
+1. Configure SvelteKit to use the Cloudflare adapter:
+
+```bash
+npm install -D @sveltejs/adapter-cloudflare
+```
+
+2. Update your `svelte.config.js`:
+
+```javascript
+import adapter from "@sveltejs/adapter-cloudflare";
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
+  // Consult https://kit.svelte.dev/docs/integrations#preprocessors
+  // for more information about preprocessors
+  preprocess: vitePreprocess(),
+
+  kit: {
+    // adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
+    // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
+    adapter: adapter(),
+  },
+};
+
+export default config;
+```
+
+3. Build your project:
+
+```bash
+npm run build
+```
+
+4. Deploy to Cloudflare Pages through the Cloudflare Dashboard or using the Wrangler CLI.
+
+## License
+
+MIT
