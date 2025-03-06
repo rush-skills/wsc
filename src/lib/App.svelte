@@ -362,7 +362,7 @@ For example:
               aria-expanded={showAbout}
             >
               <p class="subtitle">
-                Improve your writing by detecting common issues
+                Improve your technical writing by detecting common issues
               </p>
               <span class="dropdown-arrow" class:open={showAbout}>
                 <svg
