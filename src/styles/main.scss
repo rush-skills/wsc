@@ -101,7 +101,7 @@ header {
 .header-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
   position: relative;
 }
@@ -143,7 +143,7 @@ h1 {
 
 .logo-title {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .title-container {
@@ -221,6 +221,8 @@ h1 {
   background-color: var(--secondary-bg);
   border-radius: 30px;
   padding: 0.25rem;
+  margin-top: 1rem;
+  align-self: flex-start;
 }
 
 .theme-switcher button {
