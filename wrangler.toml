@@ -17,8 +17,8 @@ enabled = true
 bucket = ".svelte-kit/cloudflare"
 
 # Variables for different environments
-# [env.production]
-# route = "wsc.anks.in/*"
+[env.production]
+route = "wsc.anks.in/*"
 
 # Optional redirects - useful if you want to redirect from apex to www or vice versa
 # [[redirects]]

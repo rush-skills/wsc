@@ -581,7 +581,11 @@ For example:
         rel="noopener noreferrer"
       >
         Shell scripts for passive voice, weasel words, duplicates
-      </a> by Matt Might
+      </a>
+      by
+      <a href="https://matt.might.net" target="_blank" rel="noopener noreferrer"
+        >Matt Might</a
+      >
     </p>
     <p class="footer-credits">
       Made by <a
