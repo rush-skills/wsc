@@ -625,12 +625,3 @@ For example:
     </p>
   </footer>
 </div>
-
-<style>
-  :global([data-theme="dark"] .logo) {
-    background-color: white;
-    border-radius: 50%;
-    padding: 5px;
-    box-sizing: content-box;
-  }
-</style>
