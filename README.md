@@ -58,6 +58,8 @@ For duplicate words, a "Fix" button is provided to automatically remove them.
 ```
 .
 ├── src
+│   ├── data
+│   │   ├── words.js          # Word lists for detection
 │   ├── lib
 │   │   ├── App.svelte        # Main application component
 │   │   ├── detector.ts       # Core detection algorithms
@@ -66,8 +68,6 @@ For duplicate words, a "Fix" button is provided to automatically remove them.
 │   │   └── +page.svelte      # Main page
 │   └── styles
 │       └── main.scss         # Global styles
-├── data
-│   └── words.js              # Word lists for detection
 ├── static
 │   ├── images                # App images and screenshots
 │   ├── favicon               # Favicon files
@@ -84,7 +84,7 @@ The word lists used for detection come from:
 - **Original Word Lists**: The core weasel words and irregular verbs are from [Matt Might's original blog post](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/)
 - **Expanded Lists**: Additional words have been added with AI assistance to improve detection coverage
 
-The complete lists are maintained in `data/words.js` and imported by the detector module.
+The complete lists are maintained in `src/data/words.js` and imported by the detector module.
 
 ## 🛠️ Setup Instructions
 
@@ -153,10 +153,10 @@ Contributions are welcome! Here are some ways you can help:
 
 ### Adding More Words to the Dataset
 
-The word lists are stored in `data/words.js`. To add more words:
+The word lists are stored in `src/data/words.js`. To add more words:
 
 1. Fork the repository
-2. Edit `data/words.js` to add:
+2. Edit `src/data/words.js` to add:
    - New weasel words to the `additionalWeaselWords` array
    - New irregular verb forms to the `irregularVerbs` array
    - New auxiliary verbs to the `auxiliaryVerbs` array if needed
