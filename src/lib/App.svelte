@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, afterUpdate } from "svelte";
+  import { slide } from "svelte/transition";
   import { browser } from "$app/environment";
   import {
     detectWeaselWords,
@@ -15,6 +16,7 @@
   let theme: "light" | "dark" | "system" = "system";
   let currentTheme: "light" | "dark" = "light";
   let mounted = false;
+  let showAbout = false; // State for the expandable section
   let editorContent = `Type or paste your text here.
 This editor will highlight weasel words, passive voice, and duplicate words.
 
@@ -43,6 +45,11 @@ For example:
   // Position information
   let linePositions: number[] = [];
   let lineCount = 0;
+
+  // Toggle the about section
+  function toggleAbout() {
+    showAbout = !showAbout;
+  }
 
   // Measure character dimensions for precise positioning
   function measureCharacterDimensions() {
@@ -339,43 +346,93 @@ For example:
 
 <div class="container" data-theme={currentTheme}>
   <header>
-    <div class="header-left">
-      <img
-        src="/images/logo-small.png"
-        alt="Writing Style Checker Logo"
-        class="logo"
-      />
-      <div>
-        <h1>Writing Style Checker</h1>
-        <p class="subtitle">Improve your writing by detecting common issues</p>
+    <div class="header-top">
+      <div class="logo-title">
+        <img
+          src="/images/logo-small.png"
+          alt="Writing Style Checker Logo"
+          class="logo"
+        />
+        <div class="title-container">
+          <h1>Writing Style Checker</h1>
+          <div class="subtitle-container">
+            <button
+              class="subtitle-button"
+              on:click={toggleAbout}
+              aria-expanded={showAbout}
+            >
+              <p class="subtitle">
+                Improve your writing by detecting common issues
+              </p>
+              <span class="dropdown-arrow" class:open={showAbout}>
+                <svg
+                  width="12"
+                  height="8"
+                  viewBox="0 0 12 8"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M1 1L6 6L11 1"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="theme-switcher">
+        <button
+          class={theme === "light" ? "active" : ""}
+          on:click={() => (theme = "light")}
+          title="Light Theme"
+        >
+          <span class="icon">☀️</span>
+          <span class="label">Light</span>
+        </button>
+        <button
+          class={theme === "dark" ? "active" : ""}
+          on:click={() => (theme = "dark")}
+          title="Dark Theme"
+        >
+          <span class="icon">🌙</span>
+          <span class="label">Dark</span>
+        </button>
+        <button
+          class={theme === "system" ? "active" : ""}
+          on:click={() => (theme = "system")}
+          title="System Theme"
+        >
+          <span class="icon">⚙️</span>
+          <span class="label">System</span>
+        </button>
       </div>
     </div>
-    <div class="theme-switcher">
-      <button
-        class={theme === "light" ? "active" : ""}
-        on:click={() => (theme = "light")}
-        title="Light Theme"
-      >
-        <span class="icon">☀️</span>
-        <span class="label">Light</span>
-      </button>
-      <button
-        class={theme === "dark" ? "active" : ""}
-        on:click={() => (theme = "dark")}
-        title="Dark Theme"
-      >
-        <span class="icon">🌙</span>
-        <span class="label">Dark</span>
-      </button>
-      <button
-        class={theme === "system" ? "active" : ""}
-        on:click={() => (theme = "system")}
-        title="System Theme"
-      >
-        <span class="icon">⚙️</span>
-        <span class="label">System</span>
-      </button>
-    </div>
+    {#if showAbout}
+      <div class="about-content" transition:slide={{ duration: 300 }}>
+        <p>
+          Good writing is clear, precise, and free from clutter. But even
+          experienced writers fall into common traps: using vague "weasel
+          words," hiding behind passive voice, or accidentally repeating words.
+          This tool helps you catch these issues in real-time.
+        </p>
+        <p>
+          Inspired by Matt Might's shell scripts for writing improvement, this
+          interactive tool brings those command-line utilities to the web. Just
+          type or paste your text, and see immediate feedback about potential
+          improvements. You don't need to eliminate every highlight - just make
+          conscious choices about your writing.
+        </p>
+        <p>
+          This project was built in a single day using Claude and SvelteKit. It
+          demonstrates how AI-assisted development can quickly transform useful
+          ideas into practical tools.
+        </p>
+      </div>
+    {/if}
   </header>
 
   <main>

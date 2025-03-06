@@ -92,11 +92,18 @@ body {
 
 header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  flex-direction: column;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  position: relative;
 }
 
 .header-left {
@@ -114,6 +121,7 @@ header {
   height: 40px;
   margin-right: 15px;
   object-fit: contain;
+  margin-top: 0.5rem;
 }
 
 h1 {
@@ -127,6 +135,80 @@ h1 {
   margin: 0.25rem 0 0 0;
   color: var(--secondary-text);
   font-size: 1rem;
+}
+
+.logo-title {
+  display: flex;
+  align-items: flex-start;
+}
+
+.title-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.subtitle-container {
+  position: relative;
+  width: 100%;
+}
+
+.subtitle-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.subtitle-button:hover .subtitle {
+  text-decoration: underline;
+  color: var(--accent-color);
+}
+
+.subtitle-button:focus {
+  outline: none;
+}
+
+.subtitle-button:focus .subtitle {
+  color: var(--accent-color);
+}
+
+.dropdown-arrow {
+  transition: transform 0.3s ease;
+  color: var(--secondary-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.about-content {
+  margin-top: 1rem;
+  padding: 1rem 1.2rem;
+  background-color: var(--secondary-bg);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.about-content p {
+  margin: 0 0 1rem 0;
+  line-height: 1.6;
+  color: var(--secondary-text);
+  font-size: 0.95rem;
+}
+
+.about-content p:last-child {
+  margin-bottom: 0;
 }
 
 .theme-switcher {
@@ -581,12 +663,34 @@ footer a:hover {
     width: 32px;
     height: 32px;
     margin-right: 10px;
+    margin-top: 0;
+  }
+
+  .header-top {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .logo-title {
+    margin-bottom: 1rem;
+    align-items: center;
   }
 
   .theme-switcher {
-    margin-top: 0.5rem;
     align-self: center;
-    width: auto;
+    margin-top: 0;
+  }
+
+  .subtitle-button {
+    justify-content: center;
+    text-align: center;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .about-content {
+    padding: 1rem;
+    text-align: left;
   }
 
   .editor-container {
