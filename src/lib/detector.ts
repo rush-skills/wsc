@@ -331,7 +331,7 @@ export function detectPassiveVoice(text: string): Array<{
 }
 
 /**
- * Detects duplicate adjacent words in the given text
+ * Detects duplicate adjacent words in the given text, handling case-insensitivity
  * @param text The text to analyze
  * @returns Array of duplicate words with their positions
  */
@@ -346,19 +346,30 @@ export function detectDuplicateWords(text: string): Array<{
     length: number;
   }> = [];
 
-  // Pattern for duplicate words, accounting for line breaks and whitespace
-  const duplicatePattern = /\b(\w+)\b[\s\r\n]+\b\1\b/gi;
+  // This regex finds adjacent words with optional space in between, ignoring case
+  const regex = /\b(\w+)\b[\s\r\n]+\b(\1)\b/gi;
 
   let match;
-  while ((match = duplicatePattern.exec(text)) !== null) {
-    // The second occurrence of the word is what we want to highlight
-    const firstWordEnd = text.indexOf(match[1], match.index) + match[1].length;
-    const secondWordStart = text.indexOf(match[1], firstWordEnd);
+  while ((match = regex.exec(text)) !== null) {
+    // To handle case insensitivity correctly, we need to determine the exact positions
+    // of the second occurrence (the duplicate)
+    const firstWord = match[1];
+    const fullMatch = match[0];
+
+    // Find the position of the second word in the match
+    const firstWordIndex = match.index;
+    const secondWordIndex = firstWordIndex + fullMatch.indexOf(match[2]);
+
+    // Get the actual duplicate word from the text (preserving original case)
+    const duplicateWord = text.substring(
+      secondWordIndex,
+      secondWordIndex + firstWord.length
+    );
 
     results.push({
-      word: match[1],
-      index: secondWordStart,
-      length: match[1].length,
+      word: duplicateWord,
+      index: secondWordIndex,
+      length: duplicateWord.length,
     });
   }
 

@@ -1,4 +1,4 @@
-:global(:root) {
+:root {
   --primary-bg: #ffffff;
   --secondary-bg: #f5f5f5;
   --secondary-bg-transparent: rgba(245, 245, 245, 0.5);
@@ -18,9 +18,35 @@
   --success-color: #2ecc71;
   --warning-color: #f39c12;
   --error-color: #e74c3c;
+  --line-number-bg: #2a2a2a;
+  --line-number-text: #888888;
 }
 
-:global([data-theme="dark"]) {
+[data-theme="light"] {
+  --primary-bg: #ffffff;
+  --secondary-bg: #f5f5f5;
+  --secondary-bg-transparent: rgba(245, 245, 245, 0.5);
+  --primary-text: #333333;
+  --secondary-text: #666666;
+  --accent-color: #3498db;
+  --accent-color-transparent: rgba(52, 152, 219, 0.2);
+  --border-color: #dddddd;
+  --weasel-word-bg: #ffee99;
+  --passive-voice-bg: #99ddff;
+  --duplicate-word-bg: #ffaaaa;
+  --weasel-word-text: #664400;
+  --passive-voice-text: #003366;
+  --duplicate-word-text: #660000;
+  --button-hover: #f0f0f0;
+  --button-active: #e0e0e0;
+  --success-color: #2ecc71;
+  --warning-color: #f39c12;
+  --error-color: #e74c3c;
+  --line-number-bg: #f0f0f0;
+  --line-number-text: #888888;
+}
+
+[data-theme="dark"] {
   --primary-bg: #1a1a1a;
   --secondary-bg: #2a2a2a;
   --secondary-bg-transparent: rgba(42, 42, 42, 0.5);
@@ -40,9 +66,11 @@
   --success-color: #27ae60;
   --warning-color: #d35400;
   --error-color: #c0392b;
+  --line-number-bg: #2a2a2a;
+  --line-number-text: #555555;
 }
 
-:global(body) {
+body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   margin: 0;
@@ -135,6 +163,7 @@ main {
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color);
+  margin-bottom: 2rem;
 }
 
 .editor-header {
@@ -154,26 +183,118 @@ main {
 .editor-container {
   position: relative;
   height: 400px;
+  display: flex;
+}
+
+.line-numbers {
+  width: 40px;
+  height: 100%;
+  background-color: var(--line-number-bg);
+  color: var(--line-number-text);
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
+  font-size: 14px;
+  overflow: hidden;
+  user-select: none;
+  text-align: right;
+  padding-top: 5px;
+  box-sizing: border-box;
+}
+
+.line-number {
+  padding: 0 5px;
+  height: 20px;
+  line-height: 20px;
+}
+
+.editor-content-wrapper {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
 }
 
 .editor-textarea {
   width: 100%;
   height: 100%;
-  padding: 16px;
+  padding: 5px 10px;
   font-family: "Menlo", "Monaco", "Courier New", monospace;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 20px;
   border: none;
   resize: none;
   background-color: var(--primary-bg);
   color: var(--primary-text);
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
+  white-space: pre;
+  overflow: auto;
   box-sizing: border-box;
+  tab-size: 4;
 }
 
 .editor-textarea:focus {
   outline: none;
+}
+
+.highlight-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+  padding: 5px 10px;
+  box-sizing: border-box;
+}
+
+.text-highlight {
+  position: absolute;
+  border-radius: 2px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.weasel-highlight {
+  background-color: var(--weasel-word-bg);
+}
+
+.passive-highlight {
+  background-color: var(--passive-voice-bg);
+}
+
+.duplicate-highlight-container {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.duplicate-highlight-container:hover .fix-highlight-button {
+  opacity: 1;
+  visibility: visible;
+}
+
+.duplicate-highlight {
+  background-color: var(--duplicate-word-bg);
+  pointer-events: none;
+}
+
+.fix-highlight-button {
+  position: absolute;
+  top: -20px;
+  right: -5px;
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: bold;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .editor-stats {
@@ -244,14 +365,8 @@ main {
   background-color: var(--error-color);
 }
 
-.issue-list {
-  margin-top: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
 .issue-section {
+  margin-bottom: 1.5rem;
   padding: 1.5rem;
   background-color: var(--secondary-bg);
   border-radius: 8px;
@@ -264,22 +379,27 @@ main {
   color: var(--accent-color);
 }
 
-.issue-section ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.issue-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.issue-section li {
+.issue-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border-color);
+  gap: 0.5rem;
+  margin-right: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.issue-section li:last-child {
-  border-bottom: none;
+.position-indicator {
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
+  font-size: 0.8rem;
+  color: var(--secondary-text);
+  background-color: var(--primary-bg);
+  padding: 2px 5px;
+  border-radius: 3px;
 }
 
 .goto-button,
@@ -290,6 +410,7 @@ main {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-size: 0.8rem;
 }
 
 .goto-button {
@@ -298,8 +419,7 @@ main {
 }
 
 .goto-button:hover {
-  background-color: var(--accent-color-transparent);
-  color: var(--accent-color);
+  opacity: 0.9;
 }
 
 .fix-button {

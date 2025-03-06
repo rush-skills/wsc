@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, afterUpdate } from "svelte";
   import { browser } from "$app/environment";
   import {
     detectWeaselWords,
@@ -7,9 +7,11 @@
     detectDuplicateWords,
     removeDuplicateWord,
   } from "./detector";
-  import "./styles/main.scss";
+  import "../styles/main.scss";
 
   let editor: HTMLTextAreaElement;
+  let lineNumbersContainer: HTMLDivElement;
+  let highlightOverlay: HTMLDivElement;
   let theme: "light" | "dark" | "system" = "system";
   let currentTheme: "light" | "dark" = "light";
   let mounted = false;
@@ -19,7 +21,11 @@ This editor will highlight weasel words, passive voice, and duplicate words.
 For example:
 - Weasel words: Using very and extremely is not good for technical writing.
 - Passive voice: The code was written by the team.
-- Duplicate words: Sometimes the the brain will miss duplicated words.`;
+- Duplicate words: Sometimes sometimes the brain will miss duplicated words.`;
+
+  // Font measurements
+  let charWidth = 7.8; // Will be measured precisely
+  let lineHeight = 20; // Will be measured precisely
 
   // Statistics
   let weaselCount = 0;
@@ -34,11 +40,38 @@ For example:
   let duplicateWords: Array<{ word: string; index: number; length: number }> =
     [];
 
+  // Position information
+  let linePositions: number[] = [];
+  let lineCount = 0;
+
+  // Measure character dimensions for precise positioning
+  function measureCharacterDimensions() {
+    if (!editor) return;
+
+    // Create a single-character span to measure
+    const span = document.createElement("span");
+    span.textContent = "X";
+    span.style.fontFamily = getComputedStyle(editor).fontFamily;
+    span.style.fontSize = getComputedStyle(editor).fontSize;
+    span.style.visibility = "hidden";
+    span.style.position = "absolute";
+
+    document.body.appendChild(span);
+    charWidth = span.getBoundingClientRect().width;
+    document.body.removeChild(span);
+
+    // Measure line height from the editor
+    lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 20;
+  }
+
   // Handle text changes and perform analysis
   function handleTextChange() {
     if (!browser) return;
 
     const text = editorContent;
+
+    // Calculate line positions for faster lookup
+    calculateLinePositions(text);
 
     // Detect issues
     weaselWords = detectWeaselWords(text);
@@ -50,6 +83,160 @@ For example:
     passiveCount = passiveVoices.length;
     duplicateCount = duplicateWords.length;
     totalIssues = weaselCount + passiveCount + duplicateCount;
+
+    // Update line numbers and highlighting
+    updateLineNumbers();
+    updateHighlights();
+  }
+
+  // Calculate line positions for finding line numbers of issues
+  function calculateLinePositions(text: string) {
+    linePositions = [0]; // First line starts at index 0
+    let pos = 0;
+
+    while (pos < text.length) {
+      pos = text.indexOf("\n", pos) + 1;
+      if (pos === 0) break; // No more newlines
+      linePositions.push(pos);
+    }
+
+    lineCount = linePositions.length;
+  }
+
+  // Get line and column for a character position (1-indexed)
+  function getLineAndColumn(index: number): { line: number; column: number } {
+    // Find which line contains this index
+    let lineIndex = 0;
+    for (let i = 1; i < linePositions.length; i++) {
+      if (linePositions[i] > index) break;
+      lineIndex = i;
+    }
+
+    // Column is the distance from the line start (1-indexed)
+    const column = index - linePositions[lineIndex] + 1;
+
+    return { line: lineIndex + 1, column };
+  }
+
+  // Format position as "line:column"
+  function formatPosition(index: number): string {
+    const { line, column } = getLineAndColumn(index);
+    return `${line}:${column}`;
+  }
+
+  // Update line numbers
+  function updateLineNumbers() {
+    if (!lineNumbersContainer) return;
+
+    lineNumbersContainer.innerHTML = "";
+    const linesCount = (editorContent.match(/\n/g) || []).length + 1;
+
+    for (let i = 1; i <= linesCount; i++) {
+      const lineNumber = document.createElement("div");
+      lineNumber.className = "line-number";
+      lineNumber.textContent = String(i);
+      lineNumbersContainer.appendChild(lineNumber);
+    }
+  }
+
+  // Update the highlight overlay
+  function updateHighlights() {
+    if (!highlightOverlay || !editor) return;
+
+    // Clear existing highlights
+    highlightOverlay.innerHTML = "";
+
+    // Add new highlights
+    addHighlights(weaselWords, "weasel-highlight");
+    addHighlights(passiveVoices, "passive-highlight");
+    addHighlightsDuplicate(duplicateWords);
+  }
+
+  function addHighlights(
+    issues: Array<{ word: string; index: number; length: number }>,
+    className: string
+  ) {
+    if (!highlightOverlay || !editor) return;
+
+    for (const issue of issues) {
+      const highlight = document.createElement("div");
+      highlight.className = `text-highlight ${className}`;
+
+      // Position the highlight
+      const position = getPositionInEditor(issue.index, issue.length);
+      if (position) {
+        highlight.style.left = `${position.left}px`;
+        highlight.style.top = `${position.top}px`;
+        highlight.style.width = `${position.width}px`;
+        highlight.style.height = `${position.height}px`;
+
+        highlightOverlay.appendChild(highlight);
+      }
+    }
+  }
+
+  function addHighlightsDuplicate(
+    issues: Array<{ word: string; index: number; length: number }>
+  ) {
+    if (!highlightOverlay || !editor) return;
+
+    for (const issue of issues) {
+      const container = document.createElement("div");
+      container.className = "duplicate-highlight-container";
+
+      const highlight = document.createElement("div");
+      highlight.className = "text-highlight duplicate-highlight";
+
+      const fixButton = document.createElement("button");
+      fixButton.className = "fix-highlight-button";
+      fixButton.textContent = "Fix";
+      fixButton.onclick = (e) => {
+        e.stopPropagation();
+        handleRemoveDuplicate(issue.index, issue.length);
+      };
+
+      // Position the highlight and button
+      const position = getPositionInEditor(issue.index, issue.length);
+      if (position) {
+        // Position and size the container exactly like the highlight
+        container.style.left = `${position.left}px`;
+        container.style.top = `${position.top}px`;
+        container.style.width = `${position.width}px`;
+        container.style.height = `${position.height}px`;
+
+        // The highlight should fill the container
+        highlight.style.width = "100%";
+        highlight.style.height = "100%";
+        highlight.style.position = "absolute";
+        highlight.style.top = "0";
+        highlight.style.left = "0";
+
+        container.appendChild(highlight);
+        container.appendChild(fixButton);
+        highlightOverlay.appendChild(container);
+      }
+    }
+  }
+
+  // Helper function to get the position of text in the editor
+  function getPositionInEditor(index: number, length: number) {
+    if (!editor) return null;
+
+    // Get line and column information
+    const { line, column } = getLineAndColumn(index);
+
+    // Get editor padding
+    const editorStyle = getComputedStyle(editor);
+    const paddingLeft = parseFloat(editorStyle.paddingLeft) || 10;
+    const paddingTop = parseFloat(editorStyle.paddingTop) || 5;
+
+    // Calculate position
+    return {
+      left: (column - 1) * charWidth + paddingLeft,
+      top: (line - 1) * lineHeight + paddingTop,
+      width: length * charWidth,
+      height: lineHeight,
+    };
   }
 
   // Set up theme
@@ -74,29 +261,43 @@ For example:
     handleTextChange();
   }
 
-  // Handle Go To button functionality
+  // Handle Go To button functionality - Fixed to handle case-insensitive duplicates
   function goToPosition(index: number) {
     if (!editor) return;
 
     // Focus the editor
     editor.focus();
 
-    // Set cursor position
+    // Set cursor position - select the issue
     editor.setSelectionRange(index, index + 1);
 
     // Calculate the position for scrolling
-    const lineHeight = parseInt(getComputedStyle(editor).lineHeight) || 20;
-    const lines = editorContent.substring(0, index).split("\n").length - 1;
-    const scrollPosition = lines * lineHeight;
+    const { line } = getLineAndColumn(index);
+    const scrollPosition = (line - 3) * lineHeight; // Position a few lines above for context
 
-    // Scroll to position
-    editor.scrollTop = scrollPosition;
+    // Scroll to position (with bounds checking)
+    editor.scrollTop = Math.max(0, scrollPosition);
+  }
+
+  // Handle textarea scroll to sync line numbers and overlay
+  function handleScroll() {
+    if (lineNumbersContainer && editor) {
+      lineNumbersContainer.scrollTop = editor.scrollTop;
+    }
+
+    if (highlightOverlay && editor) {
+      highlightOverlay.scrollTop = editor.scrollTop;
+      highlightOverlay.scrollLeft = editor.scrollLeft;
+    }
   }
 
   // Initialize on mount
   onMount(() => {
     mounted = true;
     updateTheme();
+
+    // Measure character dimensions for precise positioning
+    measureCharacterDimensions();
 
     // Listen for system theme changes
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -105,9 +306,24 @@ For example:
     // Initial analysis
     handleTextChange();
 
+    // Synchronize editor and highlights on scroll
+    if (editor) {
+      editor.addEventListener("scroll", handleScroll);
+    }
+
     return () => {
       mediaQuery.removeEventListener("change", updateTheme);
+      if (editor) {
+        editor.removeEventListener("scroll", handleScroll);
+      }
     };
+  });
+
+  // After the DOM updates, recalculate highlight positions
+  afterUpdate(() => {
+    if (mounted) {
+      updateHighlights();
+    }
   });
 
   // Update theme when it changes
@@ -168,12 +384,17 @@ For example:
       </div>
 
       <div class="editor-container">
-        <textarea
-          bind:value={editorContent}
-          bind:this={editor}
-          class="editor-textarea"
-          spellcheck="false"
-        ></textarea>
+        <div class="line-numbers" bind:this={lineNumbersContainer}></div>
+        <div class="editor-content-wrapper">
+          <textarea
+            bind:value={editorContent}
+            bind:this={editor}
+            class="editor-textarea"
+            spellcheck="false"
+            on:scroll={handleScroll}
+          ></textarea>
+          <div class="highlight-overlay" bind:this={highlightOverlay}></div>
+        </div>
       </div>
 
       <div class="stats">
@@ -202,6 +423,7 @@ For example:
           {#each weaselWords as { word, index }}
             <div class="issue-item">
               <span class="weasel-word-example">{word}</span>
+              <span class="position-indicator">{formatPosition(index)}</span>
               <button class="goto-button" on:click={() => goToPosition(index)}>
                 Go to
               </button>
@@ -218,6 +440,7 @@ For example:
           {#each passiveVoices as { phrase, index }}
             <div class="issue-item">
               <span class="passive-voice-example">{phrase}</span>
+              <span class="position-indicator">{formatPosition(index)}</span>
               <button class="goto-button" on:click={() => goToPosition(index)}>
                 Go to
               </button>
@@ -234,6 +457,7 @@ For example:
           {#each duplicateWords as { word, index, length }}
             <div class="issue-item">
               <span class="duplicate-word-example">{word}</span>
+              <span class="position-indicator">{formatPosition(index)}</span>
               <button
                 class="fix-button"
                 on:click={() => handleRemoveDuplicate(index, length)}
@@ -297,7 +521,3 @@ For example:
     </p>
   </footer>
 </div>
-
-<style>
-  @import "./styles/main.scss";
-</style>
