@@ -1,107 +1,183 @@
 # Writing Style Checker
 
-A simple web application that helps improve writing by highlighting and fixing common stylistic issues:
+A browser-based tool that helps improve your writing by detecting and highlighting common stylistic issues. This tool analyzes text in real-time to identify:
 
-- **Weasel Words**: Words that sound good without conveying specific information (very, extremely, various, etc.)
-- **Passive Voice**: Constructions where the subject receives the action rather than performing it
-- **Duplicate Words**: Repeated adjacent words that might be missed during proofreading
+- **Weasel Words**: Vague terms that add no value (e.g., "very", "extremely", "various")
+- **Passive Voice**: Constructions where the subject receives rather than performs the action
+- **Duplicate Words**: Accidentally repeated words that are often missed during proofreading
 
-Based on [Shell scripts for passive voice, weasel words, duplicates](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/) by Matt Might.
+**[Live Demo: wsc.anks.in](https://wsc.anks.in)**
 
-## Features
+![Screenshot of Writing Style Checker](static/images/ss.png)
 
-- Real-time detection and highlighting of writing issues
-- Click to fix duplicate words automatically
-- Light/dark/system theme support
-- Responsive design for mobile and desktop
-- Simple, clean interface
+## 🔒 Privacy First
 
-## Project Structure
+This application runs **entirely in your browser**. Your text is never transmitted to any server, stored in databases, or shared with third parties. All analysis happens locally in your browser using JavaScript.
+
+## 🧠 Project Background
+
+Inspired by [Matt Might's shell scripts for writing improvement](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/), this tool brings those command-line utilities to an interactive web interface. It was built in a single day using SvelteKit and Claude AI, demonstrating how AI-assisted development can quickly transform useful ideas into practical tools.
+
+## 🔍 How It Works
+
+### Detector Logic
+
+The core functionality relies on three detection algorithms in `detector.ts`:
+
+1. **Weasel Word Detection**:
+
+   - Uses a predefined list of weasel words and phrases
+   - Employs regular expressions with word boundaries (`\b`) to match whole words only
+   - Returns matched words with their positions for highlighting
+
+2. **Passive Voice Detection**:
+
+   - Combines regular past participles (words ending in `-ed`) with irregular verb forms
+   - Detects auxiliary verbs (am, is, are, was, were, etc.) followed by these participles
+   - Identifies complete passive constructions for highlighting
+
+3. **Duplicate Word Detection**:
+   - Uses a regex pattern that finds adjacent identical words separated by whitespace
+   - Handles case-insensitive matching to catch duplicates with different capitalization
+   - Special handling for detecting duplicates across line breaks
+
+The detector functions not only identify issues but also return precise character positions, enabling accurate highlighting and making targeted fixes possible.
+
+### User Interface
+
+The interface displays detected issues in three ways:
+
+1. **Inline Highlighting**: Issues are highlighted directly in the text editor
+2. **Issue Counts**: Summary statistics show the number of each issue type
+3. **Issue Lists**: Detailed lists below the editor show each issue with position information
+
+For duplicate words, a "Fix" button is provided to automatically remove them.
+
+## 🗂️ Project Structure
 
 ```
-writing-style-checker/
-├── src/
-│   ├── lib/
-│   │   ├── App.svelte         # Main application component
-│   │   └── detector.ts        # Core issue detection logic
-│   ├── routes/
-│   │   └── +page.svelte       # SvelteKit route page
-│   └── app.html               # Main HTML template
-├── static/
-│   └── favicon.png            # Site icon
-├── package.json               # Project dependencies
-└── vite.config.js             # Vite configuration
+.
+├── src
+│   ├── lib
+│   │   ├── App.svelte        # Main application component
+│   │   ├── detector.ts       # Core detection algorithms
+│   ├── routes
+│   │   ├── +layout.server.js # SSG configuration
+│   │   └── +page.svelte      # Main page
+│   └── styles
+│       └── main.scss         # Global styles
+├── data
+│   └── words.js              # Word lists for detection
+├── static
+│   ├── images                # App images and screenshots
+│   ├── favicon               # Favicon files
+│   ├── robots.txt            # SEO configuration
+│   └── sitemap.xml           # SEO configuration
+├── wrangler.toml             # Cloudflare deployment config
+└── svelte.config.js          # SvelteKit configuration
 ```
 
-## Setup Instructions
+## 📊 Data Sources
 
-1. Clone this repository
+The word lists used for detection come from:
+
+- **Original Word Lists**: The core weasel words and irregular verbs are from [Matt Might's original blog post](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/)
+- **Expanded Lists**: Additional words have been added with AI assistance to improve detection coverage
+
+The complete lists are maintained in `data/words.js` and imported by the detector module.
+
+## 🛠️ Setup Instructions
+
+### Local Development
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/rush-skills/wsc.git
+   cd wsc
+   ```
+
 2. Install dependencies:
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-3. Run the development server:
+3. Run development server:
 
-```bash
-npm run dev
-```
+   ```bash
+   npm run dev
+   ```
 
-4. Open your browser and navigate to `http://localhost:5173/`
+4. Visit `http://localhost:5173` in your browser
 
-## Building for Production
+### Deployment to Cloudflare Pages
 
-To create a production version of the app:
+This project is configured for deployment to Cloudflare Pages. To deploy your own instance:
 
-```bash
-npm run build
-```
+1. **Update `wrangler.toml`**:
 
-You can preview the production build with:
+   - Replace the `account_id` with your Cloudflare account ID
+   - Update the `route` under `[env.production]` to your custom domain (if applicable)
 
-```bash
-npm run preview
-```
+   ```toml
+   # Example wrangler.toml changes
+   account_id = "your-account-id-here"
 
-## Deployment to Cloudflare Pages
+   [env.production]
+   route = "your-domain.com/*"  # Optional: only needed for custom domains
+   ```
 
-1. Configure SvelteKit to use the Cloudflare adapter:
+2. **Deploy using Wrangler CLI**:
 
-```bash
-npm install -D @sveltejs/adapter-cloudflare
-```
+   ```bash
+   # Install Wrangler if you haven't already
+   npm install -g wrangler
 
-2. Update your `svelte.config.js`:
+   # Login to your Cloudflare account
+   wrangler login
 
-```javascript
-import adapter from "@sveltejs/adapter-cloudflare";
-import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+   # Deploy to Cloudflare
+   wrangler deploy
+   ```
 
-/** @type {import('@sveltejs/kit').Config} */
-const config = {
-  // Consult https://kit.svelte.dev/docs/integrations#preprocessors
-  // for more information about preprocessors
-  preprocess: vitePreprocess(),
+3. **Access your site**:
+   - Your site will be available at `https://writing-style-checker.<your-account>.workers.dev`
+   - If you configured a custom domain, it will also be available there once DNS propagates
 
-  kit: {
-    // adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
-    // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-    adapter: adapter(),
-  },
-};
+That's it! The application is now deployed to your Cloudflare Workers account.
 
-export default config;
-```
+## 👥 Contributing
 
-3. Build your project:
+Contributions are welcome! Here are some ways you can help:
 
-```bash
-npm run build
-```
+### Adding More Words to the Dataset
 
-4. Deploy to Cloudflare Pages through the Cloudflare Dashboard or using the Wrangler CLI.
+The word lists are stored in `data/words.js`. To add more words:
 
-## License
+1. Fork the repository
+2. Edit `data/words.js` to add:
+   - New weasel words to the `additionalWeaselWords` array
+   - New irregular verb forms to the `irregularVerbs` array
+   - New auxiliary verbs to the `auxiliaryVerbs` array if needed
+3. Submit a pull request with a brief explanation of why the words should be added
 
-MIT
+### Other Contributions
+
+- Bug fixes
+- UI improvements
+- Performance optimizations
+- Documentation improvements
+
+For substantial changes, please open an issue first to discuss your ideas.
+
+## 🙏 Acknowledgements
+
+- [Matt Might](https://matt.might.net/) for the original shell scripts and concept
+- Built with [SvelteKit](https://kit.svelte.dev/)
+- Deployed on [Cloudflare Pages](https://pages.cloudflare.com/)
+- Development assisted by Claude AI
+
+## 📄 License
+
+MIT License
