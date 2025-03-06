@@ -2,6 +2,7 @@
   "name": "writing-detector",
   "version": "0.0.1",
   "private": true,
+  "author": "Ankur Singh <hello@anks.in>",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -20,15 +21,5 @@
     "typescript": "^5.0.0",
     "vite": "^5.0.3"
   },
-  "type": "module",
-  "dependencies": {
-    "@codemirror/commands": "^6.3.0",
-    "@codemirror/lang-markdown": "^6.3.0",
-    "@codemirror/language": "^6.9.0",
-    "@codemirror/lint": "^6.4.2",
-    "@codemirror/search": "^6.5.0",
-    "@codemirror/state": "^6.3.0",
-    "@codemirror/view": "^6.22.0",
-    "codemirror": "^6.0.1"
-  }
+  "type": "module"
 }
