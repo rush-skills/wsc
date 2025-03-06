@@ -176,6 +176,7 @@ For substantial changes, please open an issue first to discuss your ideas.
 - [Matt Might](https://matt.might.net/) for the original shell scripts and concept
 - Built with [SvelteKit](https://kit.svelte.dev/)
 - Deployed on [Cloudflare Pages](https://pages.cloudflare.com/)
+- Logo made with [DiffusionBee](https://diffusionbee.com/)
 - Development assisted by Claude AI
 
 ## 📄 License
