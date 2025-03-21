@@ -55,20 +55,30 @@ For example:
   function measureCharacterDimensions() {
     if (!editor) return;
 
-    // Create a single-character span to measure
+    // Create a more accurate measurement span
     const span = document.createElement("span");
     span.textContent = "X";
     span.style.fontFamily = getComputedStyle(editor).fontFamily;
     span.style.fontSize = getComputedStyle(editor).fontSize;
+    span.style.letterSpacing = getComputedStyle(editor).letterSpacing;
     span.style.visibility = "hidden";
     span.style.position = "absolute";
+    span.style.whiteSpace = "pre";
 
     document.body.appendChild(span);
     charWidth = span.getBoundingClientRect().width;
     document.body.removeChild(span);
 
-    // Measure line height from the editor
-    lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 20;
+    // Get computed line height for more accuracy
+    const computedStyle = getComputedStyle(editor);
+    const computedLineHeight = computedStyle.lineHeight;
+
+    if (computedLineHeight === "normal") {
+      // If line-height is 'normal', use a multiplier of font size
+      lineHeight = parseFloat(computedStyle.fontSize) * 1.2;
+    } else {
+      lineHeight = parseFloat(computedLineHeight);
+    }
   }
 
   // Handle text changes and perform analysis
@@ -146,24 +156,64 @@ For example:
     }
   }
 
-  // Update the highlight overlay
+  // Enhanced scroll handling for precise highlight positioning
+  function handleScroll() {
+    // Sync line numbers with editor
+    if (lineNumbersContainer && editor) {
+      lineNumbersContainer.scrollTop = editor.scrollTop;
+    }
+
+    // Sync highlights with editor for both vertical and horizontal scrolling
+    if (highlightOverlay && editor) {
+      // Use direct assignment for more precise positioning
+      highlightOverlay.scrollTop = editor.scrollTop;
+      highlightOverlay.scrollLeft = editor.scrollLeft;
+    }
+  }
+
+  // Update the highlight overlay to handle vertical scrolling correctly
   function updateHighlights() {
     if (!highlightOverlay || !editor) return;
 
     // Clear existing highlights
     highlightOverlay.innerHTML = "";
 
-    // Add new highlights
-    addHighlights(weaselWords, "weasel-highlight");
-    addHighlights(passiveVoices, "passive-highlight");
-    addHighlightsDuplicate(duplicateWords);
+    // Get the total content dimensions
+    const contentWidth = Math.max(editor.scrollWidth, editor.clientWidth);
+    const contentHeight = Math.max(editor.scrollHeight, editor.clientHeight);
+
+    // Create a wrapper for highlights that exactly matches the content
+    const highlightsWrapper = document.createElement("div");
+    highlightsWrapper.style.position = "relative";
+
+    // Set exact dimensions to match the editor content
+    highlightsWrapper.style.width = contentWidth + "px";
+    highlightsWrapper.style.height = contentHeight + "px";
+    highlightsWrapper.style.minHeight = "100%";
+
+    // Add the wrapper to the highlight overlay
+    highlightOverlay.appendChild(highlightsWrapper);
+
+    // Add highlights to the wrapper
+    addHighlightsToWrapper(weaselWords, "weasel-highlight", highlightsWrapper);
+    addHighlightsToWrapper(
+      passiveVoices,
+      "passive-highlight",
+      highlightsWrapper
+    );
+    addHighlightsDuplicateToWrapper(duplicateWords, highlightsWrapper);
+
+    // Initialize the scroll position
+    handleScroll();
   }
 
-  function addHighlights(
+  // Modified function to add highlights to the wrapper
+  function addHighlightsToWrapper(
     issues: Array<{ word: string; index: number; length: number }>,
-    className: string
+    className: string,
+    wrapper: HTMLElement
   ) {
-    if (!highlightOverlay || !editor) return;
+    if (!editor) return;
 
     for (const issue of issues) {
       const highlight = document.createElement("div");
@@ -177,15 +227,17 @@ For example:
         highlight.style.width = `${position.width}px`;
         highlight.style.height = `${position.height}px`;
 
-        highlightOverlay.appendChild(highlight);
+        wrapper.appendChild(highlight);
       }
     }
   }
 
-  function addHighlightsDuplicate(
-    issues: Array<{ word: string; index: number; length: number }>
+  // Modified function to add duplicate highlights to the wrapper
+  function addHighlightsDuplicateToWrapper(
+    issues: Array<{ word: string; index: number; length: number }>,
+    wrapper: HTMLElement
   ) {
-    if (!highlightOverlay || !editor) return;
+    if (!editor) return;
 
     for (const issue of issues) {
       const container = document.createElement("div");
@@ -205,13 +257,11 @@ For example:
       // Position the highlight and button
       const position = getPositionInEditor(issue.index, issue.length);
       if (position) {
-        // Position and size the container exactly like the highlight
         container.style.left = `${position.left}px`;
         container.style.top = `${position.top}px`;
         container.style.width = `${position.width}px`;
         container.style.height = `${position.height}px`;
 
-        // The highlight should fill the container
         highlight.style.width = "100%";
         highlight.style.height = "100%";
         highlight.style.position = "absolute";
@@ -220,26 +270,30 @@ For example:
 
         container.appendChild(highlight);
         container.appendChild(fixButton);
-        highlightOverlay.appendChild(container);
+        wrapper.appendChild(container);
       }
     }
   }
 
-  // Helper function to get the position of text in the editor
+  // Helper function to get accurate positions even after scrolling
   function getPositionInEditor(index: number, length: number) {
     if (!editor) return null;
 
     // Get line and column information
     const { line, column } = getLineAndColumn(index);
 
-    // Get editor padding
+    // Get editor padding from computed style
     const editorStyle = getComputedStyle(editor);
-    const paddingLeft = parseFloat(editorStyle.paddingLeft) || 10;
-    const paddingTop = parseFloat(editorStyle.paddingTop) || 5;
+    const paddingLeft = parseFloat(editorStyle.paddingLeft) || 8; // Use 8px as default
+    const paddingTop = parseFloat(editorStyle.paddingTop) || 1;
 
-    // Calculate position
+    // Apply a precise adjustment to fix the 1-character offset issue
+    const characterOffset = 1.0; // Exact 1 character width offset
+
+    // Calculate position with precise measurements
     return {
-      left: (column - 1) * charWidth + paddingLeft,
+      left:
+        (column - 1) * charWidth + paddingLeft - characterOffset * charWidth,
       top: (line - 1) * lineHeight + paddingTop,
       width: length * charWidth,
       height: lineHeight,
@@ -268,37 +322,67 @@ For example:
     handleTextChange();
   }
 
-  // Handle Go To button functionality - Fixed to handle case-insensitive duplicates
+  // Improved Go To function with horizontal scrolling and visual highlight
   function goToPosition(index: number) {
     if (!editor) return;
+
+    // Clear any existing target highlights
+    const existingHighlights = document.querySelectorAll(".target-highlight");
+    existingHighlights.forEach((el) => el.remove());
 
     // Focus the editor
     editor.focus();
 
+    // Get line and column information for scrolling
+    const { line, column } = getLineAndColumn(index);
+
     // Set cursor position - select the issue
     editor.setSelectionRange(index, index + 1);
 
-    // Calculate the position for scrolling
-    const { line } = getLineAndColumn(index);
-    const scrollPosition = (line - 3) * lineHeight; // Position a few lines above for context
+    // Calculate vertical scroll position (a few lines above for context)
+    const scrollPositionY = Math.max(0, (line - 3) * lineHeight);
 
-    // Scroll to position (with bounds checking)
-    editor.scrollTop = Math.max(0, scrollPosition);
-  }
+    // Calculate horizontal scroll position
+    // First character visible should be a few characters before the target
+    const contextChars = 10; // Show 10 characters before the highlighted one
+    const scrollPositionX = Math.max(0, (column - contextChars) * charWidth);
 
-  // Handle textarea scroll to sync line numbers and overlay
-  function handleScroll() {
-    if (lineNumbersContainer && editor) {
-      lineNumbersContainer.scrollTop = editor.scrollTop;
-    }
+    // Scroll to position (both vertically and horizontally)
+    editor.scrollTop = scrollPositionY;
+    editor.scrollLeft = scrollPositionX;
 
-    if (highlightOverlay && editor) {
+    // Force synchronization of highlight overlay scroll
+    if (highlightOverlay) {
       highlightOverlay.scrollTop = editor.scrollTop;
       highlightOverlay.scrollLeft = editor.scrollLeft;
     }
+
+    // Add a temporary highlight effect to make it easier to find
+    const targetHighlight = document.createElement("div");
+    targetHighlight.className = "target-highlight";
+
+    // Position the highlight
+    const position = getPositionInEditor(index, 1);
+    if (position && highlightOverlay) {
+      targetHighlight.style.left = `${position.left}px`;
+      targetHighlight.style.top = `${position.top}px`;
+      targetHighlight.style.width = `${position.width}px`;
+      targetHighlight.style.height = `${position.height}px`;
+
+      // Add the highlight to the overlay
+      const wrapper = highlightOverlay.querySelector("div");
+      if (wrapper) {
+        wrapper.appendChild(targetHighlight);
+
+        // Remove the highlight after animation completes
+        setTimeout(() => {
+          targetHighlight.remove();
+        }, 4500); // 1.5s × 3 iterations = 4.5s
+      }
+    }
   }
 
-  // Initialize on mount
+  // Ensure highlights update on resize and scroll
   onMount(() => {
     mounted = true;
     updateTheme();
@@ -306,24 +390,42 @@ For example:
     // Measure character dimensions for precise positioning
     measureCharacterDimensions();
 
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    mediaQuery.addEventListener("change", updateTheme);
-
     // Initial analysis
     handleTextChange();
 
-    // Synchronize editor and highlights on scroll
     if (editor) {
-      editor.addEventListener("scroll", handleScroll);
-    }
+      // Use passive event listener for better performance
+      editor.addEventListener("scroll", handleScroll, { passive: true });
 
-    return () => {
-      mediaQuery.removeEventListener("change", updateTheme);
-      if (editor) {
+      // Setup throttled scroll handler to reduce performance impact
+      let ticking = false;
+      editor.addEventListener(
+        "scroll",
+        () => {
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              handleScroll();
+              ticking = false;
+            });
+            ticking = true;
+          }
+        },
+        { passive: true }
+      );
+
+      // Update highlights when editor dimensions change
+      const resizeObserver = new ResizeObserver(() => {
+        measureCharacterDimensions();
+        updateHighlights();
+      });
+
+      resizeObserver.observe(editor);
+
+      return () => {
+        resizeObserver.disconnect();
         editor.removeEventListener("scroll", handleScroll);
-      }
-    };
+      };
+    }
   });
 
   // After the DOM updates, recalculate highlight positions
