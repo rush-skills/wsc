@@ -3,11 +3,9 @@ main = ".svelte-kit/cloudflare/_worker.js"
 compatibility_date = "2026-03-26"
 compatibility_flags = ["nodejs_compat"]
 
-[build]
-command = "npm run build"
-
 [assets]
-directory = ".svelte-kit/cloudflare"
+directory = ".svelte-kit/cloudflare/assets"
+binding = "ASSETS"
 
 [observability]
 enabled = true

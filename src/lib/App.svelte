@@ -933,6 +933,7 @@ node dist/mcp-server/index.js</code></pre>
         target="_blank"
         rel="noopener noreferrer"
         class="github-link"
+        aria-label="GitHub repository"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
