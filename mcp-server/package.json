@@ -1,6 +1,6 @@
 {
   "name": "wsc-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for Writing Style Checker - detects weasel words, passive voice, and duplicate words",
   "main": "dist/mcp-server/index.js",
   "bin": {
