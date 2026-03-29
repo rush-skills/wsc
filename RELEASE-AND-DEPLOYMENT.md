@@ -340,7 +340,7 @@ npm publish
 cd ..
 
 # 6. Commit version bump
-git add mcp-server/package.json
+git add mcp-server/package.json mcp-server/package-lock.json
 git commit -m "release: wsc-mcp v$(node -p "require('./mcp-server/package.json').version")"
 
 # 7. Tag the release
