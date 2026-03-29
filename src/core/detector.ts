@@ -4,27 +4,23 @@ import {
   allWeaselWords,
   irregularVerbs,
   auxiliaryVerbs,
+  nominalizations as defaultNominalizations,
+  hedgingPhrases as defaultHedgingPhrases,
+  fillerAdverbs as defaultFillerAdverbs,
+  abbreviations,
 } from "./words.js";
 
-/**
- * Detects weasel words in the given text
- * @param text The text to analyze
- * @returns Array of found weasel words with their positions
- */
-export function detectWeaselWords(text: string): Array<{
+export function detectWeaselWords(text: string, wordList?: string[]): Array<{
   word: string;
   index: number;
   length: number;
 }> {
-  const results: Array<{
-    word: string;
-    index: number;
-    length: number;
-  }> = [];
+  const results: Array<{ word: string; index: number; length: number }> = [];
+  const words = wordList ?? allWeaselWords;
+  if (words.length === 0) return results;
 
-  // Create a regex that matches whole words only for all weasel words
   const weaselWordsPattern = new RegExp(
-    `\\b(${allWeaselWords.join("|")})\\b`,
+    `\\b(${words.join("|")})\\b`,
     "gi"
   );
 
@@ -40,29 +36,16 @@ export function detectWeaselWords(text: string): Array<{
   return results;
 }
 
-/**
- * Detects passive voice in the given text
- * @param text The text to analyze
- * @returns Array of passive voice instances with their positions
- */
 export function detectPassiveVoice(text: string): Array<{
   phrase: string;
   index: number;
   length: number;
 }> {
-  const results: Array<{
-    phrase: string;
-    index: number;
-    length: number;
-  }> = [];
+  const results: Array<{ phrase: string; index: number; length: number }> = [];
 
-  // Regular past participle pattern (words ending in "ed")
   const regularPattern = "\\w+ed";
-
-  // All verbs that can be used in passive voice
   const allVerbs = `${regularPattern}|${irregularVerbs.join("|")}`;
 
-  // Full passive voice pattern: auxiliary verb + optional whitespace + past participle
   const passivePattern = new RegExp(
     `\\b(${auxiliaryVerbs.join("|")})\\b[ ]*(${allVerbs})\\b`,
     "gi"
@@ -80,37 +63,23 @@ export function detectPassiveVoice(text: string): Array<{
   return results;
 }
 
-/**
- * Detects duplicate adjacent words in the given text, handling case-insensitivity
- * @param text The text to analyze
- * @returns Array of duplicate words with their positions
- */
 export function detectDuplicateWords(text: string): Array<{
   word: string;
   index: number;
   length: number;
 }> {
-  const results: Array<{
-    word: string;
-    index: number;
-    length: number;
-  }> = [];
+  const results: Array<{ word: string; index: number; length: number }> = [];
 
-  // This regex finds adjacent words with optional space in between, ignoring case
   const regex = /\b(\w+)\b[\s\r\n]+\b(\1)\b/gi;
 
   let match;
   while ((match = regex.exec(text)) !== null) {
-    // To handle case insensitivity correctly, we need to determine the exact positions
-    // of the second occurrence (the duplicate)
     const firstWord = match[1];
     const fullMatch = match[0];
 
-    // Find the position of the second word in the match
     const firstWordIndex = match.index;
     const secondWordIndex = firstWordIndex + fullMatch.indexOf(match[2]);
 
-    // Get the actual duplicate word from the text (preserving original case)
     const duplicateWord = text.substring(
       secondWordIndex,
       secondWordIndex + firstWord.length
@@ -126,24 +95,192 @@ export function detectDuplicateWords(text: string): Array<{
   return results;
 }
 
-/**
- * Removes a duplicate word at the specified position
- * @param text The original text
- * @param index The starting index of the duplicate word
- * @param length The length of the duplicate word
- * @returns Updated text with the duplicate word removed
- */
 export function removeDuplicateWord(
   text: string,
   index: number,
   length: number
 ): string {
-  // Look backwards from the duplicate word to find the whitespace
   let whitespaceStart = index;
   while (whitespaceStart > 0 && /\s/.test(text[whitespaceStart - 1])) {
     whitespaceStart--;
   }
-
-  // Remove the duplicate word and preceding whitespace
   return text.substring(0, whitespaceStart) + text.substring(index + length);
+}
+
+export function detectLongSentences(text: string, maxWords?: number): Array<{
+  sentence: string;
+  wordCount: number;
+  index: number;
+  length: number;
+}> {
+  const threshold = maxWords ?? 30;
+  const results: Array<{ sentence: string; wordCount: number; index: number; length: number }> = [];
+
+  if (!text.trim()) return results;
+
+  // Split into sentences, preserving positions
+  const sentences: Array<{ text: string; index: number }> = [];
+  let currentStart = 0;
+
+  // Skip leading whitespace for first sentence
+  while (currentStart < text.length && /\s/.test(text[currentStart])) {
+    currentStart++;
+  }
+
+  let i = 0;
+  while (i < text.length) {
+    if (text[i] === '.' || text[i] === '!' || text[i] === '?') {
+      // Check for ellipsis
+      if (text[i] === '.' && text[i + 1] === '.' && text[i + 2] === '.') {
+        i += 3;
+        continue;
+      }
+
+      // Check for decimal number: digit.digit
+      if (text[i] === '.' && i > 0 && /\d/.test(text[i - 1]) && i + 1 < text.length && /\d/.test(text[i + 1])) {
+        i++;
+        continue;
+      }
+
+      // Check for abbreviation
+      if (text[i] === '.') {
+        let wordStart = i - 1;
+        while (wordStart >= 0 && /[a-zA-Z.]/.test(text[wordStart])) {
+          wordStart--;
+        }
+        wordStart++;
+        const wordBefore = text.substring(wordStart, i).toLowerCase().replace(/\.$/, '');
+        if (abbreviations.has(wordBefore)) {
+          i++;
+          continue;
+        }
+      }
+
+      // Check if followed by whitespace or end-of-string
+      const afterPunct = i + 1;
+      if (afterPunct >= text.length || /\s/.test(text[afterPunct])) {
+        const sentenceText = text.substring(currentStart, afterPunct).trim();
+        if (sentenceText) {
+          sentences.push({ text: sentenceText, index: currentStart });
+        }
+        i = afterPunct;
+        while (i < text.length && /\s/.test(text[i])) {
+          i++;
+        }
+        currentStart = i;
+        continue;
+      }
+    }
+    i++;
+  }
+
+  // Handle remaining text (no terminal punctuation)
+  if (currentStart < text.length) {
+    const sentenceText = text.substring(currentStart).trim();
+    if (sentenceText) {
+      sentences.push({ text: sentenceText, index: currentStart });
+    }
+  }
+
+  for (const s of sentences) {
+    const words = s.text.split(/\s+/).filter(Boolean);
+    if (words.length > threshold) {
+      const truncated = s.text.length > 50 ? s.text.substring(0, 50) + '...' : s.text;
+      results.push({
+        sentence: truncated,
+        wordCount: words.length,
+        index: s.index,
+        length: s.text.length,
+      });
+    }
+  }
+
+  return results;
+}
+
+export function detectNominalizations(
+  text: string,
+  wordList?: Array<{ word: string; suggestion: string }>,
+): Array<{
+  word: string;
+  suggestion: string;
+  index: number;
+  length: number;
+}> {
+  const results: Array<{ word: string; suggestion: string; index: number; length: number }> = [];
+  const words = wordList ?? defaultNominalizations;
+  if (words.length === 0) return results;
+
+  const pattern = new RegExp(
+    `\\b(${words.map(w => w.word).join("|")})\\b`,
+    "gi"
+  );
+
+  const suggestionMap = new Map(words.map(w => [w.word.toLowerCase(), w.suggestion]));
+
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    results.push({
+      word: match[0],
+      suggestion: suggestionMap.get(match[0].toLowerCase()) || '',
+      index: match.index,
+      length: match[0].length,
+    });
+  }
+
+  return results;
+}
+
+export function detectHedging(text: string, phraseList?: string[]): Array<{
+  phrase: string;
+  index: number;
+  length: number;
+}> {
+  const results: Array<{ phrase: string; index: number; length: number }> = [];
+  const phrases = phraseList ?? defaultHedgingPhrases;
+  if (phrases.length === 0) return results;
+
+  // Sort by length descending so longer phrases match first
+  const sorted = [...phrases].sort((a, b) => b.length - a.length);
+
+  // Escape regex special chars in phrases
+  const escaped = sorted.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(`\\b(${escaped.join("|")})\\b`, "gi");
+
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    results.push({
+      phrase: match[0],
+      index: match.index,
+      length: match[0].length,
+    });
+  }
+
+  return results;
+}
+
+export function detectAdverbs(text: string, wordList?: string[]): Array<{
+  word: string;
+  index: number;
+  length: number;
+}> {
+  const results: Array<{ word: string; index: number; length: number }> = [];
+  const words = wordList ?? defaultFillerAdverbs;
+  if (words.length === 0) return results;
+
+  const pattern = new RegExp(
+    `\\b(${words.join("|")})\\b`,
+    "gi"
+  );
+
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    results.push({
+      word: match[0],
+      index: match.index,
+      length: match[0].length,
+    });
+  }
+
+  return results;
 }

@@ -56,3 +56,37 @@ jobs:
 
       - name: Smoke test MCP server
         run: timeout 2 node mcp-server/dist/mcp-server/index.js < /dev/null 2>&1 || true
+
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install CLI dependencies
+        run: cd cli && npm ci
+
+      - name: Build CLI
+        run: cd cli && npm run build
+
+      - name: Smoke test - stdin check
+        run: echo "The code was written very quickly." | node cli/dist/cli/index.js check --stdin
+
+      - name: Smoke test - clean text
+        run: echo "The team wrote good code." | node cli/dist/cli/index.js check --stdin --quiet
+
+      - name: Smoke test - list detectors
+        run: node cli/dist/cli/index.js list
+
+      - name: Smoke test - list weasel words
+        run: node cli/dist/cli/index.js list weaselWords | head -5
+
+      - name: Smoke test - init
+        run: cd /tmp && node "${GITHUB_WORKSPACE}/cli/dist/cli/index.js" init && test -f .wscrc.json && rm .wscrc.json

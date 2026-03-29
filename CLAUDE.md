@@ -21,20 +21,39 @@ Run a single test file: `npx vitest run tests/core/detector.test.ts`
 cd mcp-server && npm ci && npm run build   # Build standalone MCP server
 ```
 
+### CLI (separate package in `cli/`)
+
+```bash
+cd cli && npm ci && npm run build   # Build CLI
+node cli/dist/cli/index.js check "**/*.md"  # Run check
+```
+
 ## Architecture
 
-**Writing Style Checker (WSC)** — detects weasel words, passive voice, and duplicate words in text. Three interfaces: web editor, HTTP API, and MCP server.
+**Writing Style Checker (WSC)** — detects 7 types of writing issues. Five interfaces: web editor, HTTP API, remote MCP, local MCP, and CLI.
 
 ### Core Detection Engine (`src/core/`)
-- `detector.ts` — Three pure functions: `detectWeaselWords`, `detectPassiveVoice`, `detectDuplicateWords`, plus `removeDuplicateWord`. All return match positions (index + length). Regex-based detection using word-boundary matching.
-- `words.ts` — Word lists: 54 weasel words (`allWeaselWords`), 176 irregular past participles (`irregularVerbs`), 8 auxiliary verbs (`auxiliaryVerbs`).
-- `index.ts` — Public re-exports.
+- `detector.ts` — 7 detector functions: `detectWeaselWords`, `detectPassiveVoice`, `detectDuplicateWords`, `detectLongSentences`, `detectNominalizations`, `detectHedging`, `detectAdverbs`, plus `removeDuplicateWord`. All return match positions (index + length). Weasel words, nominalizations, hedging, and adverbs accept optional custom word lists for config support.
+- `words.ts` — Word lists: 95 weasel words (`allWeaselWords`), 262 irregular verbs, 8 auxiliary verbs, 230 nominalizations (with suggestions), 100 hedging phrases, 140 filler adverbs, 96 abbreviations.
+- `config.ts` — Browser-safe config types (`WscConfig`), `DEFAULT_CONFIG`, `mergeConfig()`, `applyWordListOverrides()`, `applyNominalizationOverrides()`, `validateConfig()`. No Node.js imports.
+- `config-node.ts` — Node-only: `loadConfigFromFile()`, `findConfigFile()`. Uses `node:fs/promises` and `node:path`. Only imported by mcp-server and CLI.
+- `analyzer.ts` — `analyzeText(text, config?)` — the single entry point all consumers call. Runs enabled detectors with config overrides, returns `AnalysisResult`.
+- `index.ts` — Public re-exports (does NOT export config-node functions).
+
+### Key Architectural Principle
+All consumers call `analyzeText()` rather than individual detectors. Adding a new detector means updating `analyzer.ts` once, not every consumer.
 
 ### Surfaces
-- **Web Editor** (`src/lib/App.svelte`, `src/routes/+page.svelte`) — Svelte 5 client-side-only editor. All processing happens in-browser using the core engine.
-- **HTTP API** (`src/routes/api/check/+server.ts`) — `POST /api/check` accepts `{text}`, returns structured JSON with positions, line/column info, context snippets, and timing. CORS enabled. Max 100K chars.
-- **MCP Route** (`src/routes/mcp/+server.ts`) — Streamable HTTP transport. Delegates to `src/mcp/handler.ts` which implements JSON-RPC 2.0 with tools: `check_text`, `fix_duplicates`, `list_weasel_words`.
-- **Standalone MCP Server** (`mcp-server/`) — Separate npm package (`wsc-mcp`) using `@modelcontextprotocol/sdk` with stdio transport. Has its own `package.json`, `tsconfig.json`, and `node_modules`. Adds a `check_file` tool for local file reading. Imports from `../src/core`.
+- **Web Editor** (`src/lib/App.svelte`) — Svelte 5 client-side editor. Calls `analyzeText()` directly. Shows all 7 detector types with color-coded highlights.
+- **HTTP API** (`src/routes/api/check/+server.ts`) — `POST /api/check` accepts `{text, config?}`. GET returns API docs. `GET /api/detectors` lists all detectors with counts.
+- **MCP Route** (`src/routes/mcp/+server.ts`) — Streamable HTTP transport. Delegates to `src/mcp/handler.ts` with 4 tools: `check_text` (with config), `fix_duplicates`, `list_weasel_words`, `list_word_lists`.
+- **Standalone MCP Server** (`mcp-server/`) — npm package `wsc-mcp`. Adds `check_file` with auto-discovery of `.wscrc.json`. Both `check_text` and `check_file` accept config param.
+- **CLI** (`cli/`) — `wsc check`, `wsc list`, `wsc init`. Output formats: text, json, github. Auto-discovers `.wscrc.json`.
+- **Health** (`src/routes/health/+server.ts`) — `GET /health` runs a known-text smoke test.
+- **GitHub Action** (`action/action.yml`) — Composite action using wsc-cli.
+
+### Config System
+`.wscrc.json` files configure detectors. JSON Schema at `static/schema.json`. Config supports `enabled`, `add`/`remove` word list overrides, and `maxWords` for long sentences. The API and MCP tools accept inline config objects.
 
 ### Stack
 - SvelteKit + Svelte 5, TypeScript, SCSS
@@ -45,4 +64,5 @@ cd mcp-server && npm ci && npm run build   # Build standalone MCP server
 ### Key Constraints
 - Default branch is `master`
 - CI runs type check, tests, and build on Node 20 + 22
-- Coverage targets specific files in `vitest.config.ts` (excludes `mcp-server/index.ts` entry point)
+- `config-node.ts` must stay separate from `config.ts` to avoid Node.js imports in browser bundle
+- Coverage targets specific files in `vitest.config.ts`

@@ -1,13 +1,20 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { detectWeaselWords, detectPassiveVoice, detectDuplicateWords } from '../../../core';
+import { analyzeText, validateConfig } from '../../../core';
+import type { WscConfig } from '../../../core';
 
 const MAX_TEXT_LENGTH = 100_000;
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
 
 export const POST: RequestHandler = async ({ request }) => {
   const startTime = performance.now();
 
-  let body: { text?: string };
+  let body: { text?: string; config?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -22,9 +29,16 @@ export const POST: RequestHandler = async ({ request }) => {
     return json({ error: `Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters` }, { status: 400 });
   }
 
-  const weaselWords = detectWeaselWords(text);
-  const passiveVoice = detectPassiveVoice(text);
-  const duplicateWords = detectDuplicateWords(text);
+  let config: WscConfig | undefined;
+  if (body.config !== undefined) {
+    const errors = validateConfig(body.config);
+    if (errors.length > 0) {
+      return json({ error: 'Invalid config', details: errors }, { status: 400 });
+    }
+    config = body.config as WscConfig;
+  }
+
+  const result = analyzeText(text, config);
 
   const getLineCol = (index: number) => {
     const lines = text.substring(0, index).split('\n');
@@ -39,52 +53,49 @@ export const POST: RequestHandler = async ({ request }) => {
     return `${prefix}${text.substring(start, end)}${suffix}`;
   };
 
+  const enrichIssue = <T extends { index: number; length: number }>(item: T) => ({
+    ...item,
+    ...getLineCol(item.index),
+    context: getContext(item.index, item.length),
+  });
+
   const response = {
-    summary: {
-      total: weaselWords.length + passiveVoice.length + duplicateWords.length,
-      weaselWords: weaselWords.length,
-      passiveVoice: passiveVoice.length,
-      duplicateWords: duplicateWords.length,
-    },
+    summary: result.summary,
     issues: {
-      weaselWords: weaselWords.map(w => ({
-        ...w,
-        ...getLineCol(w.index),
-        context: getContext(w.index, w.length),
-      })),
-      passiveVoice: passiveVoice.map(p => ({
-        ...p,
-        ...getLineCol(p.index),
-        context: getContext(p.index, p.length),
-      })),
-      duplicateWords: duplicateWords.map(d => ({
-        ...d,
-        ...getLineCol(d.index),
-        context: getContext(d.index, d.length),
-      })),
+      weaselWords: result.issues.weaselWords.map(enrichIssue),
+      passiveVoice: result.issues.passiveVoice.map(enrichIssue),
+      duplicateWords: result.issues.duplicateWords.map(enrichIssue),
+      longSentences: result.issues.longSentences.map(enrichIssue),
+      nominalizations: result.issues.nominalizations.map(enrichIssue),
+      hedging: result.issues.hedging.map(enrichIssue),
+      adverbs: result.issues.adverbs.map(enrichIssue),
     },
     meta: {
-      characterCount: text.length,
-      wordCount: text.split(/\s+/).filter(Boolean).length,
+      ...result.meta,
       processingTimeMs: Math.round(performance.now() - startTime),
     },
   };
 
-  return json(response, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    }
-  });
+  return json(response, { headers: CORS_HEADERS });
+};
+
+export const GET: RequestHandler = async () => {
+  return json({
+    name: 'Writing Style Checker API',
+    version: '1.0.0',
+    endpoint: 'POST /api/check',
+    parameters: {
+      text: { type: 'string', required: true, maxLength: MAX_TEXT_LENGTH },
+      config: { type: 'object', required: false, description: 'Optional WscConfig to customize detectors' },
+    },
+    detectors: [
+      'weaselWords', 'passiveVoice', 'duplicateWords',
+      'longSentences', 'nominalizations', 'hedging', 'adverbs',
+    ],
+    docs: 'https://wsc.theserverless.dev',
+  }, { headers: CORS_HEADERS });
 };
 
 export const OPTIONS: RequestHandler = async () => {
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    }
-  });
+  return new Response(null, { headers: CORS_HEADERS });
 };

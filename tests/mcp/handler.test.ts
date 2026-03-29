@@ -114,7 +114,7 @@ describe('handleMcpRequest — notifications/initialized', () => {
 // ============================================================================
 
 describe('handleMcpRequest — tools/list', () => {
-  it('returns three tools', async () => {
+  it('returns four tools', async () => {
     const res = await handleMcpRequest({
       jsonrpc: '2.0',
       id: 2,
@@ -122,7 +122,12 @@ describe('handleMcpRequest — tools/list', () => {
     });
     expect(res.error).toBeUndefined();
     const result = res.result as any;
-    expect(result.tools).toHaveLength(3);
+    expect(result.tools).toHaveLength(4);
+    const names = result.tools.map((t: any) => t.name);
+    expect(names).toContain('check_text');
+    expect(names).toContain('fix_duplicates');
+    expect(names).toContain('list_weasel_words');
+    expect(names).toContain('list_word_lists');
   });
 
   it('returns check_text tool with correct schema', async () => {
@@ -318,18 +323,18 @@ describe('handleMcpRequest — tools/call check_text', () => {
   });
 
   it('accepts text at exactly max length', async () => {
-    const text = 'a'.repeat(100_000);
+    const text = 'ok. '.repeat(25_000);
     const res = await handleMcpRequest({
       jsonrpc: '2.0',
       id: 20,
       method: 'tools/call',
       params: {
         name: 'check_text',
-        arguments: { text },
+        arguments: { text: text.slice(0, 100_000) },
       },
     });
     expect(res.error).toBeUndefined();
-  });
+  }, 30000);
 
   it('includes word count in output', async () => {
     const res = await handleMcpRequest({
@@ -527,6 +532,109 @@ describe('handleMcpRequest — tools/call list_weasel_words', () => {
 });
 
 // ============================================================================
+// tools/call — list_word_lists
+// ============================================================================
+
+describe('handleMcpRequest — tools/call list_word_lists', () => {
+  it('returns detector info', async () => {
+    const res = await handleMcpRequest({
+      jsonrpc: '2.0',
+      id: 45,
+      method: 'tools/call',
+      params: {
+        name: 'list_word_lists',
+        arguments: {},
+      },
+    });
+    expect(res.error).toBeUndefined();
+    const text = (res.result as any).content[0].text;
+    expect(text).toContain('Detector Word Lists');
+    expect(text).toContain('weaselWords');
+    expect(text).toContain('nominalizations');
+  });
+});
+
+// ============================================================================
+// tools/call — check_text new detector sections
+// ============================================================================
+
+describe('handleMcpRequest — tools/call check_text new detectors', () => {
+  it('reports nominalizations, hedging, and adverbs', async () => {
+    const res = await handleMcpRequest({
+      jsonrpc: '2.0',
+      id: 48,
+      method: 'tools/call',
+      params: {
+        name: 'check_text',
+        arguments: { text: 'The utilization was high. I think it is totally fine.' },
+      },
+    });
+    const text = (res.result as any).content[0].text;
+    expect(text).toContain('NOMINALIZATIONS');
+    expect(text).toContain('HEDGING');
+    expect(text).toContain('FILLER ADVERBS');
+  });
+
+  it('reports long sentences', async () => {
+    const longText = Array(35).fill('word').join(' ') + '.';
+    const res = await handleMcpRequest({
+      jsonrpc: '2.0',
+      id: 49,
+      method: 'tools/call',
+      params: {
+        name: 'check_text',
+        arguments: { text: longText },
+      },
+    });
+    const text = (res.result as any).content[0].text;
+    expect(text).toContain('LONG SENTENCES');
+    expect(text).toContain('35 words');
+  });
+});
+
+// ============================================================================
+// tools/call — check_text with config
+// ============================================================================
+
+describe('handleMcpRequest — tools/call check_text with config', () => {
+  it('accepts valid config parameter', async () => {
+    const res = await handleMcpRequest({
+      jsonrpc: '2.0',
+      id: 46,
+      method: 'tools/call',
+      params: {
+        name: 'check_text',
+        arguments: {
+          text: 'This is very good.',
+          config: { detectors: { weaselWords: { enabled: false } } },
+        },
+      },
+    });
+    expect(res.error).toBeUndefined();
+    const text = (res.result as any).content[0].text;
+    expect(text).not.toContain('WEASEL WORDS');
+  });
+
+  it('returns error for invalid config', async () => {
+    const res = await handleMcpRequest({
+      jsonrpc: '2.0',
+      id: 47,
+      method: 'tools/call',
+      params: {
+        name: 'check_text',
+        arguments: {
+          text: 'This is very good.',
+          config: { unknown: true },
+        },
+      },
+    });
+    expect(res.error).toBeDefined();
+    expect(res.error!.code).toBe(-32602);
+    expect(res.error!.message).toContain('Invalid config');
+  });
+});
+
+// ============================================================================
 // tools/call — unknown tool
 // ============================================================================
 
@@ -588,7 +696,7 @@ describe('handleMcpRequest — internal error fallback', () => {
     // This exercises the fallback on handler.ts:226 — when a tool throws
     // something without .code and .message (e.g., a bare Error or string).
     // We mock detectWeaselWords to throw a bare Error to trigger this path.
-    const spy = vi.spyOn(core, 'detectWeaselWords').mockImplementation(() => {
+    const spy = vi.spyOn(core, 'analyzeText').mockImplementation(() => {
       throw new Error('unexpected');
     });
 

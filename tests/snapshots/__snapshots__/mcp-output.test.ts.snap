@@ -1,0 +1,26 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MCP output snapshots > check_text clean text output 1`] = `
+"Writing Style Analysis
+======================
+No issues found in 25 characters (5 words). Nice work!
+"
+`;
+
+exports[`MCP output snapshots > check_text with issues output 1`] = `
+"Writing Style Analysis
+======================
+Found 1 issue in 18 characters (4 words)
+
+WEASEL WORDS (1):
+  - "very" at line 1, column 9
+    Context: This is very good.
+"
+`;
+
+exports[`MCP output snapshots > fix_duplicates output 1`] = `
+"Removed 1 duplicate word: the
+
+Cleaned text:
+The code works."
+`;

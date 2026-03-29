@@ -1,13 +1,16 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { readFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import {
-  detectWeaselWords,
-  detectPassiveVoice,
   detectDuplicateWords,
   removeDuplicateWord,
   allWeaselWords,
+  analyzeText as coreAnalyzeText,
+  validateConfig,
 } from '../src/core/index.js';
+import type { WscConfig } from '../src/core/index.js';
+import { findConfigFile, loadConfigFromFile } from '../src/core/config-node.js';
 
 const MAX_TEXT_LENGTH = 100_000;
 
@@ -24,44 +27,35 @@ export function getContext(text: string, index: number, length: number) {
   return `${prefix}${text.substring(start, end)}${suffix}`;
 }
 
-export function analyzeText(text: string): string {
-  const weaselWords = detectWeaselWords(text);
-  const passiveVoice = detectPassiveVoice(text);
-  const duplicateWords = detectDuplicateWords(text);
-  const total = weaselWords.length + passiveVoice.length + duplicateWords.length;
-  const wordCount = text.split(/\s+/).filter(Boolean).length;
+export function formatAnalysis(text: string, config?: WscConfig): string {
+  const result = coreAnalyzeText(text, config);
+  const { summary, issues, meta } = result;
 
   let output = `Writing Style Analysis\n======================\n`;
 
-  if (total === 0) {
-    output += `No issues found in ${text.length} characters (${wordCount} words). Nice work!\n`;
+  if (summary.total === 0) {
+    output += `No issues found in ${meta.characterCount} characters (${meta.wordCount} words). Nice work!\n`;
   } else {
-    output += `Found ${total} issue${total !== 1 ? 's' : ''} in ${text.length} characters (${wordCount} words)\n`;
+    output += `Found ${summary.total} issue${summary.total !== 1 ? 's' : ''} in ${meta.characterCount} characters (${meta.wordCount} words)\n`;
 
-    if (weaselWords.length > 0) {
-      output += `\nWEASEL WORDS (${weaselWords.length}):\n`;
-      for (const w of weaselWords) {
-        const { line, column } = getLineCol(text, w.index);
-        const context = getContext(text, w.index, w.length);
-        output += `  - "${w.word}" at line ${line}, column ${column}\n    Context: ${context}\n`;
-      }
-    }
+    const sections: Array<{ label: string; items: Array<{ display: string; index: number; length: number }> }> = [
+      { label: 'WEASEL WORDS', items: issues.weaselWords.map(w => ({ display: w.word, ...w })) },
+      { label: 'PASSIVE VOICE', items: issues.passiveVoice.map(p => ({ display: p.phrase, ...p })) },
+      { label: 'DUPLICATE WORDS', items: issues.duplicateWords.map(d => ({ display: d.word, ...d })) },
+      { label: 'LONG SENTENCES', items: issues.longSentences.map(s => ({ display: `${s.sentence} (${s.wordCount} words)`, ...s })) },
+      { label: 'NOMINALIZATIONS', items: issues.nominalizations.map(n => ({ display: `${n.word} → ${n.suggestion}`, ...n })) },
+      { label: 'HEDGING', items: issues.hedging.map(h => ({ display: h.phrase, ...h })) },
+      { label: 'FILLER ADVERBS', items: issues.adverbs.map(a => ({ display: a.word, ...a })) },
+    ];
 
-    if (passiveVoice.length > 0) {
-      output += `\nPASSIVE VOICE (${passiveVoice.length}):\n`;
-      for (const p of passiveVoice) {
-        const { line, column } = getLineCol(text, p.index);
-        const context = getContext(text, p.index, p.length);
-        output += `  - "${p.phrase}" at line ${line}, column ${column}\n    Context: ${context}\n`;
-      }
-    }
-
-    if (duplicateWords.length > 0) {
-      output += `\nDUPLICATE WORDS (${duplicateWords.length}):\n`;
-      for (const d of duplicateWords) {
-        const { line, column } = getLineCol(text, d.index);
-        const context = getContext(text, d.index, d.length);
-        output += `  - "${d.word}" at line ${line}, column ${column}\n    Context: ${context}\n`;
+    for (const section of sections) {
+      if (section.items.length > 0) {
+        output += `\n${section.label} (${section.items.length}):\n`;
+        for (const item of section.items) {
+          const { line, column } = getLineCol(text, item.index);
+          const context = getContext(text, item.index, item.length);
+          output += `  - "${item.display}" at line ${line}, column ${column}\n    Context: ${context}\n`;
+        }
       }
     }
   }
@@ -69,21 +63,35 @@ export function analyzeText(text: string): string {
   return output;
 }
 
+// Keep backward compatibility — old name used in tests
+export const analyzeText = formatAnalysis;
+
 export function createServer(): McpServer {
   const server = new McpServer({
     name: 'writing-style-checker',
-    version: '1.0.0',
+    version: '2.0.0',
   });
 
   server.tool(
     'check_text',
-    'Analyze text for weasel words, passive voice, and duplicate words. Returns structured results with issue positions and context.',
-    { text: z.string().describe('The text to analyze for writing style issues') },
-    async ({ text }) => {
+    'Analyze text for writing style issues (weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs). Returns structured results with issue positions and context.',
+    {
+      text: z.string().describe('The text to analyze for writing style issues'),
+      config: z.any().optional().describe('Optional WscConfig JSON object to customize detectors'),
+    },
+    async ({ text, config: rawConfig }) => {
       if (text.length > MAX_TEXT_LENGTH) {
         return { content: [{ type: 'text', text: `Error: Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters` }] };
       }
-      return { content: [{ type: 'text', text: analyzeText(text) }] };
+      let config: WscConfig | undefined;
+      if (rawConfig !== undefined) {
+        const errors = validateConfig(rawConfig);
+        if (errors.length > 0) {
+          return { content: [{ type: 'text', text: `Error: Invalid config - ${errors.join('; ')}` }] };
+        }
+        config = rawConfig as WscConfig;
+      }
+      return { content: [{ type: 'text', text: formatAnalysis(text, config) }] };
     }
   );
 
@@ -126,15 +134,34 @@ export function createServer(): McpServer {
 
   server.tool(
     'check_file',
-    'Read a file from disk and analyze it for writing style issues. Supports .txt, .md, and other text files.',
-    { path: z.string().describe('Path to the file to analyze') },
-    async ({ path }) => {
+    'Read a file from disk and analyze it for writing style issues. Auto-discovers .wscrc.json config from the file directory upward.',
+    {
+      path: z.string().describe('Path to the file to analyze'),
+      config: z.any().optional().describe('Optional WscConfig JSON object (overrides auto-discovered .wscrc.json)'),
+    },
+    async ({ path, config: rawConfig }) => {
       try {
         const text = await readFile(path, 'utf-8');
         if (text.length > MAX_TEXT_LENGTH) {
           return { content: [{ type: 'text', text: `Error: File exceeds maximum length of ${MAX_TEXT_LENGTH} characters` }] };
         }
-        return { content: [{ type: 'text', text: `File: ${path}\n\n${analyzeText(text)}` }] };
+
+        let config: WscConfig | undefined;
+        if (rawConfig !== undefined) {
+          const errors = validateConfig(rawConfig);
+          if (errors.length > 0) {
+            return { content: [{ type: 'text', text: `Error: Invalid config - ${errors.join('; ')}` }] };
+          }
+          config = rawConfig as WscConfig;
+        } else {
+          // Auto-discover .wscrc.json
+          const configPath = await findConfigFile(dirname(path));
+          if (configPath) {
+            config = await loadConfigFromFile(configPath);
+          }
+        }
+
+        return { content: [{ type: 'text', text: `File: ${path}\n\n${formatAnalysis(text, config)}` }] };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: 'text', text: `Error reading file: ${message}` }] };

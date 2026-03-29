@@ -1,10 +1,11 @@
 import {
-  detectWeaselWords,
-  detectPassiveVoice,
   detectDuplicateWords,
   removeDuplicateWord,
   allWeaselWords,
+  analyzeText,
+  validateConfig,
 } from '../core';
+import type { WscConfig } from '../core';
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -23,13 +24,17 @@ interface JsonRpcResponse {
 const TOOLS = [
   {
     name: 'check_text',
-    description: 'Analyze text for weasel words, passive voice, and duplicate words. Returns structured results with issue positions and context.',
+    description: 'Analyze text for writing style issues (weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs). Returns structured results with issue positions and context.',
     inputSchema: {
       type: 'object',
       properties: {
         text: {
           type: 'string',
           description: 'The text to analyze for writing style issues',
+        },
+        config: {
+          type: 'object',
+          description: 'Optional WscConfig to customize which detectors run and their settings',
         },
       },
       required: ['text'],
@@ -52,6 +57,15 @@ const TOOLS = [
   {
     name: 'list_weasel_words',
     description: 'Return the complete list of weasel words that the checker flags.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'list_word_lists',
+    description: 'Return all word/phrase lists used by the detectors.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -84,43 +98,43 @@ function handleCheckText(args: Record<string, unknown>): { content: Array<{ type
     throw { code: -32602, message: `Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters` };
   }
 
-  const weaselWords = detectWeaselWords(text);
-  const passiveVoice = detectPassiveVoice(text);
-  const duplicateWords = detectDuplicateWords(text);
-  const total = weaselWords.length + passiveVoice.length + duplicateWords.length;
-  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  let config: WscConfig | undefined;
+  if (args.config !== undefined) {
+    const errors = validateConfig(args.config);
+    if (errors.length > 0) {
+      throw { code: -32602, message: `Invalid config: ${errors.join('; ')}` };
+    }
+    config = args.config as WscConfig;
+  }
+
+  const result = analyzeText(text, config);
+  const { summary, issues, meta } = result;
 
   let output = `Writing Style Analysis\n======================\n`;
 
-  if (total === 0) {
-    output += `No issues found in ${text.length} characters (${wordCount} words). Nice work!\n`;
+  if (summary.total === 0) {
+    output += `No issues found in ${meta.characterCount} characters (${meta.wordCount} words). Nice work!\n`;
   } else {
-    output += `Found ${total} issue${total !== 1 ? 's' : ''} in ${text.length} characters (${wordCount} words)\n`;
+    output += `Found ${summary.total} issue${summary.total !== 1 ? 's' : ''} in ${meta.characterCount} characters (${meta.wordCount} words)\n`;
 
-    if (weaselWords.length > 0) {
-      output += `\nWEASEL WORDS (${weaselWords.length}):\n`;
-      for (const w of weaselWords) {
-        const { line, column } = getLineCol(text, w.index);
-        const context = getContext(text, w.index, w.length);
-        output += `  - "${w.word}" at line ${line}, column ${column}\n    Context: ${context}\n`;
-      }
-    }
+    const sections: Array<{ label: string; items: Array<{ display: string; index: number; length: number }> }> = [
+      { label: 'WEASEL WORDS', items: issues.weaselWords.map(w => ({ display: w.word, ...w })) },
+      { label: 'PASSIVE VOICE', items: issues.passiveVoice.map(p => ({ display: p.phrase, ...p })) },
+      { label: 'DUPLICATE WORDS', items: issues.duplicateWords.map(d => ({ display: d.word, ...d })) },
+      { label: 'LONG SENTENCES', items: issues.longSentences.map(s => ({ display: `${s.sentence} (${s.wordCount} words)`, ...s })) },
+      { label: 'NOMINALIZATIONS', items: issues.nominalizations.map(n => ({ display: `${n.word} → ${n.suggestion}`, ...n })) },
+      { label: 'HEDGING', items: issues.hedging.map(h => ({ display: h.phrase, ...h })) },
+      { label: 'FILLER ADVERBS', items: issues.adverbs.map(a => ({ display: a.word, ...a })) },
+    ];
 
-    if (passiveVoice.length > 0) {
-      output += `\nPASSIVE VOICE (${passiveVoice.length}):\n`;
-      for (const p of passiveVoice) {
-        const { line, column } = getLineCol(text, p.index);
-        const context = getContext(text, p.index, p.length);
-        output += `  - "${p.phrase}" at line ${line}, column ${column}\n    Context: ${context}\n`;
-      }
-    }
-
-    if (duplicateWords.length > 0) {
-      output += `\nDUPLICATE WORDS (${duplicateWords.length}):\n`;
-      for (const d of duplicateWords) {
-        const { line, column } = getLineCol(text, d.index);
-        const context = getContext(text, d.index, d.length);
-        output += `  - "${d.word}" at line ${line}, column ${column}\n    Context: ${context}\n`;
+    for (const section of sections) {
+      if (section.items.length > 0) {
+        output += `\n${section.label} (${section.items.length}):\n`;
+        for (const item of section.items) {
+          const { line, column } = getLineCol(text, item.index);
+          const context = getContext(text, item.index, item.length);
+          output += `  - "${item.display}" at line ${line}, column ${column}\n    Context: ${context}\n`;
+        }
       }
     }
   }
@@ -138,7 +152,6 @@ function handleFixDuplicates(args: Record<string, unknown>): { content: Array<{ 
   let duplicates = detectDuplicateWords(text);
 
   while (duplicates.length > 0) {
-    // Fix from the end to preserve indices
     const d = duplicates[duplicates.length - 1];
     fixes.push(d.word);
     text = removeDuplicateWord(text, d.index, d.length);
@@ -157,6 +170,23 @@ function handleFixDuplicates(args: Record<string, unknown>): { content: Array<{ 
 
 function handleListWeaselWords(): { content: Array<{ type: string; text: string }> } {
   const output = `Weasel Words List (${allWeaselWords.length} words)\n${'='.repeat(40)}\n\n${allWeaselWords.join(', ')}`;
+  return { content: [{ type: 'text', text: output }] };
+}
+
+function handleListWordLists(): { content: Array<{ type: string; text: string }> } {
+  // Import all lists dynamically would require top-level imports, so reference via analyzeText
+  const result = analyzeText('');
+  const cfg = result.config;
+  const output = [
+    `Detector Word Lists`,
+    `===================`,
+    ``,
+    `Detectors: weaselWords, passiveVoice, duplicateWords, longSentences, nominalizations, hedging, adverbs`,
+    ``,
+    `All detectors are enabled by default. Use the config parameter in check_text to customize.`,
+    `For the complete weasel words list, use the list_weasel_words tool.`,
+  ].join('\n');
+
   return { content: [{ type: 'text', text: output }] };
 }
 
@@ -209,6 +239,9 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<JsonRpc
             break;
           case 'list_weasel_words':
             result = handleListWeaselWords();
+            break;
+          case 'list_word_lists':
+            result = handleListWordLists();
             break;
           default:
             return {

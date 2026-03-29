@@ -1,0 +1,35 @@
+{
+  "name": "wsc-cli",
+  "version": "1.0.0",
+  "description": "CLI for Writing Style Checker - detects weasel words, passive voice, duplicate words, and more",
+  "main": "dist/cli/index.js",
+  "bin": {
+    "wsc": "dist/cli/index.js"
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "writing",
+    "style-checker",
+    "cli",
+    "linter",
+    "weasel-words",
+    "passive-voice"
+  ],
+  "author": "Ankur Singh <hello@anks.in>",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "cac": "^6.7.14",
+    "picocolors": "^1.1.1",
+    "tinyglobby": "^0.2.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

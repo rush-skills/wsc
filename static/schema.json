@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WSC Configuration",
+  "description": "Configuration file for the Writing Style Checker (.wscrc.json)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "detectors": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Configure individual detectors",
+      "properties": {
+        "weaselWords": {
+          "$ref": "#/$defs/wordListDetector",
+          "description": "Detects vague terms like 'very', 'extremely', 'various'"
+        },
+        "passiveVoice": {
+          "$ref": "#/$defs/baseDetector",
+          "description": "Detects passive voice constructions"
+        },
+        "duplicateWords": {
+          "$ref": "#/$defs/baseDetector",
+          "description": "Detects adjacent repeated words"
+        },
+        "longSentences": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Detects sentences exceeding a word count threshold",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "maxWords": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 30,
+              "description": "Maximum words per sentence before flagging"
+            }
+          }
+        },
+        "nominalizations": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Detects nouns that could be replaced with stronger verbs",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "add": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["word", "suggestion"],
+                "additionalProperties": false,
+                "properties": {
+                  "word": { "type": "string", "minLength": 1 },
+                  "suggestion": { "type": "string", "minLength": 1 }
+                }
+              },
+              "description": "Additional nominalization pairs to detect"
+            },
+            "remove": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Nominalizations to remove from the default list (by word)"
+            }
+          }
+        },
+        "hedging": {
+          "$ref": "#/$defs/wordListDetector",
+          "description": "Detects hedging phrases like 'I think', 'it seems'"
+        },
+        "adverbs": {
+          "$ref": "#/$defs/wordListDetector",
+          "description": "Detects filler adverbs like 'totally', 'utterly'"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "baseDetector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": true }
+      }
+    },
+    "wordListDetector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "add": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Words/phrases to add to the default list"
+        },
+        "remove": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Words/phrases to remove from the default list"
+        }
+      }
+    }
+  }
+}

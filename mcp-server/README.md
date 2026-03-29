@@ -1,13 +1,13 @@
 # wsc-mcp
 
-A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for the [Writing Style Checker](https://wsc.theserverless.dev). Detects **weasel words**, **passive voice**, and **duplicate words** in text — directly from your AI assistant.
+A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for the [Writing Style Checker](https://wsc.theserverless.dev). Detects **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, and **filler adverbs** — directly from your AI assistant.
 
 ## Tools
 
 | Tool | Description |
 |------|-------------|
-| `check_text` | Analyze text for weasel words, passive voice, and duplicate words with positions and context |
-| `check_file` | Read a file from disk and analyze it for writing style issues |
+| `check_text` | Analyze text for all 7 writing style issues with positions and context. Accepts optional `config` to customize detectors. |
+| `check_file` | Read a file from disk and analyze it. Auto-discovers `.wscrc.json` config. Accepts optional `config` override. |
 | `fix_duplicates` | Remove all duplicate adjacent words and return the cleaned text |
 | `list_weasel_words` | Return the complete list of weasel words the checker flags |
 
@@ -66,7 +66,23 @@ If you don't need local file analysis, you can use the hosted MCP server instead
 }
 ```
 
-The remote server provides `check_text`, `fix_duplicates`, and `list_weasel_words` (no `check_file` since it runs on Cloudflare Workers).
+The remote server provides `check_text`, `fix_duplicates`, `list_weasel_words`, and `list_word_lists` (no `check_file` since it runs on Cloudflare Workers).
+
+## Configuration
+
+Both `check_text` and `check_file` accept an optional `config` parameter to customize detectors:
+
+```json
+{
+  "detectors": {
+    "weaselWords": { "enabled": true, "add": ["synergy"], "remove": ["very"] },
+    "longSentences": { "maxWords": 25 },
+    "adverbs": { "enabled": false }
+  }
+}
+```
+
+The `check_file` tool also auto-discovers `.wscrc.json` files by walking up from the file's directory. A `config` parameter overrides auto-discovery.
 
 ## Example Usage
 
@@ -75,13 +91,20 @@ Once connected, ask your AI assistant:
 - "Check this text for writing issues: The report was written very quickly and is basically done."
 - "Analyze the file at ~/Documents/essay.md for writing style problems"
 - "Fix duplicate words in: The the code is is working"
+- "Check this text but disable the adverbs detector"
 - "What weasel words does the checker look for?"
 
 ## Detection Rules
 
-1. **Weasel Words** — 54 vague terms like "very", "basically", "arguably", "several", matched with word-boundary regex
-2. **Passive Voice** — Auxiliary verbs (`was`, `were`, `been`, etc.) followed by past participles (regular `-ed` forms + 176 irregular verbs)
-3. **Duplicate Words** — Adjacent repeated words across whitespace, case-insensitive
+| Detector | Count | Description |
+|----------|-------|-------------|
+| Weasel Words | 95 | Vague terms like "very", "basically", "arguably" |
+| Passive Voice | — | Auxiliary verbs + past participles (262 irregular + regular `-ed`) |
+| Duplicate Words | — | Adjacent repeated words, case-insensitive |
+| Long Sentences | — | Sentences exceeding a word threshold (default: 30) |
+| Nominalizations | 230 | Nouns replaceable with verbs ("utilization" → "use") |
+| Hedging | 100 | Phrases that weaken assertions ("I think", "it seems") |
+| Filler Adverbs | 140 | Adverbs adding emphasis without substance ("totally", "utterly") |
 
 ## Privacy
 
@@ -91,6 +114,7 @@ The local MCP server runs entirely on your machine. Text is never sent to any ex
 
 - [Web App](https://wsc.theserverless.dev) — Interactive browser-based editor
 - [HTTP API](https://wsc.theserverless.dev/api/check) — POST endpoint for programmatic access
+- [CLI](https://www.npmjs.com/package/wsc-cli) — Command-line tool
 - [GitHub](https://github.com/theserverlessdev/wsc) — Source code
 - [MCP Protocol](https://modelcontextprotocol.io/) — Model Context Protocol specification
 

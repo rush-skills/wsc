@@ -9,15 +9,21 @@ export default defineConfig({
       include: [
         'src/core/detector.ts',
         'src/core/words.ts',
+        'src/core/config.ts',
+        'src/core/config-node.ts',
+        'src/core/analyzer.ts',
         'src/mcp/handler.ts',
         'src/routes/api/check/+server.ts',
         'src/routes/mcp/+server.ts',
         'mcp-server/server.ts',
-        // mcp-server/index.ts excluded: 3-line entry point that immediately
-        // connects to StdioServerTransport (blocks on stdin). Cannot be
-        // imported in tests. All logic it calls (createServer) is 100% tested
-        // through server.test.ts.
+        // Entry points excluded: small wrappers that block on stdin/transport
       ],
+      thresholds: {
+        statements: 95,
+        functions: 95,
+        lines: 95,
+        branches: 93,
+      },
     },
   },
   resolve: {

@@ -5,6 +5,9 @@ import {
   allWeaselWords,
   irregularVerbs,
   auxiliaryVerbs,
+  nominalizations,
+  hedgingPhrases,
+  fillerAdverbs,
 } from '../../src/core/words';
 
 describe('words.ts', () => {
@@ -123,6 +126,73 @@ describe('words.ts', () => {
     it('has no duplicates', () => {
       const unique = new Set(auxiliaryVerbs);
       expect(unique.size).toBe(auxiliaryVerbs.length);
+    });
+  });
+
+  describe('nominalizations', () => {
+    it('has no duplicates by word', () => {
+      const words = nominalizations.map(n => n.word.toLowerCase());
+      expect(new Set(words).size).toBe(words.length);
+    });
+
+    it('every entry has a non-empty word and suggestion', () => {
+      for (const entry of nominalizations) {
+        expect(entry.word.length).toBeGreaterThan(0);
+        expect(entry.suggestion.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('all words are lowercase', () => {
+      for (const entry of nominalizations) {
+        expect(entry.word).toBe(entry.word.toLowerCase());
+      }
+    });
+  });
+
+  describe('hedgingPhrases', () => {
+    it('has no duplicates (case-insensitive)', () => {
+      const lower = hedgingPhrases.map(p => p.toLowerCase());
+      expect(new Set(lower).size).toBe(lower.length);
+    });
+
+    it('every entry is a non-empty string', () => {
+      for (const phrase of hedgingPhrases) {
+        expect(typeof phrase).toBe('string');
+        expect(phrase.length).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  describe('fillerAdverbs', () => {
+    it('has no duplicates', () => {
+      const unique = new Set(fillerAdverbs);
+      expect(unique.size).toBe(fillerAdverbs.length);
+    });
+
+    it('all entries are lowercase', () => {
+      for (const adverb of fillerAdverbs) {
+        expect(adverb).toBe(adverb.toLowerCase());
+      }
+    });
+
+    it('does not overlap with allWeaselWords', () => {
+      const weaselSet = new Set(allWeaselWords.map(w => w.toLowerCase()));
+      const overlap = fillerAdverbs.filter(a => weaselSet.has(a.toLowerCase()));
+      expect(overlap).toEqual([]);
+    });
+  });
+
+  describe('cross-list integrity', () => {
+    it('weaselWords entries are all lowercase (except multi-word phrases)', () => {
+      for (const word of allWeaselWords) {
+        expect(word).toBe(word.toLowerCase());
+      }
+    });
+
+    it('irregularVerbs entries are all lowercase', () => {
+      for (const verb of irregularVerbs) {
+        expect(verb).toBe(verb.toLowerCase());
+      }
     });
   });
 });

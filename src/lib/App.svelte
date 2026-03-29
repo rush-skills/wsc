@@ -3,11 +3,10 @@
   import { slide } from "svelte/transition";
   import { browser } from "$app/environment";
   import {
-    detectWeaselWords,
-    detectPassiveVoice,
-    detectDuplicateWords,
+    analyzeText,
     removeDuplicateWord,
   } from "../core";
+  import type { AnalysisResult } from "../core";
   import "../styles/main.scss";
 
   let editor: HTMLTextAreaElement;
@@ -17,7 +16,7 @@
   let currentTheme: "light" | "dark" = "light";
   let mounted = false;
   let showAbout = false; // State for the expandable section
-  let activeTab: 'api' | 'mcp-remote' | 'mcp-local' = 'api';
+  let activeTab: 'api' | 'mcp-remote' | 'mcp-local' | 'cli' = 'api';
   let copiedId: string | null = null;
 
   function copyToClipboard(text: string) {
@@ -26,12 +25,16 @@
     setTimeout(() => { copiedId = null; }, 2000);
   }
   let editorContent = `Type or paste your text here.
-This editor will highlight weasel words, passive voice, and duplicate words.
+This editor will highlight weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs.
 
 For example:
 - Weasel words: Using very and extremely is not good for technical writing.
 - Passive voice: The code was written by the team.
-- Duplicate words: Sometimes the the brain will miss duplicated words.`;
+- Duplicate words: Sometimes the the brain will miss duplicated words.
+- Long sentences: This is a very long sentence that keeps going and going with more and more words added to it so that the sentence detector will flag it because it has many more words than the default threshold of thirty.
+- Nominalizations: The implementation of the optimization led to improvement.
+- Hedging: I think it seems like this could be better.
+- Filler adverbs: The system is totally and utterly broken.`;
 
   // Font measurements
   let charWidth = 7.8; // Will be measured precisely
@@ -41,14 +44,20 @@ For example:
   let weaselCount = 0;
   let passiveCount = 0;
   let duplicateCount = 0;
+  let longSentenceCount = 0;
+  let nominalizationCount = 0;
+  let hedgingCount = 0;
+  let adverbCount = 0;
   let totalIssues = 0;
 
   // Issue detection results
   let weaselWords: Array<{ word: string; index: number; length: number }> = [];
-  let passiveVoices: Array<{ phrase: string; index: number; length: number }> =
-    [];
-  let duplicateWords: Array<{ word: string; index: number; length: number }> =
-    [];
+  let passiveVoices: Array<{ phrase: string; index: number; length: number }> = [];
+  let duplicateWords: Array<{ word: string; index: number; length: number }> = [];
+  let longSentences: Array<{ sentence: string; wordCount: number; index: number; length: number }> = [];
+  let nominalizationResults: Array<{ word: string; suggestion: string; index: number; length: number }> = [];
+  let hedgingResults: Array<{ phrase: string; index: number; length: number }> = [];
+  let adverbResults: Array<{ word: string; index: number; length: number }> = [];
 
   // Position information
   let linePositions: number[] = [];
@@ -98,16 +107,25 @@ For example:
     // Calculate line positions for faster lookup
     calculateLinePositions(text);
 
-    // Detect issues
-    weaselWords = detectWeaselWords(text);
-    passiveVoices = detectPassiveVoice(text);
-    duplicateWords = detectDuplicateWords(text);
+    // Run unified analysis
+    const result = analyzeText(text);
+    weaselWords = result.issues.weaselWords;
+    passiveVoices = result.issues.passiveVoice;
+    duplicateWords = result.issues.duplicateWords;
+    longSentences = result.issues.longSentences;
+    nominalizationResults = result.issues.nominalizations;
+    hedgingResults = result.issues.hedging;
+    adverbResults = result.issues.adverbs;
 
     // Update counts
     weaselCount = weaselWords.length;
     passiveCount = passiveVoices.length;
     duplicateCount = duplicateWords.length;
-    totalIssues = weaselCount + passiveCount + duplicateCount;
+    longSentenceCount = longSentences.length;
+    nominalizationCount = nominalizationResults.length;
+    hedgingCount = hedgingResults.length;
+    adverbCount = adverbResults.length;
+    totalIssues = result.summary.total;
 
     // Update line numbers and highlighting
     updateLineNumbers();
@@ -204,12 +222,12 @@ For example:
 
     // Add highlights to the wrapper
     addHighlightsToWrapper(weaselWords, "weasel-highlight", highlightsWrapper);
-    addHighlightsToWrapper(
-      passiveVoices,
-      "passive-highlight",
-      highlightsWrapper
-    );
+    addHighlightsToWrapper(passiveVoices, "passive-highlight", highlightsWrapper);
     addHighlightsDuplicateToWrapper(duplicateWords, highlightsWrapper);
+    addHighlightsToWrapper(longSentences, "long-sentence-highlight", highlightsWrapper);
+    addHighlightsToWrapper(nominalizationResults, "nominalization-highlight", highlightsWrapper);
+    addHighlightsToWrapper(hedgingResults, "hedging-highlight", highlightsWrapper);
+    addHighlightsToWrapper(adverbResults, "adverb-highlight", highlightsWrapper);
 
     // Initialize the scroll position
     handleScroll();
@@ -593,6 +611,26 @@ For example:
           <span class="stat-label">Duplicate Words:</span>
           <span class="stat-value">{duplicateCount}</span>
         </div>
+        <div class="stat-item" class:has-issues={longSentenceCount > 0}>
+          <div class="stat-icon long-sentence-icon">S</div>
+          <span class="stat-label">Long Sentences:</span>
+          <span class="stat-value">{longSentenceCount}</span>
+        </div>
+        <div class="stat-item" class:has-issues={nominalizationCount > 0}>
+          <div class="stat-icon nominalization-icon">N</div>
+          <span class="stat-label">Nominalizations:</span>
+          <span class="stat-value">{nominalizationCount}</span>
+        </div>
+        <div class="stat-item" class:has-issues={hedgingCount > 0}>
+          <div class="stat-icon hedging-icon">H</div>
+          <span class="stat-label">Hedging:</span>
+          <span class="stat-value">{hedgingCount}</span>
+        </div>
+        <div class="stat-item" class:has-issues={adverbCount > 0}>
+          <div class="stat-icon adverb-icon">A</div>
+          <span class="stat-label">Filler Adverbs:</span>
+          <span class="stat-value">{adverbCount}</span>
+        </div>
       </div>
     </div>
 
@@ -653,45 +691,120 @@ For example:
       </div>
     {/if}
 
+    {#if longSentenceCount > 0}
+      <div class="issue-section">
+        <h3>Long Sentences</h3>
+        <div class="issue-list">
+          {#each longSentences as { sentence, wordCount, index }}
+            <div class="issue-item">
+              <span class="long-sentence-example">{sentence}</span>
+              <span class="word-count-badge">{wordCount} words</span>
+              <span class="position-indicator">{formatPosition(index)}</span>
+              <button class="goto-button" on:click={() => goToPosition(index)}>
+                Go to
+              </button>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
+    {#if nominalizationCount > 0}
+      <div class="issue-section">
+        <h3>Nominalizations</h3>
+        <div class="issue-list">
+          {#each nominalizationResults as { word, suggestion, index }}
+            <div class="issue-item">
+              <span class="nominalization-example">{word}</span>
+              <span class="suggestion-badge">try: {suggestion}</span>
+              <span class="position-indicator">{formatPosition(index)}</span>
+              <button class="goto-button" on:click={() => goToPosition(index)}>
+                Go to
+              </button>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
+    {#if hedgingCount > 0}
+      <div class="issue-section">
+        <h3>Hedging Language</h3>
+        <div class="issue-list">
+          {#each hedgingResults as { phrase, index }}
+            <div class="issue-item">
+              <span class="hedging-example">{phrase}</span>
+              <span class="position-indicator">{formatPosition(index)}</span>
+              <button class="goto-button" on:click={() => goToPosition(index)}>
+                Go to
+              </button>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
+    {#if adverbCount > 0}
+      <div class="issue-section">
+        <h3>Filler Adverbs</h3>
+        <div class="issue-list">
+          {#each adverbResults as { word, index }}
+            <div class="issue-item">
+              <span class="adverb-example">{word}</span>
+              <span class="position-indicator">{formatPosition(index)}</span>
+              <button class="goto-button" on:click={() => goToPosition(index)}>
+                Go to
+              </button>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
     <div class="legend">
       <h3>How to use this tool:</h3>
       <p>
-        This tool highlights three common writing issues that can weaken your
-        writing:
+        This tool highlights common writing issues that can weaken your writing:
       </p>
       <div class="legend-items">
         <div class="legend-item">
           <span class="weasel-word-example">Weasel Words</span>
-          <p>
-            Words that sound good without conveying information (very,
-            extremely, various, etc.)
-          </p>
+          <p>Words that sound good without conveying information (very, extremely, various, etc.)</p>
         </div>
         <div class="legend-item">
           <span class="passive-voice-example">Passive Voice</span>
-          <p>
-            Constructions where the subject receives the action rather than
-            performing it
-          </p>
+          <p>Constructions where the subject receives the action rather than performing it</p>
         </div>
         <div class="legend-item">
           <span class="duplicate-word-example">Duplicate Words</span>
-          <p>
-            Repeated adjacent words (click on highlighted duplicates to remove
-            them)
-          </p>
+          <p>Repeated adjacent words (click on highlighted duplicates to remove them)</p>
+        </div>
+        <div class="legend-item">
+          <span class="long-sentence-example">Long Sentences</span>
+          <p>Sentences exceeding 30 words that may be hard to follow</p>
+        </div>
+        <div class="legend-item">
+          <span class="nominalization-example">Nominalizations</span>
+          <p>Nouns that could be replaced with stronger verbs (utilization &rarr; use)</p>
+        </div>
+        <div class="legend-item">
+          <span class="hedging-example">Hedging Language</span>
+          <p>Phrases that weaken assertions (I think, it seems, etc.)</p>
+        </div>
+        <div class="legend-item">
+          <span class="adverb-example">Filler Adverbs</span>
+          <p>Adverbs that add emphasis without substance (totally, utterly, etc.)</p>
         </div>
       </div>
       <p class="legend-note">
-        Note: The goal is not to eliminate all highlighted issues, but to make
-        conscious choices about their use.
+        Note: The goal is not to eliminate all highlighted issues, but to make conscious choices about their use.
       </p>
     </div>
 
     <div class="integration-section">
-      <h2>API & MCP Integration</h2>
+      <h2>API, MCP & CLI Integration</h2>
       <p class="integration-intro">
-        Use the Writing Style Checker programmatically via the HTTP API, or connect it to AI assistants like Claude via the MCP server.
+        Use the Writing Style Checker programmatically via the HTTP API, connect it to AI assistants via MCP, or check files from the command line.
       </p>
 
       <div class="integration-tabs">
@@ -715,6 +828,13 @@ For example:
           on:click={() => (activeTab = 'mcp-local')}
         >
           MCP Server (Local)
+        </button>
+        <button
+          class="integration-tab"
+          class:active={activeTab === 'cli'}
+          on:click={() => (activeTab = 'cli')}
+        >
+          CLI
         </button>
       </div>
 
@@ -742,18 +862,26 @@ For example:
               <div class="code-block-header"><span>Response</span></div>
               <pre><code>{`{
   "summary": {
-    "total": 2,
-    "weaselWords": 1,
-    "passiveVoice": 1,
-    "duplicateWords": 0
+    "total": 2, "weaselWords": 1, "passiveVoice": 1,
+    "duplicateWords": 0, "longSentences": 0,
+    "nominalizations": 0, "hedging": 0, "adverbs": 0
   },
   "issues": {
-    "weaselWords": [{ "word": "very", "index": 21, "line": 1, "column": 22, ... }],
-    "passiveVoice": [{ "phrase": "was written", "index": 9, "line": 1, "column": 10, ... }],
-    "duplicateWords": []
+    "weaselWords": [{ "word": "very", "index": 21, "line": 1, ... }],
+    "passiveVoice": [{ "phrase": "was written", "index": 9, ... }],
+    "duplicateWords": [], "longSentences": [],
+    "nominalizations": [], "hedging": [], "adverbs": []
   },
   "meta": { "characterCount": 34, "wordCount": 6, "processingTimeMs": 2 }
 }`}</code></pre>
+            </div>
+
+            <p>Pass an optional <code>config</code> object to customize detectors:</p>
+            <div class="code-block">
+              <div class="code-block-header"><span>With Config</span></div>
+              <pre><code>{`curl -X POST https://wsc.theserverless.dev/api/check \\
+  -H "Content-Type: application/json" \\
+  -d '{"text":"...", "config":{"detectors":{"adverbs":{"enabled":false}}}}'`}</code></pre>
             </div>
 
             <div class="integration-details">
@@ -780,7 +908,7 @@ For example:
             <div class="tools-grid">
               <div class="tool-card">
                 <div class="tool-name">check_text</div>
-                <div class="tool-desc">Analyze text for weasel words, passive voice, and duplicate words</div>
+                <div class="tool-desc">Analyze text for all 7 writing style issues. Accepts optional config.</div>
               </div>
               <div class="tool-card">
                 <div class="tool-name">fix_duplicates</div>
@@ -789,6 +917,10 @@ For example:
               <div class="tool-card">
                 <div class="tool-name">list_weasel_words</div>
                 <div class="tool-desc">Return the complete list of flagged weasel words</div>
+              </div>
+              <div class="tool-card">
+                <div class="tool-name">list_word_lists</div>
+                <div class="tool-desc">Return info about all detector word/phrase lists</div>
               </div>
             </div>
 
@@ -838,14 +970,18 @@ For example:
             <h3>Local MCP Server (stdio)</h3>
             <p>
               Run the MCP server locally for use with Claude Desktop, Claude Code, or other MCP clients.
-              The local server includes an additional <strong>check_file</strong> tool for analyzing files directly from disk.
+              The local server includes <strong>check_file</strong> for analyzing files from disk with auto-discovery of <code>.wscrc.json</code> config.
             </p>
 
             <h4>Available Tools</h4>
             <div class="tools-grid">
               <div class="tool-card">
                 <div class="tool-name">check_text</div>
-                <div class="tool-desc">Analyze text for writing style issues</div>
+                <div class="tool-desc">Analyze text for all 7 issues. Accepts optional config.</div>
+              </div>
+              <div class="tool-card">
+                <div class="tool-name">check_file</div>
+                <div class="tool-desc">Read a file and analyze it. Auto-discovers .wscrc.json.</div>
               </div>
               <div class="tool-card">
                 <div class="tool-name">fix_duplicates</div>
@@ -854,10 +990,6 @@ For example:
               <div class="tool-card">
                 <div class="tool-name">list_weasel_words</div>
                 <div class="tool-desc">List all flagged weasel words</div>
-              </div>
-              <div class="tool-card">
-                <div class="tool-name">check_file</div>
-                <div class="tool-desc">Read and analyze a file from disk (.txt, .md, etc.)</div>
               </div>
             </div>
 
@@ -901,6 +1033,60 @@ node dist/mcp-server/index.js`)}>
 npm install
 npm run build
 node dist/mcp-server/index.js</code></pre>
+            </div>
+          </div>
+        {:else if activeTab === 'cli'}
+          <div class="integration-panel">
+            <h3>Command-Line Tool</h3>
+            <p>
+              Check files for writing style issues from the terminal. Supports glob patterns, JSON output, and GitHub Actions annotations.
+            </p>
+
+            <h4>Quick Start</h4>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span>Shell</span>
+                <button class="copy-button" on:click={() => copyToClipboard(`npx wsc-cli check "**/*.md"`)}>
+                  {copiedId === 'cli-check' ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              <pre><code>npx wsc-cli check "**/*.md"</code></pre>
+            </div>
+
+            <h4>Commands</h4>
+            <div class="tools-grid">
+              <div class="tool-card">
+                <div class="tool-name">wsc check &lt;files&gt;</div>
+                <div class="tool-desc">Check files for writing issues. Supports --format, --config, --stdin.</div>
+              </div>
+              <div class="tool-card">
+                <div class="tool-name">wsc list [detector]</div>
+                <div class="tool-desc">List word/phrase lists for a detector</div>
+              </div>
+              <div class="tool-card">
+                <div class="tool-name">wsc init</div>
+                <div class="tool-desc">Create a .wscrc.json config file</div>
+              </div>
+            </div>
+
+            <h4>Output Formats</h4>
+            <div class="code-block">
+              <div class="code-block-header"><span>Text (default)</span></div>
+              <pre><code>README.md:3:15  weasel-word  "very"
+README.md:5:1   passive-voice  "was written"
+Found 2 issues in 1 file.</code></pre>
+            </div>
+
+            <div class="integration-details">
+              <div class="detail-item">
+                <strong>--format json</strong> Structured JSON output
+              </div>
+              <div class="detail-item">
+                <strong>--format github</strong> ::warning annotations for CI
+              </div>
+              <div class="detail-item">
+                <strong>--stdin</strong> Read from stdin
+              </div>
             </div>
           </div>
         {/if}

@@ -1,0 +1,58 @@
+name: 'Writing Style Checker'
+description: 'Check your writing for weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs'
+inputs:
+  files:
+    description: 'Glob pattern for files to check'
+    required: false
+    default: '**/*.md'
+  config:
+    description: 'Path to .wscrc.json config file'
+    required: false
+  max-warnings:
+    description: 'Maximum number of warnings before failing (default: unlimited)'
+    required: false
+    default: '-1'
+  only-changed:
+    description: 'Only check files changed in this PR'
+    required: false
+    default: 'false'
+outputs:
+  total-issues:
+    description: 'Total number of issues found'
+    value: ${{ steps.check.outputs.total-issues }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install wsc-cli
+      shell: bash
+      run: |
+        cd ${{ github.action_path }}/..
+        npm ci
+        cd cli && npm ci && npm run build
+
+    - name: Get changed files (PR only)
+      id: changed
+      if: inputs.only-changed == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      run: |
+        FILES=$(gh pr diff ${{ github.event.pull_request.number }} --name-only | grep -E '\.(md|txt|rst)$' | tr '\n' ' ')
+        echo "files=$FILES" >> $GITHUB_OUTPUT
+
+    - name: Run wsc check
+      id: check
+      shell: bash
+      run: |
+        FILES="${{ steps.changed.outputs.files || inputs.files }}"
+        ARGS="check $FILES --format github"
+        if [ -n "${{ inputs.config }}" ]; then
+          ARGS="$ARGS --config ${{ inputs.config }}"
+        fi
+        if [ "${{ inputs.max-warnings }}" != "-1" ]; then
+          ARGS="$ARGS --max-warnings ${{ inputs.max-warnings }}"
+        fi
+        node ${{ github.action_path }}/../cli/dist/cli/index.js $ARGS || true

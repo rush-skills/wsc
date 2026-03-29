@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/wsc-mcp)](https://www.npmjs.com/package/wsc-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A tool that detects common writing issues: **weasel words**, **passive voice**, and **duplicate words**. Available as an interactive web editor, an HTTP API, and an MCP server for AI assistants.
+A tool that detects common writing issues: **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, and **filler adverbs**. Available as a web editor, HTTP API, MCP server, CLI tool, and GitHub Action.
 
 **[Live: wsc.theserverless.dev](https://wsc.theserverless.dev)**
 
@@ -12,10 +12,52 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 
 ## Features
 
-- **Web Editor** - Real-time highlighting with inline fix buttons
-- **HTTP API** - POST text, get structured JSON results with positions and context
+- **Web Editor** - Real-time highlighting with inline fix buttons for all 7 detectors
+- **HTTP API** - POST text with optional config, get structured JSON results
 - **MCP Server (Remote)** - Connect AI assistants via Streamable HTTP transport
 - **MCP Server (Local)** - Stdio-based server via [`wsc-mcp`](https://www.npmjs.com/package/wsc-mcp) on npm
+- **CLI** - Check files from the command line via `wsc-cli`
+- **GitHub Action** - Run checks in CI with `::warning` annotations
+- **Configurable** - Customize detectors with `.wscrc.json` files
+
+---
+
+## Detection Rules
+
+| Detector | Items | Description |
+|----------|-------|-------------|
+| **Weasel Words** | 95 words/phrases | Vague terms like "very", "basically", "arguably", "numerous" |
+| **Passive Voice** | 262 irregular verbs | Auxiliary verbs + past participles (regular `-ed` + irregular) |
+| **Duplicate Words** | — | Adjacent repeated words across whitespace, case-insensitive |
+| **Long Sentences** | threshold: 30 words | Sentences exceeding a configurable word count |
+| **Nominalizations** | 230 word pairs | Nouns replaceable with verbs ("utilization" → "use") |
+| **Hedging** | 100 phrases | Phrases that weaken assertions ("I think", "it seems") |
+| **Filler Adverbs** | 140 words | Adverbs adding emphasis without substance ("totally", "utterly") |
+
+Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/), expanded significantly.
+
+---
+
+## Configuration
+
+Create a `.wscrc.json` to customize detectors. All tools (API, MCP, CLI) support it.
+
+```json
+{
+  "$schema": "https://wsc.theserverless.dev/schema.json",
+  "detectors": {
+    "weaselWords": {
+      "enabled": true,
+      "add": ["synergy", "leverage"],
+      "remove": ["very"]
+    },
+    "longSentences": { "maxWords": 25 },
+    "adverbs": { "enabled": false }
+  }
+}
+```
+
+Every field is optional. Missing fields use defaults. JSON Schema provides autocompletion in VS Code.
 
 ---
 
@@ -23,7 +65,7 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 
 ### `POST /api/check`
 
-Analyze text for writing style issues.
+Analyze text for writing style issues. Accepts optional `config` object.
 
 ```bash
 curl -X POST https://wsc.theserverless.dev/api/check \
@@ -39,42 +81,46 @@ curl -X POST https://wsc.theserverless.dev/api/check \
     "total": 2,
     "weaselWords": 1,
     "passiveVoice": 1,
-    "duplicateWords": 0
+    "duplicateWords": 0,
+    "longSentences": 0,
+    "nominalizations": 0,
+    "hedging": 0,
+    "adverbs": 0
   },
   "issues": {
-    "weaselWords": [
-      {
-        "word": "very",
-        "index": 21,
-        "length": 4,
-        "line": 1,
-        "column": 22,
-        "context": "...he code was written very quickly."
-      }
-    ],
-    "passiveVoice": [
-      {
-        "phrase": "was written",
-        "index": 9,
-        "length": 11,
-        "line": 1,
-        "column": 10,
-        "context": "The code was written very quickly."
-      }
-    ],
-    "duplicateWords": []
+    "weaselWords": [{ "word": "very", "index": 21, "line": 1, "column": 22, "context": "..." }],
+    "passiveVoice": [{ "phrase": "was written", "index": 9, "line": 1, "column": 10, "context": "..." }],
+    "duplicateWords": [],
+    "longSentences": [],
+    "nominalizations": [],
+    "hedging": [],
+    "adverbs": []
   },
-  "meta": {
-    "characterCount": 34,
-    "wordCount": 6,
-    "processingTimeMs": 2
-  }
+  "meta": { "characterCount": 34, "wordCount": 6, "sentenceCount": 1, "processingTimeMs": 2 }
 }
 ```
 
-**Limits:** Max 100,000 characters per request. CORS enabled for all origins.
+**With config:**
 
-**Errors:** `400` for missing/invalid text or exceeding limits.
+```bash
+curl -X POST https://wsc.theserverless.dev/api/check \
+  -H "Content-Type: application/json" \
+  -d '{"text":"The code was written very quickly.", "config":{"detectors":{"weaselWords":{"enabled":false}}}}'
+```
+
+### `GET /api/check`
+
+Returns API documentation as JSON.
+
+### `GET /api/detectors`
+
+Returns the list of all 7 detectors with descriptions, configurability, and word counts.
+
+### `GET /health`
+
+Runs a smoke test with known text and returns `{"status":"healthy"}` or `503`.
+
+**Limits:** Max 100,000 characters per request. CORS enabled for all origins.
 
 ---
 
@@ -86,16 +132,15 @@ The Writing Style Checker is available as an [MCP](https://modelcontextprotocol.
 
 | Tool | Description |
 |------|-------------|
-| `check_text` | Analyze text for weasel words, passive voice, and duplicate words |
+| `check_text` | Analyze text for all 7 writing style issues. Accepts optional `config`. |
 | `fix_duplicates` | Remove duplicate adjacent words and return cleaned text |
 | `list_weasel_words` | Return the complete list of weasel words the checker flags |
-| `check_file` | *(Local only)* Read a file from disk and analyze it |
+| `list_word_lists` | Return info about all detector word lists |
+| `check_file` | *(Local only)* Read a file from disk and analyze it. Auto-discovers `.wscrc.json`. |
 
 ### Remote MCP Server
 
 Connect any MCP client to the hosted server - no installation required.
-
-**Claude Desktop / Claude Code config:**
 
 ```json
 {
@@ -108,34 +153,15 @@ Connect any MCP client to the hosted server - no installation required.
 }
 ```
 
-**Test with curl:**
-
-```bash
-# Initialize
-curl -X POST https://wsc.theserverless.dev/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}'
-
-# List tools
-curl -X POST https://wsc.theserverless.dev/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
-
-# Check text
-curl -X POST https://wsc.theserverless.dev/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"check_text","arguments":{"text":"The the code was written very quickly."}}}'
-```
-
 ### Local MCP Server (stdio)
 
-Install via npm for local usage with Claude Desktop, Claude Code, or other MCP clients. Includes the `check_file` tool for analyzing files on disk.
+Install via npm for local usage. Includes `check_file` for analyzing files on disk with auto-discovery of `.wscrc.json`.
 
 ```bash
 npx wsc-mcp
 ```
 
-**Claude Desktop config:**
+**Claude Desktop / Claude Code config:**
 
 ```json
 {
@@ -152,6 +178,42 @@ See the [`wsc-mcp` npm page](https://www.npmjs.com/package/wsc-mcp) for full doc
 
 ---
 
+## CLI
+
+Check files from the command line.
+
+```bash
+# Check all markdown files
+npx wsc-cli check "**/*.md"
+
+# Read from stdin
+echo "The code was written very quickly." | npx wsc-cli check --stdin
+
+# JSON output for scripting
+npx wsc-cli check "**/*.md" --format json
+
+# GitHub Actions annotations
+npx wsc-cli check "**/*.md" --format github
+
+# Create a config file
+npx wsc-cli init
+```
+
+See the [`wsc-cli` README](cli/README.md) for full documentation.
+
+---
+
+## GitHub Action
+
+```yaml
+- uses: theserverlessdev/wsc-action@v1
+  with:
+    files: '**/*.md'
+    max-warnings: 20
+```
+
+---
+
 ## Privacy
 
 The web editor runs **entirely in your browser** - text is never sent to any server. The API and MCP endpoints only process text you explicitly send to them.
@@ -164,42 +226,31 @@ The web editor runs **entirely in your browser** - text is never sent to any ser
 .
 ├── src/
 │   ├── core/                    # Shared detection engine
-│   │   ├── detector.ts          # Detection algorithms
-│   │   ├── words.ts             # Word lists (weasel words, irregular verbs)
+│   │   ├── detector.ts          # 7 detection algorithms
+│   │   ├── words.ts             # Word/phrase lists (800+ entries)
+│   │   ├── config.ts            # Config types, merging, validation
+│   │   ├── config-node.ts       # Node-only: file loading, discovery
+│   │   ├── analyzer.ts          # Unified analyzeText() entry point
 │   │   └── index.ts             # Public API exports
 │   ├── mcp/
 │   │   └── handler.ts           # MCP JSON-RPC 2.0 handler
 │   ├── lib/
 │   │   └── App.svelte           # Main application component
 │   ├── routes/
-│   │   ├── +layout.server.js    # SSR configuration
-│   │   ├── +page.server.js      # Page prerender config
-│   │   ├── +page.svelte         # Main page
-│   │   ├── api/check/
-│   │   │   └── +server.ts       # HTTP API endpoint
-│   │   └── mcp/
-│   │       └── +server.ts       # MCP endpoint
+│   │   ├── api/check/+server.ts # HTTP API endpoint
+│   │   ├── mcp/+server.ts       # MCP endpoint
+│   │   └── health/+server.ts    # Health check endpoint
 │   └── styles/
-│       └── main.scss            # Global styles
+│       └── main.scss            # Global styles (light + dark themes)
 ├── mcp-server/                  # Standalone stdio MCP server (npm: wsc-mcp)
-│   ├── server.ts                # Server logic and tools
-│   ├── index.ts                 # Entry point
-│   └── package.json
-├── tests/                       # 159 tests, 100% coverage
-├── static/                      # Images, favicon, SEO files
+├── cli/                         # CLI tool (npm: wsc-cli)
+├── action/                      # GitHub Action (composite)
+├── tests/                       # 341 tests across 18 files
+├── static/
+│   └── schema.json              # JSON Schema for .wscrc.json
 ├── wrangler.toml                # Cloudflare Workers config
 └── svelte.config.js             # SvelteKit configuration
 ```
-
----
-
-## Detection Logic
-
-1. **Weasel Words** - Matches against a curated list of 54 vague terms using word-boundary regex
-2. **Passive Voice** - Detects auxiliary verbs followed by past participles (regular `-ed` forms + 176 irregular verbs)
-3. **Duplicate Words** - Finds adjacent repeated words across whitespace, case-insensitive
-
-Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/), expanded with additional terms.
 
 ---
 
@@ -212,7 +263,7 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:5173`. The API is available at `/api/check` and MCP at `/mcp`.
+Visit `http://localhost:5173`. The API is at `/api/check`, MCP at `/mcp`, health at `/health`.
 
 ### Commands
 
@@ -221,7 +272,7 @@ Visit `http://localhost:5173`. The API is available at `/api/check` and MCP at `
 | `npm run dev` | Start dev server |
 | `npm run build` | Build for production |
 | `npm run check` | Type check with svelte-check |
-| `npm test` | Run all 159 tests |
+| `npm test` | Run all 341 tests |
 | `npm run test:coverage` | Coverage report |
 
 ## Deployment

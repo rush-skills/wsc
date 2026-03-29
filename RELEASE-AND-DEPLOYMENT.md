@@ -8,6 +8,7 @@ This document covers how to deploy the Writing Style Checker to Cloudflare Worke
 
 - [Cloudflare Workers Deployment](#cloudflare-workers-deployment)
 - [npm Package Publishing (wsc-mcp)](#npm-package-publishing-wsc-mcp)
+- [npm Package Publishing (wsc-cli)](#npm-package-publishing-wsc-cli)
 - [DNS Setup](#dns-setup)
 - [Rollback](#rollback)
 
@@ -110,7 +111,7 @@ curl -s -X POST https://wsc.theserverless.dev/api/check \
 curl -s -X POST https://wsc.theserverless.dev/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Tools: {len(d[\"result\"][\"tools\"])}')"
-# Expected: Tools: 3
+# Expected: Tools: 4
 ```
 
 ---
@@ -248,6 +249,45 @@ Users can now install via:
 
 ---
 
+## npm Package Publishing (wsc-cli)
+
+The CLI tool lives in `cli/` and is published to npm as `wsc-cli`.
+
+### Pre-Publish Checklist
+
+```bash
+cd cli
+
+# 1. Install dependencies
+npm install
+
+# 2. Build
+npm run build
+
+# 3. Verify the build output exists
+ls dist/cli/index.js
+
+# 4. Smoke test
+echo "The code was written very quickly." | node dist/cli/index.js check --stdin
+```
+
+### Publish
+
+```bash
+cd cli
+npm version patch   # or minor/major
+npm publish
+```
+
+### Verify
+
+```bash
+npx wsc-cli --help
+echo "very good" | npx wsc-cli check --stdin
+```
+
+---
+
 ## DNS Setup
 
 To set up `wsc.theserverless.dev` (or your own domain):
@@ -314,7 +354,7 @@ npm publish
 
 ## Release Workflow Summary
 
-A typical release that includes both the web app and the npm package:
+A typical release that includes the web app and npm packages:
 
 ```bash
 # 1. Run all checks
@@ -324,26 +364,25 @@ npm run check
 # 2. Build everything
 npm run build
 cd mcp-server && npm run build && cd ..
+cd cli && npm run build && cd ..
 
 # 3. Deploy web app to Cloudflare
 npx wrangler deploy --env production
 
 # 4. Verify deployment
-curl -s https://wsc.theserverless.dev/api/check \
-  -H "Content-Type: application/json" \
-  -d '{"text":"very good"}' | python3 -m json.tool
+curl -s https://wsc.theserverless.dev/health | python3 -m json.tool
 
-# 5. Bump MCP server version and publish
-cd mcp-server
-npm version patch
-npm publish
-cd ..
+# 5. Bump and publish MCP server
+cd mcp-server && npm version patch && npm publish && cd ..
 
-# 6. Commit version bump
-git add mcp-server/package.json mcp-server/package-lock.json
-git commit -m "release: wsc-mcp v$(node -p "require('./mcp-server/package.json').version")"
+# 6. Bump and publish CLI
+cd cli && npm version patch && npm publish && cd ..
 
-# 7. Tag the release
-git tag v$(node -p "require('./mcp-server/package.json').version")
+# 7. Commit version bumps
+git add mcp-server/package.json mcp-server/package-lock.json cli/package.json cli/package-lock.json
+git commit -m "release: wsc-mcp + wsc-cli"
+
+# 8. Tag and push
+git tag v$(node -p "require('./package.json').version")
 git push && git push --tags
 ```

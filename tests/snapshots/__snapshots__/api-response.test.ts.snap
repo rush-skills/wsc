@@ -1,0 +1,77 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`API response snapshots > clean text response structure 1`] = `
+{
+  "issues": {
+    "adverbs": [],
+    "duplicateWords": [],
+    "hedging": [],
+    "longSentences": [],
+    "nominalizations": [],
+    "passiveVoice": [],
+    "weaselWords": [],
+  },
+  "meta": {
+    "characterCount": 25,
+    "sentenceCount": 1,
+    "wordCount": 5,
+  },
+  "summary": {
+    "adverbs": 0,
+    "duplicateWords": 0,
+    "hedging": 0,
+    "longSentences": 0,
+    "nominalizations": 0,
+    "passiveVoice": 0,
+    "total": 0,
+    "weaselWords": 0,
+  },
+}
+`;
+
+exports[`API response snapshots > text with weasel word and passive voice 1`] = `
+{
+  "issues": {
+    "adverbs": [],
+    "duplicateWords": [],
+    "hedging": [],
+    "longSentences": [],
+    "nominalizations": [],
+    "passiveVoice": [
+      {
+        "column": 10,
+        "context": "The code was written very fast.",
+        "index": 9,
+        "length": 11,
+        "line": 1,
+        "phrase": "was written",
+      },
+    ],
+    "weaselWords": [
+      {
+        "column": 22,
+        "context": "...he code was written very fast.",
+        "index": 21,
+        "length": 4,
+        "line": 1,
+        "word": "very",
+      },
+    ],
+  },
+  "meta": {
+    "characterCount": 31,
+    "sentenceCount": 1,
+    "wordCount": 6,
+  },
+  "summary": {
+    "adverbs": 0,
+    "duplicateWords": 0,
+    "hedging": 0,
+    "longSentences": 0,
+    "nominalizations": 0,
+    "passiveVoice": 1,
+    "total": 2,
+    "weaselWords": 1,
+  },
+}
+`;

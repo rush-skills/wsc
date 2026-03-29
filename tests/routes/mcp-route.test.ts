@@ -50,7 +50,7 @@ describe('POST /mcp', () => {
     });
     const response = await POST({ request } as any);
     const data = await response.json();
-    expect(data.result.tools).toHaveLength(3);
+    expect(data.result.tools).toHaveLength(4);
   });
 
   it('handles tools/call check_text', async () => {
@@ -144,7 +144,7 @@ describe('GET /mcp', () => {
     const data = await response.json();
     expect(data.name).toBe('Writing Style Checker MCP Server');
     expect(data.version).toBe('1.0.0');
-    expect(data.tools).toEqual(['check_text', 'fix_duplicates', 'list_weasel_words']);
+    expect(data.tools).toEqual(['check_text', 'fix_duplicates', 'list_weasel_words', 'list_word_lists']);
     expect(data.protocol).toContain('MCP');
   });
 

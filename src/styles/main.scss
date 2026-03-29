@@ -10,9 +10,17 @@
   --weasel-word-bg: #ffee99;
   --passive-voice-bg: #99ddff;
   --duplicate-word-bg: #ffaaaa;
+  --long-sentence-bg: #ffd699;
+  --nominalization-bg: #d4b8ff;
+  --hedging-bg: #b8e6cc;
+  --adverb-bg: #ffb8d9;
   --weasel-word-text: #664400;
   --passive-voice-text: #003366;
   --duplicate-word-text: #660000;
+  --long-sentence-text: #663300;
+  --nominalization-text: #3d0066;
+  --hedging-text: #004d26;
+  --adverb-text: #660033;
   --button-hover: #f0f0f0;
   --button-active: #e0e0e0;
   --success-color: #2ecc71;
@@ -34,9 +42,17 @@
   --weasel-word-bg: #ffee99;
   --passive-voice-bg: #99ddff;
   --duplicate-word-bg: #ffaaaa;
+  --long-sentence-bg: #ffd699;
+  --nominalization-bg: #d4b8ff;
+  --hedging-bg: #b8e6cc;
+  --adverb-bg: #ffb8d9;
   --weasel-word-text: #664400;
   --passive-voice-text: #003366;
   --duplicate-word-text: #660000;
+  --long-sentence-text: #663300;
+  --nominalization-text: #3d0066;
+  --hedging-text: #004d26;
+  --adverb-text: #660033;
   --button-hover: #f0f0f0;
   --button-active: #e0e0e0;
   --success-color: #2ecc71;
@@ -58,9 +74,17 @@
   --weasel-word-bg: #755c22;
   --passive-voice-bg: #22577a;
   --duplicate-word-bg: #7a2222;
+  --long-sentence-bg: #7a5522;
+  --nominalization-bg: #4a2277;
+  --hedging-bg: #22664a;
+  --adverb-bg: #77224a;
   --weasel-word-text: #ffee99;
   --passive-voice-text: #99ddff;
   --duplicate-word-text: #ffaaaa;
+  --long-sentence-text: #ffd699;
+  --nominalization-text: #d4b8ff;
+  --hedging-text: #b8e6cc;
+  --adverb-text: #ffb8d9;
   --button-hover: #333333;
   --button-active: #404040;
   --success-color: #27ae60;
@@ -382,6 +406,22 @@ main {
   background-color: var(--passive-voice-bg);
 }
 
+.long-sentence-highlight {
+  background-color: var(--long-sentence-bg);
+}
+
+.nominalization-highlight {
+  background-color: var(--nominalization-bg);
+}
+
+.hedging-highlight {
+  background-color: var(--hedging-bg);
+}
+
+.adverb-highlight {
+  background-color: var(--adverb-bg);
+}
+
 .duplicate-highlight-container {
   position: absolute;
   pointer-events: auto;
@@ -465,6 +505,26 @@ main {
 .duplicate-icon {
   background-color: var(--duplicate-word-bg);
   color: var(--duplicate-word-text);
+}
+
+.long-sentence-icon {
+  background-color: var(--long-sentence-bg);
+  color: var(--long-sentence-text);
+}
+
+.nominalization-icon {
+  background-color: var(--nominalization-bg);
+  color: var(--nominalization-text);
+}
+
+.hedging-icon {
+  background-color: var(--hedging-bg);
+  color: var(--hedging-text);
+}
+
+.adverb-icon {
+  background-color: var(--adverb-bg);
+  color: var(--adverb-text);
 }
 
 .stat-label {
@@ -618,6 +678,53 @@ main {
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
+}
+
+.long-sentence-example {
+  background-color: var(--long-sentence-bg);
+  color: var(--long-sentence-text);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.nominalization-example {
+  background-color: var(--nominalization-bg);
+  color: var(--nominalization-text);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.hedging-example {
+  background-color: var(--hedging-bg);
+  color: var(--hedging-text);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.adverb-example {
+  background-color: var(--adverb-bg);
+  color: var(--adverb-text);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.word-count-badge,
+.suggestion-badge {
+  font-size: 0.8rem;
+  color: var(--secondary-text);
+  background-color: var(--primary-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-style: italic;
 }
 
 footer {

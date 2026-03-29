@@ -11,14 +11,14 @@ npm install
 npm run dev
 ```
 
-The app runs at `http://localhost:5173` with the API at `/api/check` and MCP at `/mcp`.
+The app runs at `http://localhost:5173` with the API at `/api/check`, MCP at `/mcp`, and health at `/health`.
 
 ## Running Tests
 
 ```bash
-npm test              # Run all 159 tests
+npm test              # Run all 341 tests
 npm run test:watch    # Watch mode
-npm run test:coverage # Coverage report (100% statements/functions/lines)
+npm run test:coverage # Coverage report
 ```
 
 ## Type Checking
@@ -33,30 +33,57 @@ npm run check         # svelte-check — must pass with 0 errors, 0 warnings
 npm run build         # SvelteKit build for Cloudflare Workers
 ```
 
-## MCP Server (standalone)
+### MCP Server
 
 ```bash
-cd mcp-server
-npm install
-npm run build
+cd mcp-server && npm install && npm run build
 ```
+
+### CLI
+
+```bash
+cd cli && npm install && npm run build
+```
+
+## Architecture
+
+All consumers (API, MCP, CLI, frontend) call `analyzeText()` from `src/core/analyzer.ts`. This is the single entry point that runs all enabled detectors with config overrides applied.
+
+### Adding a New Detector
+
+1. **Add word list** (if applicable) to `src/core/words.ts`
+2. **Add detection function** to `src/core/detector.ts` — follow the pattern: pure function, takes `text` + optional word list, returns `Array<{ index, length, ... }>`
+3. **Add config types** to `src/core/config.ts` — add the detector to `WscConfig`, `DEFAULT_CONFIG`, `KNOWN_DETECTOR_NAMES`, and validation
+4. **Wire into analyzer** in `src/core/analyzer.ts` — add the detector call and include results in `AnalysisResult`
+5. **Export** from `src/core/index.ts`
+6. **Add tests**: `tests/core/detector-{name}.test.ts` with standard patterns (empty, clean, detected, case-insensitive, correct index/length, custom word list)
+7. **Update frontend** in `src/lib/App.svelte` — highlight class, stats icon, issue section, legend item
+8. **Update styles** in `src/styles/main.scss` — CSS variables for light + dark themes
+
+No changes needed to API, MCP, or CLI — they all go through `analyzeText()`.
+
+### Configuration System
+
+- `src/core/config.ts` — Browser-safe types, merging, validation (no Node.js imports)
+- `src/core/config-node.ts` — Node-only file loading (`loadConfigFromFile`, `findConfigFile`)
+- `.wscrc.json` — User config file; JSON Schema at `static/schema.json`
+
+All config types support `enabled` (boolean). Word-list detectors also support `add`/`remove` arrays. Long sentences supports `maxWords`.
+
+### Test Expectations
+
+- Unit tests for every detector, config function, and analyzer path
+- Integration tests for config combinations
+- Contract tests for API schema and MCP protocol compliance
+- Snapshot tests for output format stability
+- Word list integrity tests (no duplicates, no cross-list overlap, lowercase)
 
 ## What to Contribute
 
-### Word Lists
-Edit `src/core/words.ts` to add or remove:
-- Weasel words (`weaselWords` or `additionalWeaselWords` arrays)
-- Irregular past participles (`irregularVerbs` array)
-
-### New Detectors
-Add a new detection function in `src/core/detector.ts`, export it from `src/core/index.ts`, and wire it into:
-- `src/mcp/handler.ts` (remote MCP)
-- `src/routes/api/check/+server.ts` (HTTP API)
-- `mcp-server/server.ts` (local MCP)
-- `src/lib/App.svelte` (frontend highlighting)
-
-### Bug Fixes and UI Improvements
-PRs welcome for any bug fixes, accessibility improvements, or UI enhancements.
+- **Word lists**: Add to `src/core/words.ts`. Ensure no duplicates and no overlap with other lists.
+- **New detectors**: Follow the pattern above.
+- **Bug fixes and UI improvements**: PRs welcome.
+- **Documentation**: Keep README, CONTRIBUTING, TESTING updated.
 
 ## Pull Request Process
 

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { analyzeText, getLineCol, getContext, createServer } from '../../mcp-server/server';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { writeFile, unlink } from 'node:fs/promises';
+import { writeFile, unlink, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -122,6 +122,20 @@ describe('analyzeText', () => {
   it('includes line and column in output', () => {
     const result = analyzeText('Hello\nThis is very good.');
     expect(result).toContain('line 2');
+  });
+
+  it('reports new detector types (nominalizations, hedging, adverbs)', () => {
+    const output = analyzeText('The utilization was high. I think it is totally fine.');
+    expect(output).toContain('NOMINALIZATIONS');
+    expect(output).toContain('HEDGING');
+    expect(output).toContain('FILLER ADVERBS');
+  });
+
+  it('reports long sentences', () => {
+    const longText = Array(35).fill('word').join(' ') + '.';
+    const output = analyzeText(longText);
+    expect(output).toContain('LONG SENTENCES');
+    expect(output).toContain('35 words');
   });
 
   it('includes context in output', () => {
@@ -304,6 +318,94 @@ describe('createServer — MCP integration', () => {
       const text = (result.content as any)[0].text;
       expect(text).toContain('Error');
       expect(text).toContain('100000');
+    } finally {
+      await unlink(tmpFile);
+    }
+  });
+
+  it('check_text accepts config parameter', async () => {
+    const result = await client.callTool({
+      name: 'check_text',
+      arguments: {
+        text: 'This is very good.',
+        config: { detectors: { weaselWords: { enabled: false } } },
+      },
+    });
+    const text = (result.content as any)[0].text;
+    expect(text).not.toContain('WEASEL WORDS');
+  });
+
+  it('check_text returns error for invalid config', async () => {
+    const result = await client.callTool({
+      name: 'check_text',
+      arguments: {
+        text: 'This is very good.',
+        config: { unknown: true },
+      },
+    });
+    const text = (result.content as any)[0].text;
+    expect(text).toContain('Error: Invalid config');
+  });
+
+  it('check_file accepts config parameter', async () => {
+    const tmpFile = join(tmpdir(), `wsc-test-cfg-${Date.now()}.txt`);
+    await writeFile(tmpFile, 'This is very good.', 'utf-8');
+
+    try {
+      const result = await client.callTool({
+        name: 'check_file',
+        arguments: {
+          path: tmpFile,
+          config: { detectors: { weaselWords: { enabled: false } } },
+        },
+      });
+      const text = (result.content as any)[0].text;
+      expect(text).toContain(`File: ${tmpFile}`);
+      expect(text).not.toContain('WEASEL WORDS');
+    } finally {
+      await unlink(tmpFile);
+    }
+  });
+
+  it('check_file auto-discovers .wscrc.json', async () => {
+    const tmpDir = join(tmpdir(), `wsc-test-autodiscovery-${Date.now()}`);
+    const subDir = join(tmpDir, 'sub');
+    await mkdir(subDir, { recursive: true });
+
+    // Write config that disables weasel words
+    await writeFile(join(tmpDir, '.wscrc.json'), JSON.stringify({
+      detectors: { weaselWords: { enabled: false } },
+    }));
+    // Write file in subdirectory
+    await writeFile(join(subDir, 'test.txt'), 'This is very good.');
+
+    try {
+      const result = await client.callTool({
+        name: 'check_file',
+        arguments: { path: join(subDir, 'test.txt') },
+      });
+      const text = (result.content as any)[0].text;
+      // Weasel words should be disabled via auto-discovered config
+      expect(text).not.toContain('WEASEL WORDS');
+    } finally {
+      await rm(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('check_file returns error for invalid config', async () => {
+    const tmpFile = join(tmpdir(), `wsc-test-badcfg-${Date.now()}.txt`);
+    await writeFile(tmpFile, 'This is very good.', 'utf-8');
+
+    try {
+      const result = await client.callTool({
+        name: 'check_file',
+        arguments: {
+          path: tmpFile,
+          config: { unknown: true },
+        },
+      });
+      const text = (result.content as any)[0].text;
+      expect(text).toContain('Error: Invalid config');
     } finally {
       await unlink(tmpFile);
     }

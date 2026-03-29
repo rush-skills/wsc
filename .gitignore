@@ -23,6 +23,10 @@ vite.config.ts.timestamp-*
 # MCP server build output
 mcp-server/dist
 
+# CLI build output
+cli/dist
+cli/node_modules
+
 # Build artifacts in source (from mcp-server tsc)
 src/core/*.js
 src/core/*.d.ts

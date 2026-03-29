@@ -1,0 +1,52 @@
+name: Health Check
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check /health endpoint
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://wsc.theserverless.dev/health)
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Health check passed"
+
+      - name: Check /api/check with known text
+        run: |
+          RESULT=$(curl -s -X POST https://wsc.theserverless.dev/api/check \
+            -H "Content-Type: application/json" \
+            -d '{"text":"The code was written very quickly."}')
+          TOTAL=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['summary']['total'])")
+          if [ "$TOTAL" -lt "2" ]; then
+            echo "API check failed: expected at least 2 issues, got $TOTAL"
+            exit 1
+          fi
+          echo "API check passed: $TOTAL issues"
+
+      - name: Check /mcp tools/list
+        run: |
+          RESULT=$(curl -s -X POST https://wsc.theserverless.dev/mcp \
+            -H "Content-Type: application/json" \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}')
+          TOOLS=$(echo "$RESULT" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['result']['tools']))")
+          if [ "$TOOLS" -lt "3" ]; then
+            echo "MCP check failed: expected at least 3 tools, got $TOOLS"
+            exit 1
+          fi
+          echo "MCP check passed: $TOOLS tools"
+
+      - name: Check frontend loads
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://wsc.theserverless.dev)
+          if [ "$STATUS" != "200" ]; then
+            echo "Frontend check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Frontend check passed"
