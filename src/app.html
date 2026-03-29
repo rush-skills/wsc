@@ -5,47 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- Basic SEO -->
-    <title>Writing Style Checker - Improve Your Writing</title>
+    <title>Writing Style Checker - Detect Weasel Words, Passive Voice & Duplicates</title>
     <meta
       name="description"
-      content="Detect and fix weasel words, passive voice, and duplicate words to improve your writing clarity and precision."
+      content="Free online tool to detect weasel words, passive voice, and duplicate words in your writing. Available as a web editor, HTTP API, and MCP server for AI assistants."
     />
     <meta
       name="keywords"
-      content="writing, style checker, weasel words, passive voice, duplicate words, editing tool"
+      content="writing style checker, weasel words detector, passive voice detector, duplicate words, writing tool, editing tool, MCP server, writing API, text analysis"
     />
+    <meta name="author" content="Ankur Singh" />
+    <meta name="robots" content="index, follow" />
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://wsc.anks.in" />
+    <link rel="canonical" href="https://wsc.theserverless.dev" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://wsc.anks.in" />
+    <meta property="og:url" content="https://wsc.theserverless.dev" />
+    <meta property="og:site_name" content="Writing Style Checker" />
     <meta
       property="og:title"
-      content="Writing Style Checker - Improve Your Writing"
+      content="Writing Style Checker - Detect Weasel Words, Passive Voice & Duplicates"
     />
     <meta
       property="og:description"
-      content="Detect and fix weasel words, passive voice, and duplicate words to improve your writing clarity and precision."
+      content="Free online tool to detect weasel words, passive voice, and duplicate words. Also available as an HTTP API and MCP server for AI assistants."
     />
-    <meta property="og:image" content="https://wsc.anks.in/images/ss.png" />
+    <meta property="og:image" content="https://wsc.theserverless.dev/images/ss.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Writing Style Checker screenshot showing highlighted weasel words and passive voice" />
+    <meta property="og:locale" content="en_US" />
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://wsc.anks.in" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://wsc.theserverless.dev" />
     <meta
-      property="twitter:title"
-      content="Writing Style Checker - Improve Your Writing"
+      name="twitter:title"
+      content="Writing Style Checker - Detect Weasel Words, Passive Voice & Duplicates"
     />
     <meta
-      property="twitter:description"
-      content="Detect and fix weasel words, passive voice, and duplicate words to improve your writing clarity and precision."
+      name="twitter:description"
+      content="Free online tool to detect weasel words, passive voice, and duplicate words. Also available as an HTTP API and MCP server for AI assistants."
     />
     <meta
-      property="twitter:image"
-      content="https://wsc.anks.in/images/ss.png"
+      name="twitter:image"
+      content="https://wsc.theserverless.dev/images/ss.png"
     />
+    <meta name="twitter:image:alt" content="Writing Style Checker screenshot" />
 
     <!-- Favicons -->
     <link
@@ -64,10 +72,12 @@
     <meta name="apple-mobile-web-app-title" content="Writing Style Checker" />
     <link rel="manifest" href="/favicon/site.webmanifest" />
     <meta name="msapplication-TileColor" content="#3498db" />
-    <meta name="theme-color" content="#1a1a1a" />
+    <meta name="theme-color" content="#3498db" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)" />
 
     <!-- Preconnect to reduce load time -->
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
     <!-- Font -->
     <link
@@ -81,11 +91,23 @@
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "Writing Style Checker",
-        "description": "Tool to detect and fix weasel words, passive voice, and duplicate words to improve writing clarity and precision.",
-        "image": "https://wsc.anks.in/images/ss.png",
-        "url": "https://wsc.anks.in",
+        "alternateName": "WSC",
+        "description": "Free online tool to detect weasel words, passive voice, and duplicate words in your writing. Available as a web editor, HTTP API, and MCP server for AI assistants.",
+        "image": "https://wsc.theserverless.dev/images/ss.png",
+        "url": "https://wsc.theserverless.dev",
         "applicationCategory": "UtilityApplication",
         "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "softwareVersion": "2.0",
+        "featureList": [
+          "Weasel word detection",
+          "Passive voice detection",
+          "Duplicate word detection",
+          "Real-time text highlighting",
+          "HTTP API for programmatic access",
+          "MCP server for AI assistant integration",
+          "Privacy-first: text never leaves your browser"
+        ],
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -94,8 +116,16 @@
         "author": {
           "@type": "Person",
           "name": "Ankur Singh",
-          "url": "https://anks.in",
-          "email": "hello@anks.in"
+          "url": "https://anks.in"
+        },
+        "isBasedOn": {
+          "@type": "CreativeWork",
+          "name": "Shell scripts for passive voice, weasel words, duplicates",
+          "author": {
+            "@type": "Person",
+            "name": "Matt Might"
+          },
+          "url": "https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/"
         }
       }
     </script>
@@ -115,7 +145,6 @@
         dataLayer.push(arguments);
       }
       gtag("js", new Date());
-
       gtag("config", "G-38BW8P5GZN");
     </script>
   </body>

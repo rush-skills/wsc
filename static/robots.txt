@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /mcp
 
-Sitemap: https://wsc.anks.in/sitemap.xml
+Sitemap: https://wsc.theserverless.dev/sitemap.xml

@@ -1,6 +1,8 @@
 {
   "name": "Writing Style Checker",
-  "short_name": "MySite",
+  "short_name": "WSC",
+  "description": "Detect weasel words, passive voice, and duplicate words in your writing",
+  "start_url": "/",
   "icons": [
     {
       "src": "/favicon/web-app-manifest-192x192.png",
@@ -15,7 +17,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
+  "theme_color": "#3498db",
   "background_color": "#ffffff",
   "display": "standalone"
 }
