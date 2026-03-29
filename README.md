@@ -1,184 +1,242 @@
 # Writing Style Checker
 
-A browser-based tool that helps improve your writing by detecting and highlighting common stylistic issues. This tool analyzes text in real-time to identify:
+A tool that detects common writing issues: **weasel words**, **passive voice**, and **duplicate words**. Available as an interactive web editor, an HTTP API, and an MCP server for AI assistants.
 
-- **Weasel Words**: Vague terms that add no value (e.g., "very", "extremely", "various")
-- **Passive Voice**: Constructions where the subject receives rather than performs the action
-- **Duplicate Words**: Accidentally repeated words that are often missed during proofreading
-
-**[Live Demo: wsc.anks.in](https://wsc.anks.in)**
+**[Live: wsc.theserverless.dev](https://wsc.theserverless.dev)**
 
 ![Screenshot of Writing Style Checker](static/images/ss.png)
 
-## 🔒 Privacy First
+## Features
 
-This application runs **entirely in your browser**. Your text is never transmitted to any server, stored in databases, or shared with third parties. All analysis happens locally in your browser using JavaScript.
+- **Web Editor** - Real-time highlighting with inline fix buttons
+- **HTTP API** - POST text, get structured JSON results with positions and context
+- **MCP Server (Remote)** - Connect AI assistants via Streamable HTTP transport
+- **MCP Server (Local)** - Stdio-based server for Claude Desktop, Claude Code, etc.
 
-## 🧠 Project Background
+---
 
-Inspired by [Matt Might's shell scripts for writing improvement](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/), this tool brings those command-line utilities to an interactive web interface. It was built in a single day using SvelteKit and Claude AI, demonstrating how AI-assisted development can quickly transform useful ideas into practical tools.
+## API Usage
 
-## 🔍 How It Works
+### `POST /api/check`
 
-### Detector Logic
+Analyze text for writing style issues.
 
-The core functionality relies on three detection algorithms in `detector.ts`:
+```bash
+curl -X POST https://wsc.theserverless.dev/api/check \
+  -H "Content-Type: application/json" \
+  -d '{"text":"The code was written very quickly."}'
+```
 
-1. **Weasel Word Detection**:
+**Response:**
 
-   - Uses a predefined list of weasel words and phrases
-   - Employs regular expressions with word boundaries (`\b`) to match whole words only
-   - Returns matched words with their positions for highlighting
+```json
+{
+  "summary": {
+    "total": 2,
+    "weaselWords": 1,
+    "passiveVoice": 1,
+    "duplicateWords": 0
+  },
+  "issues": {
+    "weaselWords": [
+      {
+        "word": "very",
+        "index": 21,
+        "length": 4,
+        "line": 1,
+        "column": 22,
+        "context": "...he code was written very quickly."
+      }
+    ],
+    "passiveVoice": [
+      {
+        "phrase": "was written",
+        "index": 9,
+        "length": 11,
+        "line": 1,
+        "column": 10,
+        "context": "The code was written very quickly."
+      }
+    ],
+    "duplicateWords": []
+  },
+  "meta": {
+    "characterCount": 34,
+    "wordCount": 6,
+    "processingTimeMs": 2
+  }
+}
+```
 
-2. **Passive Voice Detection**:
+**Limits:** Max 100,000 characters per request. CORS enabled for all origins.
 
-   - Combines regular past participles (words ending in `-ed`) with irregular verb forms
-   - Detects auxiliary verbs (am, is, are, was, were, etc.) followed by these participles
-   - Identifies complete passive constructions for highlighting
+**Errors:** `400` for missing/invalid text or exceeding limits.
 
-3. **Duplicate Word Detection**:
-   - Uses a regex pattern that finds adjacent identical words separated by whitespace
-   - Handles case-insensitive matching to catch duplicates with different capitalization
-   - Special handling for detecting duplicates across line breaks
+---
 
-The detector functions not only identify issues but also return precise character positions, enabling accurate highlighting and making targeted fixes possible.
+## MCP Server
 
-### User Interface
+The Writing Style Checker is available as an [MCP](https://modelcontextprotocol.io/) server, letting AI assistants check your writing directly.
 
-The interface displays detected issues in three ways:
+### Tools
 
-1. **Inline Highlighting**: Issues are highlighted directly in the text editor
-2. **Issue Counts**: Summary statistics show the number of each issue type
-3. **Issue Lists**: Detailed lists below the editor show each issue with position information
+| Tool | Description |
+|------|-------------|
+| `check_text` | Analyze text for weasel words, passive voice, and duplicate words |
+| `fix_duplicates` | Remove duplicate adjacent words and return cleaned text |
+| `list_weasel_words` | Return the complete list of weasel words the checker flags |
+| `check_file` | *(Local only)* Read a file from disk and analyze it |
 
-For duplicate words, a "Fix" button is provided to automatically remove them.
+### Remote MCP Server
 
-## 🗂️ Project Structure
+Connect any MCP client to the hosted server - no installation required.
+
+**Claude Desktop / Claude Code config:**
+
+```json
+{
+  "mcpServers": {
+    "writing-style-checker": {
+      "type": "url",
+      "url": "https://wsc.theserverless.dev/mcp"
+    }
+  }
+}
+```
+
+**Test with curl:**
+
+```bash
+# Initialize
+curl -X POST https://wsc.theserverless.dev/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}'
+
+# List tools
+curl -X POST https://wsc.theserverless.dev/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+
+# Check text
+curl -X POST https://wsc.theserverless.dev/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"check_text","arguments":{"text":"The the code was written very quickly."}}}'
+```
+
+### Local MCP Server (stdio)
+
+For local usage with Claude Desktop, Claude Code, or other MCP clients. Includes the `check_file` tool for analyzing files on disk.
+
+**Claude Desktop config:**
+
+```json
+{
+  "mcpServers": {
+    "writing-style-checker": {
+      "command": "npx",
+      "args": ["wsc-mcp"]
+    }
+  }
+}
+```
+
+**Build from source:**
+
+```bash
+cd mcp-server
+npm install
+npm run build
+node dist/mcp-server/index.js
+```
+
+---
+
+## Privacy
+
+The web editor runs **entirely in your browser** - text is never sent to any server. The API and MCP endpoints only process text you explicitly send to them.
+
+---
+
+## Project Structure
 
 ```
 .
-├── src
-│   ├── data
-│   │   ├── words.js          # Word lists for detection
-│   ├── lib
-│   │   ├── App.svelte        # Main application component
-│   │   ├── detector.ts       # Core detection algorithms
-│   ├── routes
-│   │   ├── +layout.server.js # SSG configuration
-│   │   └── +page.svelte      # Main page
-│   └── styles
-│       └── main.scss         # Global styles
-├── static
-│   ├── images                # App images and screenshots
-│   ├── favicon               # Favicon files
-│   ├── robots.txt            # SEO configuration
-│   └── sitemap.xml           # SEO configuration
-├── wrangler.toml             # Cloudflare deployment config
-└── svelte.config.js          # SvelteKit configuration
+├── src/
+│   ├── core/                    # Shared detection engine
+│   │   ├── detector.ts          # Detection algorithms
+│   │   ├── words.ts             # Word lists (weasel words, irregular verbs)
+│   │   └── index.ts             # Public API exports
+│   ├── mcp/
+│   │   └── handler.ts           # MCP JSON-RPC 2.0 handler
+│   ├── lib/
+│   │   └── App.svelte           # Main application component
+│   ├── routes/
+│   │   ├── +layout.server.js    # SSR configuration
+│   │   ├── +page.server.js      # Page prerender config
+│   │   ├── +page.svelte         # Main page
+│   │   ├── api/check/
+│   │   │   └── +server.ts       # HTTP API endpoint
+│   │   └── mcp/
+│   │       └── +server.ts       # MCP endpoint
+│   └── styles/
+│       └── main.scss            # Global styles
+├── mcp-server/                  # Standalone stdio MCP server
+│   ├── index.ts                 # Entry point
+│   ├── package.json
+│   └── tsconfig.json
+├── static/                      # Images, favicon, SEO files
+├── wrangler.toml                # Cloudflare Workers config
+└── svelte.config.js             # SvelteKit configuration
 ```
 
-## 📊 Data Sources
+---
 
-The word lists used for detection come from:
+## Detection Logic
 
-- **Original Word Lists**: The core weasel words and irregular verbs are from [Matt Might's original blog post](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/)
-- **Expanded Lists**: Additional words have been added with AI assistance to improve detection coverage
+1. **Weasel Words** - Matches against a curated list of 54 vague terms using word-boundary regex
+2. **Passive Voice** - Detects auxiliary verbs followed by past participles (regular `-ed` forms + 176 irregular verbs)
+3. **Duplicate Words** - Finds adjacent repeated words across whitespace, case-insensitive
 
-The complete lists are maintained in `src/data/words.js` and imported by the detector module.
+Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/), expanded with additional terms.
 
-## 🛠️ Setup Instructions
+---
 
-### Local Development
+## Local Development
 
-1. Clone the repository:
+```bash
+git clone https://github.com/rush-skills/wsc.git
+cd wsc
+npm install
+npm run dev
+```
 
-   ```bash
-   git clone https://github.com/rush-skills/wsc.git
-   cd wsc
-   ```
+Visit `http://localhost:5173`. The API is available at `/api/check` and MCP at `/mcp`.
 
-2. Install dependencies:
+## Deployment
 
-   ```bash
-   npm install
-   ```
+Deployed as a Cloudflare Worker at `wsc.theserverless.dev`.
 
-3. Run development server:
+```bash
+npm run build
+npx wrangler deploy --env production
+```
 
-   ```bash
-   npm run dev
-   ```
+To deploy your own instance, update `account_id` and `route` in `wrangler.toml`.
 
-4. Visit `http://localhost:5173` in your browser
+---
 
-### Deployment to Cloudflare Pages
+## Contributing
 
-This project is configured for deployment to Cloudflare Pages. To deploy your own instance:
+- **Word lists**: Edit `src/core/words.ts` to add weasel words or irregular verbs
+- **Bug fixes, UI improvements, new detectors**: PRs welcome
+- For substantial changes, open an issue first
 
-1. **Update `wrangler.toml`**:
+## Acknowledgements
 
-   - Replace the `account_id` with your Cloudflare account ID
-   - Update the `route` under `[env.production]` to your custom domain (if applicable)
-
-   ```toml
-   # Example wrangler.toml changes
-   account_id = "your-account-id-here"
-
-   [env.production]
-   route = "your-domain.com/*"  # Optional: only needed for custom domains
-   ```
-
-2. **Deploy using Wrangler CLI**:
-
-   ```bash
-   # Install Wrangler if you haven't already
-   npm install -g wrangler
-
-   # Login to your Cloudflare account
-   wrangler login
-
-   # Deploy to Cloudflare
-   wrangler deploy
-   ```
-
-3. **Access your site**:
-   - Your site will be available at `https://writing-style-checker.<your-account>.workers.dev`
-   - If you configured a custom domain, it will also be available there once DNS propagates
-
-That's it! The application is now deployed to your Cloudflare Workers account.
-
-## 👥 Contributing
-
-Contributions are welcome! Here are some ways you can help:
-
-### Adding More Words to the Dataset
-
-The word lists are stored in `src/data/words.js`. To add more words:
-
-1. Fork the repository
-2. Edit `src/data/words.js` to add:
-   - New weasel words to the `additionalWeaselWords` array
-   - New irregular verb forms to the `irregularVerbs` array
-   - New auxiliary verbs to the `auxiliaryVerbs` array if needed
-3. Submit a pull request with a brief explanation of why the words should be added
-
-### Other Contributions
-
-- Bug fixes
-- UI improvements
-- Performance optimizations
-- Documentation improvements
-
-For substantial changes, please open an issue first to discuss your ideas.
-
-## 🙏 Acknowledgements
-
-- [Matt Might](https://matt.might.net/) for the original shell scripts and concept
-- Built with [SvelteKit](https://kit.svelte.dev/)
-- Deployed on [Cloudflare Pages](https://pages.cloudflare.com/)
+- [Matt Might](https://matt.might.net/) for the original shell scripts
+- Built with [SvelteKit](https://kit.svelte.dev/), deployed on [Cloudflare Workers](https://workers.cloudflare.com/)
 - Logo made with [DiffusionBee](https://diffusionbee.com/)
-- Development assisted by Claude AI
 
-## 📄 License
+## License
 
 MIT License

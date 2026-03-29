@@ -19,3 +19,13 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# MCP server build output
+mcp-server/dist
+
+# Build artifacts in source (from mcp-server tsc)
+src/core/*.js
+src/core/*.d.ts
+
+# Test coverage output
+coverage

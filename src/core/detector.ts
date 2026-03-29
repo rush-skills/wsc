@@ -4,7 +4,7 @@ import {
   allWeaselWords,
   irregularVerbs,
   auxiliaryVerbs,
-} from "../data/words.js";
+} from "./words.js";
 
 /**
  * Detects weasel words in the given text

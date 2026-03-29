@@ -7,7 +7,7 @@
     detectPassiveVoice,
     detectDuplicateWords,
     removeDuplicateWord,
-  } from "./detector";
+  } from "../core";
   import "../styles/main.scss";
 
   let editor: HTMLTextAreaElement;
@@ -17,6 +17,14 @@
   let currentTheme: "light" | "dark" = "light";
   let mounted = false;
   let showAbout = false; // State for the expandable section
+  let activeTab: 'api' | 'mcp-remote' | 'mcp-local' = 'api';
+  let copiedId: string | null = null;
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+    copiedId = text;
+    setTimeout(() => { copiedId = null; }, 2000);
+  }
   let editorContent = `Type or paste your text here.
 This editor will highlight weasel words, passive voice, and duplicate words.
 
@@ -209,7 +217,7 @@ For example:
 
   // Modified function to add highlights to the wrapper
   function addHighlightsToWrapper(
-    issues: Array<{ word: string; index: number; length: number }>,
+    issues: Array<{ index: number; length: number }>,
     className: string,
     wrapper: HTMLElement
   ) {
@@ -678,6 +686,225 @@ For example:
         Note: The goal is not to eliminate all highlighted issues, but to make
         conscious choices about their use.
       </p>
+    </div>
+
+    <div class="integration-section">
+      <h2>API & MCP Integration</h2>
+      <p class="integration-intro">
+        Use the Writing Style Checker programmatically via the HTTP API, or connect it to AI assistants like Claude via the MCP server.
+      </p>
+
+      <div class="integration-tabs">
+        <button
+          class="integration-tab"
+          class:active={activeTab === 'api'}
+          on:click={() => (activeTab = 'api')}
+        >
+          HTTP API
+        </button>
+        <button
+          class="integration-tab"
+          class:active={activeTab === 'mcp-remote'}
+          on:click={() => (activeTab = 'mcp-remote')}
+        >
+          MCP Server (Remote)
+        </button>
+        <button
+          class="integration-tab"
+          class:active={activeTab === 'mcp-local'}
+          on:click={() => (activeTab = 'mcp-local')}
+        >
+          MCP Server (Local)
+        </button>
+      </div>
+
+      <div class="integration-content">
+        {#if activeTab === 'api'}
+          <div class="integration-panel">
+            <h3>POST /api/check</h3>
+            <p>Send text and receive structured results with issue positions, line numbers, and context snippets.</p>
+
+            <div class="code-block">
+              <div class="code-block-header">
+                <span>Request</span>
+                <button class="copy-button" on:click={() => copyToClipboard(`curl -X POST https://wsc.theserverless.dev/api/check \\
+  -H "Content-Type: application/json" \\
+  -d '{"text":"The code was written very quickly."}'`)}>
+                  {copiedId === 'api-req' ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              <pre><code>curl -X POST https://wsc.theserverless.dev/api/check \
+  -H "Content-Type: application/json" \
+  -d '{`{`}"text":"The code was written very quickly."{`}`}'</code></pre>
+            </div>
+
+            <div class="code-block">
+              <div class="code-block-header"><span>Response</span></div>
+              <pre><code>{`{
+  "summary": {
+    "total": 2,
+    "weaselWords": 1,
+    "passiveVoice": 1,
+    "duplicateWords": 0
+  },
+  "issues": {
+    "weaselWords": [{ "word": "very", "index": 21, "line": 1, "column": 22, ... }],
+    "passiveVoice": [{ "phrase": "was written", "index": 9, "line": 1, "column": 10, ... }],
+    "duplicateWords": []
+  },
+  "meta": { "characterCount": 34, "wordCount": 6, "processingTimeMs": 2 }
+}`}</code></pre>
+            </div>
+
+            <div class="integration-details">
+              <div class="detail-item">
+                <strong>Limit:</strong> 100,000 characters per request
+              </div>
+              <div class="detail-item">
+                <strong>CORS:</strong> Enabled for all origins
+              </div>
+              <div class="detail-item">
+                <strong>Errors:</strong> 400 for missing/invalid text or exceeding limits
+              </div>
+            </div>
+          </div>
+        {:else if activeTab === 'mcp-remote'}
+          <div class="integration-panel">
+            <h3>Remote MCP Server</h3>
+            <p>
+              Connect any <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener noreferrer">MCP</a>-compatible
+              AI assistant to the hosted server. No installation required.
+            </p>
+
+            <h4>Available Tools</h4>
+            <div class="tools-grid">
+              <div class="tool-card">
+                <div class="tool-name">check_text</div>
+                <div class="tool-desc">Analyze text for weasel words, passive voice, and duplicate words</div>
+              </div>
+              <div class="tool-card">
+                <div class="tool-name">fix_duplicates</div>
+                <div class="tool-desc">Remove duplicate adjacent words and return cleaned text</div>
+              </div>
+              <div class="tool-card">
+                <div class="tool-name">list_weasel_words</div>
+                <div class="tool-desc">Return the complete list of flagged weasel words</div>
+              </div>
+            </div>
+
+            <h4>Claude Desktop / Claude Code</h4>
+            <p>Add this to your MCP configuration:</p>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span>Config</span>
+                <button class="copy-button" on:click={() => copyToClipboard(`{
+  "mcpServers": {
+    "writing-style-checker": {
+      "type": "url",
+      "url": "https://wsc.theserverless.dev/mcp"
+    }
+  }
+}`)}>
+                  {copiedId === 'mcp-remote-config' ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              <pre><code>{`{
+  "mcpServers": {
+    "writing-style-checker": {
+      "type": "url",
+      "url": "https://wsc.theserverless.dev/mcp"
+    }
+  }
+}`}</code></pre>
+            </div>
+
+            <h4>Test with curl</h4>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span>Initialize + Check Text</span>
+                <button class="copy-button" on:click={() => copyToClipboard(`curl -X POST https://wsc.theserverless.dev/mcp \\
+  -H "Content-Type: application/json" \\
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"check_text","arguments":{"text":"The the code was written very quickly."}}}'`)}>
+                  {copiedId === 'mcp-remote-curl' ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              <pre><code>curl -X POST https://wsc.theserverless.dev/mcp \
+  -H "Content-Type: application/json" \
+  -d '{`{`}"jsonrpc":"2.0","id":1,"method":"tools/call","params":{`{`}"name":"check_text","arguments":{`{`}"text":"The the code was written very quickly."{`}`}{`}`}{`}`}'</code></pre>
+            </div>
+          </div>
+        {:else if activeTab === 'mcp-local'}
+          <div class="integration-panel">
+            <h3>Local MCP Server (stdio)</h3>
+            <p>
+              Run the MCP server locally for use with Claude Desktop, Claude Code, or other MCP clients.
+              The local server includes an additional <strong>check_file</strong> tool for analyzing files directly from disk.
+            </p>
+
+            <h4>Available Tools</h4>
+            <div class="tools-grid">
+              <div class="tool-card">
+                <div class="tool-name">check_text</div>
+                <div class="tool-desc">Analyze text for writing style issues</div>
+              </div>
+              <div class="tool-card">
+                <div class="tool-name">fix_duplicates</div>
+                <div class="tool-desc">Remove duplicate adjacent words</div>
+              </div>
+              <div class="tool-card">
+                <div class="tool-name">list_weasel_words</div>
+                <div class="tool-desc">List all flagged weasel words</div>
+              </div>
+              <div class="tool-card">
+                <div class="tool-name">check_file</div>
+                <div class="tool-desc">Read and analyze a file from disk (.txt, .md, etc.)</div>
+              </div>
+            </div>
+
+            <h4>Claude Desktop Config</h4>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span>Config</span>
+                <button class="copy-button" on:click={() => copyToClipboard(`{
+  "mcpServers": {
+    "writing-style-checker": {
+      "command": "npx",
+      "args": ["wsc-mcp"]
+    }
+  }
+}`)}>
+                  {copiedId === 'mcp-local-config' ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              <pre><code>{`{
+  "mcpServers": {
+    "writing-style-checker": {
+      "command": "npx",
+      "args": ["wsc-mcp"]
+    }
+  }
+}`}</code></pre>
+            </div>
+
+            <h4>Build from Source</h4>
+            <div class="code-block">
+              <div class="code-block-header">
+                <span>Shell</span>
+                <button class="copy-button" on:click={() => copyToClipboard(`cd mcp-server
+npm install
+npm run build
+node dist/mcp-server/index.js`)}>
+                  {copiedId === 'mcp-local-build' ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              <pre><code>cd mcp-server
+npm install
+npm run build
+node dist/mcp-server/index.js</code></pre>
+            </div>
+          </div>
+        {/if}
+      </div>
     </div>
   </main>
 

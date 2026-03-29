@@ -1,0 +1,349 @@
+# Release and Deployment
+
+This document covers how to deploy the Writing Style Checker to Cloudflare Workers and publish the standalone MCP server to npm.
+
+---
+
+## Table of Contents
+
+- [Cloudflare Workers Deployment](#cloudflare-workers-deployment)
+- [npm Package Publishing (wsc-mcp)](#npm-package-publishing-wsc-mcp)
+- [DNS Setup](#dns-setup)
+- [Rollback](#rollback)
+
+---
+
+## Cloudflare Workers Deployment
+
+The SvelteKit app (frontend + API + remote MCP server) is deployed as a single Cloudflare Worker.
+
+### Prerequisites
+
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) installed (`npm install -g wrangler`)
+- Authenticated with Cloudflare (`wrangler login`)
+- DNS configured for `wsc.theserverless.dev` (see [DNS Setup](#dns-setup))
+
+### Configuration
+
+The deployment is configured in `wrangler.toml`:
+
+```toml
+name = "wsc"
+account_id = "3f847e2fadeef3e583701e8fa25657b5"
+compatibility_date = "2025-03-01"
+workers_dev = true
+
+[build]
+command = "npm run build"
+
+[observability.logs]
+enabled = true
+
+[site]
+bucket = ".svelte-kit/cloudflare"
+
+[env.production]
+route = "wsc.theserverless.dev/*"
+```
+
+To deploy your own instance, update `account_id` to your Cloudflare account ID and `route` to your domain.
+
+### Pre-Deployment Checklist
+
+```bash
+# 1. Run tests
+npm test
+
+# 2. Run type checking
+npm run check
+
+# 3. Build locally and verify
+npm run build
+
+# 4. Preview locally (optional)
+npm run preview
+```
+
+### Deploy to Production
+
+```bash
+npx wrangler deploy --env production
+```
+
+This will:
+1. Run `npm run build` (the SvelteKit build)
+2. Upload the Worker and static assets to Cloudflare
+3. Bind the Worker to the `wsc.theserverless.dev/*` route
+
+### Deploy to Workers Dev (Staging)
+
+```bash
+npx wrangler deploy
+```
+
+This deploys without the production route binding. The app will be available at `https://wsc.<your-subdomain>.workers.dev`.
+
+### View Logs
+
+```bash
+npx wrangler tail --env production
+```
+
+This streams real-time logs from the production Worker. Useful for debugging API or MCP endpoint issues.
+
+### Verify Deployment
+
+After deploying, run these quick checks:
+
+```bash
+# Frontend loads
+curl -s -o /dev/null -w "%{http_code}" https://wsc.theserverless.dev
+# Expected: 200
+
+# API works
+curl -s -X POST https://wsc.theserverless.dev/api/check \
+  -H "Content-Type: application/json" \
+  -d '{"text":"very good"}' | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Issues: {d[\"summary\"][\"total\"]}')"
+# Expected: Issues: 1
+
+# MCP works
+curl -s -X POST https://wsc.theserverless.dev/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Tools: {len(d[\"result\"][\"tools\"])}')"
+# Expected: Tools: 3
+```
+
+---
+
+## npm Package Publishing (wsc-mcp)
+
+The standalone stdio MCP server lives in `mcp-server/` and is published to npm as `wsc-mcp`.
+
+### Prerequisites
+
+- npm account with publish access
+- Authenticated with npm (`npm login`)
+
+### Pre-Publish Checklist
+
+```bash
+cd mcp-server
+
+# 1. Install dependencies
+npm install
+
+# 2. Build
+npm run build
+
+# 3. Verify the build output exists
+ls dist/mcp-server/index.js
+
+# 4. Verify it starts without errors
+timeout 2 node dist/mcp-server/index.js < /dev/null 2>&1; echo "Exit: $?"
+```
+
+### Review package.json
+
+Before publishing, verify `mcp-server/package.json`:
+
+- `name`: `wsc-mcp`
+- `version`: Update to the version you want to publish
+- `description`: Accurate description
+- `main`: `dist/index.js`
+- `bin.wsc-mcp`: `dist/index.js` (this is what `npx wsc-mcp` runs)
+- `license`: MIT
+- `author`: Correct
+
+### Update Version
+
+```bash
+cd mcp-server
+
+# Patch release (1.0.0 -> 1.0.1)
+npm version patch
+
+# Minor release (1.0.0 -> 1.1.0)
+npm version minor
+
+# Major release (1.0.0 -> 2.0.0)
+npm version major
+```
+
+### Files Included in Package
+
+The `mcp-server/` directory does not have a `.npmignore` or `files` field, so npm will include everything except what's in `.gitignore`. For a clean package, add a `files` field to `mcp-server/package.json`:
+
+```json
+{
+  "files": [
+    "dist/"
+  ]
+}
+```
+
+This ensures only the compiled output is published — not the TypeScript source, `tsconfig.json`, or `node_modules`.
+
+### Dry Run
+
+Always do a dry run first to see exactly what will be published:
+
+```bash
+cd mcp-server
+npm pack --dry-run
+```
+
+Review the file list. It should contain:
+- `package.json`
+- `dist/mcp-server/index.js` (entry point)
+- `dist/mcp-server/server.js` (server logic)
+- `dist/src/core/detector.js` (bundled core)
+- `dist/src/core/words.js` (bundled core)
+- `dist/src/core/index.js` (bundled core)
+- Corresponding `.d.ts` declaration files
+
+### Publish
+
+```bash
+cd mcp-server
+
+# Publish to npm
+npm publish
+
+# Or publish with a tag (e.g., beta)
+npm publish --tag beta
+```
+
+### Verify Published Package
+
+```bash
+# Check it exists on npm
+npm info wsc-mcp
+
+# Test installation
+npx wsc-mcp --help 2>&1 || echo "(server starts on stdio, no --help flag)"
+
+# Test in a temporary directory
+cd /tmp
+mkdir wsc-test && cd wsc-test
+npm init -y
+npm install wsc-mcp
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | timeout 5 npx wsc-mcp 2>/dev/null
+cd .. && rm -rf wsc-test
+```
+
+### Post-Publish: Update Claude Desktop Config
+
+Users can now install via:
+
+```json
+{
+  "mcpServers": {
+    "writing-style-checker": {
+      "command": "npx",
+      "args": ["wsc-mcp"]
+    }
+  }
+}
+```
+
+---
+
+## DNS Setup
+
+To set up `wsc.theserverless.dev` (or your own domain):
+
+### Option A: Cloudflare-Managed DNS
+
+If `theserverless.dev` is on Cloudflare:
+
+1. Go to Cloudflare Dashboard > DNS
+2. Add a record:
+   - **Type**: AAAA
+   - **Name**: wsc
+   - **Content**: `100::` (dummy address; Cloudflare proxies the request to the Worker)
+   - **Proxy status**: Proxied (orange cloud)
+
+The Worker route in `wrangler.toml` (`wsc.theserverless.dev/*`) handles the rest.
+
+### Option B: External DNS
+
+If the domain is managed elsewhere:
+
+1. Add a CNAME record pointing `wsc.theserverless.dev` to your Workers subdomain (e.g., `wsc.your-subdomain.workers.dev`)
+2. In the Cloudflare dashboard, add the custom domain under Workers > your Worker > Settings > Domains & Routes
+
+---
+
+## Rollback
+
+### Cloudflare Worker
+
+Wrangler keeps deployment versions. To rollback:
+
+```bash
+# List recent deployments
+npx wrangler deployments list --env production
+
+# Rollback to a previous deployment
+npx wrangler rollback --env production
+```
+
+Or redeploy from a previous git commit:
+
+```bash
+git checkout <previous-commit>
+npx wrangler deploy --env production
+git checkout master
+```
+
+### npm Package
+
+npm does not support un-publishing after 72 hours. To effectively rollback:
+
+```bash
+# Deprecate the bad version
+cd mcp-server
+npm deprecate wsc-mcp@1.0.1 "Known issue, use 1.0.0 instead"
+
+# Publish a new fixed version
+npm version patch
+npm publish
+```
+
+---
+
+## Release Workflow Summary
+
+A typical release that includes both the web app and the npm package:
+
+```bash
+# 1. Run all checks
+npm test
+npm run check
+
+# 2. Build everything
+npm run build
+cd mcp-server && npm run build && cd ..
+
+# 3. Deploy web app to Cloudflare
+npx wrangler deploy --env production
+
+# 4. Verify deployment
+curl -s https://wsc.theserverless.dev/api/check \
+  -H "Content-Type: application/json" \
+  -d '{"text":"very good"}' | python3 -m json.tool
+
+# 5. Bump MCP server version and publish
+cd mcp-server
+npm version patch
+npm publish
+cd ..
+
+# 6. Commit version bump
+git add mcp-server/package.json
+git commit -m "release: wsc-mcp v$(node -p "require('./mcp-server/package.json').version")"
+
+# 7. Tag the release
+git tag v$(node -p "require('./mcp-server/package.json').version")
+git push && git push --tags
+```
