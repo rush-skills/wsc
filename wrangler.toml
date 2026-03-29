@@ -1,7 +1,7 @@
 name = "wsc"
-account_id = "3f847e2fadeef3e583701e8fa25657b5"
-compatibility_date = "2025-03-01"
-workers_dev = true
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2026-03-26"
+compatibility_flags = ["nodejs_compat"]
 
 [build]
 command = "npm run build"
@@ -9,7 +9,7 @@ command = "npm run build"
 [assets]
 directory = ".svelte-kit/cloudflare"
 
-[observability.logs]
+[observability]
 enabled = true
 
 [[routes]]

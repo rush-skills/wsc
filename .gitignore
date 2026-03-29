@@ -29,3 +29,5 @@ src/core/*.d.ts
 
 # Test coverage output
 coverage
+
+.wrangler
