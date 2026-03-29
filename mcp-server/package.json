@@ -1,6 +1,6 @@
 {
   "name": "wsc-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP server for Writing Style Checker - detects weasel words, passive voice, and duplicate words",
   "main": "dist/mcp-server/index.js",
   "bin": {
@@ -13,7 +13,13 @@
     "build": "tsc",
     "start": "node dist/mcp-server/index.js"
   },
-  "keywords": ["mcp", "writing", "style-checker", "weasel-words", "passive-voice"],
+  "keywords": [
+    "mcp",
+    "writing",
+    "style-checker",
+    "weasel-words",
+    "passive-voice"
+  ],
   "author": "Ankur Singh <hello@anks.in>",
   "license": "MIT",
   "type": "module",
