@@ -929,7 +929,7 @@ node dist/mcp-server/index.js</code></pre>
         rel="noopener noreferrer">Ankur Singh</a
       >
       <a
-        href="https://github.com/rush-skills/wsc"
+        href="https://github.com/theserverlessdev/wsc"
         target="_blank"
         rel="noopener noreferrer"
         class="github-link"

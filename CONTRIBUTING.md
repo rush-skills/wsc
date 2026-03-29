@@ -5,7 +5,7 @@ Thanks for your interest in contributing! This guide will help you get started.
 ## Development Setup
 
 ```bash
-git clone https://github.com/rush-skills/wsc.git
+git clone https://github.com/theserverlessdev/wsc.git
 cd wsc
 npm install
 npm run dev
@@ -77,7 +77,7 @@ PRs welcome for any bug fixes, accessibility improvements, or UI enhancements.
 
 ## Reporting Issues
 
-Open an issue on [GitHub](https://github.com/rush-skills/wsc/issues) with:
+Open an issue on [GitHub](https://github.com/theserverlessdev/wsc/issues) with:
 - What you expected to happen
 - What actually happened
 - Steps to reproduce (text input that triggers the bug, if applicable)

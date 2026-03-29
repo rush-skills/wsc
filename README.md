@@ -1,6 +1,6 @@
 # Writing Style Checker
 
-[![CI](https://github.com/rush-skills/wsc/actions/workflows/ci.yml/badge.svg)](https://github.com/rush-skills/wsc/actions/workflows/ci.yml)
+[![CI](https://github.com/theserverlessdev/wsc/actions/workflows/ci.yml/badge.svg)](https://github.com/theserverlessdev/wsc/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/wsc-mcp)](https://www.npmjs.com/package/wsc-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -206,7 +206,7 @@ Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/arti
 ## Local Development
 
 ```bash
-git clone https://github.com/rush-skills/wsc.git
+git clone https://github.com/theserverlessdev/wsc.git
 cd wsc
 npm install
 npm run dev
@@ -239,7 +239,7 @@ npx wrangler deploy
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and pull request guidelines.
 
-For substantial changes, please [open an issue](https://github.com/rush-skills/wsc/issues) first.
+For substantial changes, please [open an issue](https://github.com/theserverlessdev/wsc/issues) first.
 
 ## Acknowledgements
 
