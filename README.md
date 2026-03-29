@@ -1,5 +1,9 @@
 # Writing Style Checker
 
+[![CI](https://github.com/rush-skills/wsc/actions/workflows/ci.yml/badge.svg)](https://github.com/rush-skills/wsc/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/wsc-mcp)](https://www.npmjs.com/package/wsc-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A tool that detects common writing issues: **weasel words**, **passive voice**, and **duplicate words**. Available as an interactive web editor, an HTTP API, and an MCP server for AI assistants.
 
 **[Live: wsc.theserverless.dev](https://wsc.theserverless.dev)**
@@ -11,7 +15,7 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 - **Web Editor** - Real-time highlighting with inline fix buttons
 - **HTTP API** - POST text, get structured JSON results with positions and context
 - **MCP Server (Remote)** - Connect AI assistants via Streamable HTTP transport
-- **MCP Server (Local)** - Stdio-based server for Claude Desktop, Claude Code, etc.
+- **MCP Server (Local)** - Stdio-based server via [`wsc-mcp`](https://www.npmjs.com/package/wsc-mcp) on npm
 
 ---
 
@@ -125,7 +129,11 @@ curl -X POST https://wsc.theserverless.dev/mcp \
 
 ### Local MCP Server (stdio)
 
-For local usage with Claude Desktop, Claude Code, or other MCP clients. Includes the `check_file` tool for analyzing files on disk.
+Install via npm for local usage with Claude Desktop, Claude Code, or other MCP clients. Includes the `check_file` tool for analyzing files on disk.
+
+```bash
+npx wsc-mcp
+```
 
 **Claude Desktop config:**
 
@@ -140,14 +148,7 @@ For local usage with Claude Desktop, Claude Code, or other MCP clients. Includes
 }
 ```
 
-**Build from source:**
-
-```bash
-cd mcp-server
-npm install
-npm run build
-node dist/mcp-server/index.js
-```
+See the [`wsc-mcp` npm page](https://www.npmjs.com/package/wsc-mcp) for full documentation.
 
 ---
 
@@ -180,10 +181,11 @@ The web editor runs **entirely in your browser** - text is never sent to any ser
 │   │       └── +server.ts       # MCP endpoint
 │   └── styles/
 │       └── main.scss            # Global styles
-├── mcp-server/                  # Standalone stdio MCP server
+├── mcp-server/                  # Standalone stdio MCP server (npm: wsc-mcp)
+│   ├── server.ts                # Server logic and tools
 │   ├── index.ts                 # Entry point
-│   ├── package.json
-│   └── tsconfig.json
+│   └── package.json
+├── tests/                       # 159 tests, 100% coverage
 ├── static/                      # Images, favicon, SEO files
 ├── wrangler.toml                # Cloudflare Workers config
 └── svelte.config.js             # SvelteKit configuration
@@ -212,31 +214,39 @@ npm run dev
 
 Visit `http://localhost:5173`. The API is available at `/api/check` and MCP at `/mcp`.
 
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Build for production |
+| `npm run check` | Type check with svelte-check |
+| `npm test` | Run all 159 tests |
+| `npm run test:coverage` | Coverage report |
+
 ## Deployment
 
 Deployed as a Cloudflare Worker at `wsc.theserverless.dev`.
 
 ```bash
 npm run build
-npx wrangler deploy --env production
+npx wrangler deploy
 ```
-
-To deploy your own instance, update `account_id` and `route` in `wrangler.toml`.
 
 ---
 
 ## Contributing
 
-- **Word lists**: Edit `src/core/words.ts` to add weasel words or irregular verbs
-- **Bug fixes, UI improvements, new detectors**: PRs welcome
-- For substantial changes, open an issue first
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and pull request guidelines.
+
+For substantial changes, please [open an issue](https://github.com/rush-skills/wsc/issues) first.
 
 ## Acknowledgements
 
-- [Matt Might](https://matt.might.net/) for the original shell scripts
-- Built with [SvelteKit](https://kit.svelte.dev/), deployed on [Cloudflare Workers](https://workers.cloudflare.com/)
+- [Matt Might](https://matt.might.net/) for the [original shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/)
+- Built with [SvelteKit](https://svelte.dev/) and [Svelte 5](https://svelte.dev/blog/svelte-5-is-alive), deployed on [Cloudflare Workers](https://workers.cloudflare.com/)
 - Logo made with [DiffusionBee](https://diffusionbee.com/)
 
 ## License
 
-MIT License
+[MIT](LICENSE)
