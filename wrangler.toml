@@ -6,11 +6,12 @@ workers_dev = true
 [build]
 command = "npm run build"
 
+[assets]
+directory = ".svelte-kit/cloudflare"
+
 [observability.logs]
 enabled = true
 
-[site]
-bucket = ".svelte-kit/cloudflare"
-
-[env.production]
-route = "wsc.theserverless.dev/*"
+[[routes]]
+pattern = "wsc.theserverless.dev"
+custom_domain = true
