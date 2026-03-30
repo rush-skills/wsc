@@ -49,4 +49,4 @@ Each detector works differently:
 
 ### Suggest a Word
 
-Think a word or phrase should be added to a detector list? Visit the [Word Library](/words) page and use the "Suggest a Word" form. It checks if the word already exists before opening a GitHub issue.
+Want to add a word or phrase to a detector list? Visit the [Word Library](/words) page and use the "Suggest a Word" form. It checks if the word already exists before opening a GitHub issue.

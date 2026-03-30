@@ -35,7 +35,7 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 | **Filler Adverbs** | 140 words | Adverbs adding emphasis without substance ("totally", "utterly") |
 | **AI Tells** | 37 words + 31 phrases | Words/phrases overrepresented in AI-generated text ("delve", "tapestry", "let's dive in") |
 
-Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/), expanded significantly. AI tells based on GPTZero corpus analysis and CMU PNAS study.
+Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/) and expanded with additional entries. AI tells based on GPTZero corpus analysis and CMU PNAS study.
 
 ---
 

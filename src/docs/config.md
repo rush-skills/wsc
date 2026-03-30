@@ -5,7 +5,7 @@ The CLI, GitHub Action, and local MCP server auto-discover this file.
 
 ### JSON Schema
 
-Add a `$schema` key for autocompletion and validation in your editor:
+Add a `$schema` key for autocompletion and to validate your config in your editor:
 
 ```json
 {
@@ -13,7 +13,7 @@ Add a `$schema` key for autocompletion and validation in your editor:
 }
 ```
 
-The full schema is published at `https://wsc.theserverless.dev/schema.json`.
+You can find the full schema at `https://wsc.theserverless.dev/schema.json`.
 
 Generate a starter config with the CLI:
 
@@ -23,7 +23,7 @@ npx wsc-cli init
 
 ### Detector Reference
 
-All 8 detectors are enabled by default. Set `enabled: false` to disable any detector.
+All 8 detectors run by default. Set `enabled: false` to disable any detector.
 
 | Detector | Options |
 |----------|---------|

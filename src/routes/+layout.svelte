@@ -93,14 +93,14 @@
           This tool helps you catch these issues in real-time.
         </p>
         <p>
-          Inspired by Matt Might's shell scripts for writing improvement, this
-          interactive tool brings those command-line utilities to the web. Just
-          type or paste your text, and see immediate feedback about potential
+          Inspired by Matt Might's shell scripts for improving writing, this
+          interactive tool brings those command-line utilities to the web. Type
+          or paste your text and see immediate feedback about potential
           improvements.
         </p>
         <p>
-          <strong>Your privacy is protected</strong>: all analysis runs
-          entirely in your browser. Your text is never sent to any server.
+          <strong>Private by design</strong>: all analysis runs
+          in your browser. Your text never leaves your device.
         </p>
       </div>
     {/if}

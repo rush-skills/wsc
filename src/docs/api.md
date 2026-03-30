@@ -46,5 +46,5 @@ Returns metadata about all detectors and their word/phrase counts.
 ### Limits
 
 - **Max text:** 100,000 characters per request
-- **CORS:** Enabled for all origins
+- **CORS:** Open to all origins
 - **Errors:** 400 for missing/invalid text or exceeding limits
