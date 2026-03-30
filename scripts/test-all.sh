@@ -85,9 +85,11 @@ npm ci --silent 2>&1 | tail -1
 check "npm ci succeeds" "true"
 
 echo "  Type checking..."
-TYPE_OUT=$(npm run check 2>&1)
-TYPE_OK=$(echo "$TYPE_OUT" | grep -c "0 ERRORS" || true)
-check "npm run check — 0 errors" "$([ "$TYPE_OK" -ge 1 ] && echo true || echo false)"
+if npm run check >/dev/null 2>&1; then
+  check "npm run check — 0 errors" "true"
+else
+  check "npm run check — 0 errors" "false"
+fi
 
 echo "  Running tests..."
 TEST_OUT=$(npx vitest run 2>&1)
