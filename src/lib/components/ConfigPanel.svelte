@@ -17,6 +17,7 @@
   let nominalizationsEnabled = true;
   let hedgingEnabled = true;
   let adverbsEnabled = true;
+  let aiTellsEnabled = true;
 
   let maxWords = 30;
 
@@ -49,6 +50,7 @@
     { key: 'nominalizations', label: 'Nominalizations', color: 'var(--nominalization-bg)', enabled: nominalizationsEnabled },
     { key: 'hedging', label: 'Hedging', color: 'var(--hedging-bg)', enabled: hedgingEnabled },
     { key: 'adverbs', label: 'Filler Adverbs', color: 'var(--adverb-bg)', enabled: adverbsEnabled },
+    { key: 'aiTells', label: 'AI Tells', color: 'var(--ai-tells-bg)', enabled: aiTellsEnabled },
   ];
 
   function toggleDetector(key: string) {
@@ -60,6 +62,7 @@
       case 'nominalizations': nominalizationsEnabled = !nominalizationsEnabled; break;
       case 'hedging': hedgingEnabled = !hedgingEnabled; break;
       case 'adverbs': adverbsEnabled = !adverbsEnabled; break;
+      case 'aiTells': aiTellsEnabled = !aiTellsEnabled; break;
     }
     buildConfig();
   }
@@ -153,6 +156,9 @@
         ...(adverbRemove.length && { remove: [...adverbRemove] }),
       };
     }
+    if (!aiTellsEnabled) {
+      cfg.detectors!.aiTells = { enabled: false };
+    }
 
     // Clean empty detectors object
     if (Object.keys(cfg.detectors!).length === 0) {
@@ -164,7 +170,7 @@
   }
 
   function resetConfig() {
-    weaselEnabled = passiveEnabled = duplicateEnabled = longSentencesEnabled = nominalizationsEnabled = hedgingEnabled = adverbsEnabled = true;
+    weaselEnabled = passiveEnabled = duplicateEnabled = longSentencesEnabled = nominalizationsEnabled = hedgingEnabled = adverbsEnabled = aiTellsEnabled = true;
     maxWords = 30;
     weaselAdd = []; weaselRemove = [];
     hedgingAdd = []; hedgingRemove = [];
@@ -229,7 +235,7 @@
 
   <p class="config-note">
     Passive Voice and Duplicate Words use grammar-based pattern matching and only support enable/disable.
-    The detectors below support custom word list overrides.
+    The other detectors support custom word list overrides via the config file.
   </p>
 
   {#if weaselEnabled}

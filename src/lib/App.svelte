@@ -24,7 +24,7 @@
   let userConfig: WscConfig = {};
 
   let editorContent = `Type or paste your text here.
-This editor will highlight weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs.
+This editor will highlight weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and AI tells.
 
 For example:
 - Weasel words: Using very and extremely is not good for technical writing.
@@ -33,7 +33,8 @@ For example:
 - Long sentences: This is a very long sentence that keeps going and going with more and more words added to it so that the sentence detector will flag it because it has many more words than the default threshold of thirty.
 - Nominalizations: The implementation of the optimization led to improvement.
 - Hedging: I think it seems like this could be better.
-- Filler adverbs: The system is totally and utterly broken.`;
+- Filler adverbs: The system is totally and utterly broken.
+- AI tells: Let's delve into this comprehensive and pivotal tapestry of ideas.`;
 
   // Font measurements
   let charWidth = 7.8;
@@ -47,6 +48,7 @@ For example:
   let nominalizationCount = 0;
   let hedgingCount = 0;
   let adverbCount = 0;
+  let aiTellsCount = 0;
   let totalIssues = 0;
 
   // Issue detection results
@@ -57,6 +59,7 @@ For example:
   let nominalizationResults: Array<{ word: string; suggestion: string; index: number; length: number }> = [];
   let hedgingResults: Array<{ phrase: string; index: number; length: number }> = [];
   let adverbResults: Array<{ word: string; index: number; length: number }> = [];
+  let aiTellsResults: Array<{ text: string; index: number; length: number; reason: string }> = [];
 
   // Position information
   let linePositions: number[] = [];
@@ -102,6 +105,7 @@ For example:
     nominalizationResults = result.issues.nominalizations;
     hedgingResults = result.issues.hedging;
     adverbResults = result.issues.adverbs;
+    aiTellsResults = result.issues.aiTells;
 
     weaselCount = weaselWords.length;
     passiveCount = passiveVoices.length;
@@ -110,6 +114,7 @@ For example:
     nominalizationCount = nominalizationResults.length;
     hedgingCount = hedgingResults.length;
     adverbCount = adverbResults.length;
+    aiTellsCount = aiTellsResults.length;
     totalIssues = result.summary.total;
 
     updateLineNumbers();
@@ -194,6 +199,7 @@ For example:
     addHighlightsToWrapper(nominalizationResults, "nominalization-highlight", highlightsWrapper);
     addHighlightsToWrapper(hedgingResults, "hedging-highlight", highlightsWrapper);
     addHighlightsToWrapper(adverbResults, "adverb-highlight", highlightsWrapper);
+    addHighlightsToWrapper(aiTellsResults, "ai-tells-highlight", highlightsWrapper);
 
     handleScroll();
   }
@@ -438,6 +444,7 @@ For example:
     {nominalizationCount}
     {hedgingCount}
     {adverbCount}
+    {aiTellsCount}
     on:statclick={handleStatClick}
   />
 </div>
@@ -483,6 +490,7 @@ For example:
   nominalizationResults={nominalizationResults}
   {hedgingResults}
   {adverbResults}
+  {aiTellsResults}
   {weaselCount}
   {passiveCount}
   {duplicateCount}
@@ -490,6 +498,7 @@ For example:
   {nominalizationCount}
   {hedgingCount}
   {adverbCount}
+  {aiTellsCount}
   {formatPosition}
   {goToPosition}
   {handleRemoveDuplicate}

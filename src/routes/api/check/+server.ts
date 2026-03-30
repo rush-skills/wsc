@@ -69,6 +69,7 @@ export const POST: RequestHandler = async ({ request }) => {
       nominalizations: result.issues.nominalizations.map(enrichIssue),
       hedging: result.issues.hedging.map(enrichIssue),
       adverbs: result.issues.adverbs.map(enrichIssue),
+      aiTells: result.issues.aiTells.map(enrichIssue),
     },
     meta: {
       ...result.meta,

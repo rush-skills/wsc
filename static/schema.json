@@ -73,6 +73,34 @@
         "adverbs": {
           "$ref": "#/$defs/wordListDetector",
           "description": "Detects filler adverbs like 'totally', 'utterly'"
+        },
+        "aiTells": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Detects words and phrases overrepresented in AI-generated text",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "add": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Extra vocabulary words to flag as AI tells"
+            },
+            "remove": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Vocabulary words to stop flagging"
+            },
+            "addPhrases": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Extra phrases to flag as AI tells"
+            },
+            "removePhrases": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Phrases to stop flagging"
+            }
+          }
         }
       }
     }

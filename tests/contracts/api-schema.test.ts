@@ -28,12 +28,12 @@ describe('API response schema', () => {
     expect(data).toHaveProperty('meta');
   });
 
-  it('summary has all 7 detector counts plus total', async () => {
+  it('summary has all 8 detector counts plus total', async () => {
     const response = await POST({ request: makeRequest({ text: 'Hello world.' }) } as any);
     const data = await response.json();
     const keys = Object.keys(data.summary).sort();
     expect(keys).toEqual([
-      'adverbs', 'duplicateWords', 'hedging', 'longSentences',
+      'adverbs', 'aiTells', 'duplicateWords', 'hedging', 'longSentences',
       'nominalizations', 'passiveVoice', 'total', 'weaselWords',
     ]);
     for (const key of keys) {
@@ -41,12 +41,12 @@ describe('API response schema', () => {
     }
   });
 
-  it('issues has all 7 detector arrays', async () => {
+  it('issues has all 8 detector arrays', async () => {
     const response = await POST({ request: makeRequest({ text: 'Hello world.' }) } as any);
     const data = await response.json();
     const keys = Object.keys(data.issues).sort();
     expect(keys).toEqual([
-      'adverbs', 'duplicateWords', 'hedging', 'longSentences',
+      'adverbs', 'aiTells', 'duplicateWords', 'hedging', 'longSentences',
       'nominalizations', 'passiveVoice', 'weaselWords',
     ]);
     for (const key of keys) {

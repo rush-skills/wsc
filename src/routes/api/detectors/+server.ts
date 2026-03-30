@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { allWeaselWords, nominalizations, hedgingPhrases, fillerAdverbs } from '../../../core';
+import { allWeaselWords, nominalizations, hedgingPhrases, fillerAdverbs, aiTellsVocabulary, aiTellsPhrases } from '../../../core';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -50,6 +50,13 @@ export const GET: RequestHandler = async () => {
         description: 'Filler adverbs that add emphasis without substance',
         configurable: true,
         wordCount: fillerAdverbs.length,
+      },
+      {
+        name: 'aiTells',
+        description: 'Words and phrases overrepresented in AI-generated text',
+        configurable: true,
+        wordCount: aiTellsVocabulary.length,
+        phraseCount: aiTellsPhrases.length,
       },
     ],
   }, { headers: CORS_HEADERS });

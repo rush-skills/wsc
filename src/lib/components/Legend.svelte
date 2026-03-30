@@ -32,6 +32,10 @@
       <span class="adverb-example">Filler Adverbs</span>
       <p>Adverbs that add emphasis without substance (totally, utterly, etc.)</p>
     </div>
+    <div class="legend-item">
+      <span class="ai-tells-example">AI Tells</span>
+      <p>Words and phrases that are heavily overrepresented in AI-generated text (delve, tapestry, etc.)</p>
+    </div>
   </div>
   <p class="legend-note">
     Note: The goal is not to eliminate all highlighted issues, but to make conscious choices about their use.

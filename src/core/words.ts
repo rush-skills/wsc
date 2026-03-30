@@ -748,3 +748,96 @@ export const abbreviations = new Set([
   "al", "cf", "ref", "tel", "fax", "misc", "temp",
   "govt", "org", "co", "intl",
 ]);
+
+// AI-tells vocabulary: words that appear 10x-200x more often in AI text than human text
+// Sources: GPTZero corpus analysis, CMU PNAS study
+export const aiTellsVocabulary: Array<{ word: string; reason: string }> = [
+  // Tier 1: Extreme overuse (50x-200x)
+  { word: 'delve', reason: '"delve" appears ~150x more in AI text than human text' },
+  { word: 'tapestry', reason: '"tapestry" (metaphorical) is a strong AI vocabulary marker' },
+  { word: 'multifaceted', reason: '"multifaceted" is heavily overrepresented in AI writing' },
+  { word: 'commendable', reason: '"commendable" is a classic AI praise word' },
+  { word: 'meticulous', reason: '"meticulous" appears far more often in AI than human text' },
+  { word: 'intricate', reason: '"intricate" is disproportionately used by AI models' },
+  // Tier 2: Strong overuse (20x-50x)
+  { word: 'nuanced', reason: '"nuanced" is a frequent AI filler adjective' },
+  { word: 'comprehensive', reason: '"comprehensive" is overused by AI as a generic intensifier' },
+  { word: 'pivotal', reason: '"pivotal" is disproportionately favored by AI' },
+  { word: 'holistic', reason: '"holistic" appears far more in AI text than human writing' },
+  { word: 'groundbreaking', reason: '"groundbreaking" is AI hyperbole' },
+  { word: 'transformative', reason: '"transformative" is a strong AI vocabulary signal' },
+  { word: 'encompasses', reason: '"encompasses" is overrepresented in AI-generated text' },
+  { word: 'embark', reason: '"embark" (especially "embark on a journey") is a known AI tell' },
+  { word: 'fostering', reason: '"fostering" is used ~30x more by AI models' },
+  { word: 'spearheading', reason: '"spearheading" is a classic AI action verb' },
+  { word: 'underscores', reason: '"underscores" is overused by AI for emphasis' },
+  { word: 'underpins', reason: '"underpins" is disproportionately AI-favored' },
+  { word: 'leveraging', reason: '"leveraging" is AI-corporate jargon rarely used naturally' },
+  { word: 'landscape', reason: '"landscape" (metaphorical) is a known AI tell' },
+  { word: 'testament', reason: '"testament" is overused by AI ("a testament to...")' },
+  { word: 'noteworthy', reason: '"noteworthy" is disproportionately AI-generated' },
+  { word: 'invaluable', reason: '"invaluable" is overrepresented in AI text' },
+  { word: 'elevate', reason: '"elevate" is a frequent AI verb' },
+  // Tier 3: Moderate overuse (10x-20x)
+  { word: 'robust', reason: '"robust" is AI jargon — humans rarely use it outside engineering' },
+  { word: 'streamline', reason: '"streamline" is overrepresented in AI-generated content' },
+  { word: 'crucial', reason: '"crucial" is overused by AI where "important" would do' },
+  { word: 'realm', reason: '"realm" (metaphorical, "in the realm of") is AI-favored' },
+  { word: 'paradigm', reason: '"paradigm" is overrepresented in AI text' },
+  { word: 'myriad', reason: '"myriad" is disproportionately AI-generated' },
+  { word: 'plethora', reason: '"plethora" is a known AI vocabulary marker' },
+  { word: 'beacon', reason: '"beacon" (metaphorical) is AI-overused' },
+  { word: 'bustling', reason: '"bustling" is overrepresented in AI descriptions' },
+  { word: 'camaraderie', reason: '"camaraderie" appears ~150x more in ChatGPT text (CMU study)' },
+  { word: 'resonate', reason: '"resonate" / "resonates" is disproportionately AI' },
+  { word: 'bespoke', reason: '"bespoke" is overrepresented in AI writing' },
+  { word: 'esteemed', reason: '"esteemed" is AI-formal language rarely used naturally' },
+  { word: 'unparalleled', reason: '"unparalleled" is AI superlative overuse' },
+  { word: 'harness', reason: '"harness" (as verb) is AI-overused' },
+  { word: 'adept', reason: '"adept" is disproportionately AI-generated' },
+  { word: 'aligns', reason: '"aligns" / "aligns with" is AI transition overuse' },
+];
+
+// AI-tells phrases: multi-word patterns that are strong AI indicators
+export const aiTellsPhrases: Array<{ phrase: string; reason: string }> = [
+  // Sycophantic / conversational openers
+  { phrase: 'great question', reason: 'Sycophantic AI opener — humans rarely say this in writing' },
+  { phrase: 'excellent question', reason: 'Sycophantic AI opener' },
+  { phrase: 'glad you asked', reason: 'AI conversational filler' },
+  // Hedging preambles
+  { phrase: "it's important to note that", reason: 'AI hedging preamble — add the point directly' },
+  { phrase: "it's worth noting that", reason: 'AI hedging filler' },
+  { phrase: "it's worth mentioning that", reason: 'AI hedging filler — just mention it' },
+  { phrase: 'it should be noted that', reason: 'AI passive hedge' },
+  // Filler openers
+  { phrase: "in today's fast-paced world", reason: 'AI cliche opener — 107x more in AI text than human' },
+  { phrase: "in today's digital age", reason: 'AI cliche opener' },
+  { phrase: "in today's rapidly evolving", reason: 'AI cliche opener variant' },
+  { phrase: 'in the realm of', reason: 'AI filler phrase — 50x overrepresentation' },
+  { phrase: 'in an era of', reason: 'AI scene-setting cliche' },
+  { phrase: 'at its core', reason: 'AI emphasis filler — often adds nothing' },
+  { phrase: 'at the end of the day', reason: 'AI cliche wrap-up phrase' },
+  { phrase: 'when it comes to', reason: 'AI transition filler — overused as topic introducer' },
+  // Overly formal transitions
+  { phrase: 'furthermore,', reason: 'AI transition — "also" or "and" is more natural' },
+  { phrase: 'moreover,', reason: 'AI transition overuse' },
+  { phrase: 'additionally,', reason: 'AI transition overuse — "also" is more natural' },
+  { phrase: 'consequently,', reason: 'AI transition — "so" is more natural in most contexts' },
+  { phrase: 'in conclusion,', reason: 'AI structural cliche — rarely needed' },
+  // "Let's" constructions
+  { phrase: "let's dive in", reason: 'AI conversational filler' },
+  { phrase: "let's explore", reason: 'AI conversational filler — just explore it' },
+  { phrase: "let's delve", reason: 'AI filler combining two tells' },
+  { phrase: "let's break this down", reason: 'AI structural filler' },
+  { phrase: 'without further ado', reason: 'AI filler phrase before getting to the point' },
+  // Superlative/emphasis
+  { phrase: 'a testament to', reason: 'AI emphasis cliche' },
+  { phrase: 'plays a crucial role', reason: 'AI emphasis cliche' },
+  { phrase: "it's not just about", reason: 'AI negation-pivot opener' },
+  // Wrap-up phrases
+  { phrase: 'embrace the', reason: 'AI call-to-action cliche ("embrace the future")' },
+  { phrase: 'navigate the complexities', reason: 'AI closing cliche' },
+  { phrase: 'pave the way for', reason: 'AI forward-looking cliche' },
+  { phrase: 'the possibilities are endless', reason: 'AI optimism cliche' },
+  { phrase: 'only time will tell', reason: 'AI non-committal closing' },
+];

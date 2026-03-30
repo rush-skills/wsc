@@ -1,6 +1,6 @@
-import type { WscConfig, WordListDetectorConfig, NominalizationDetectorConfig, LongSentenceDetectorConfig } from './config.js';
-import { mergeConfig, applyWordListOverrides, applyNominalizationOverrides } from './config.js';
-import { allWeaselWords, nominalizations, hedgingPhrases, fillerAdverbs } from './words.js';
+import type { WscConfig, WordListDetectorConfig, NominalizationDetectorConfig, LongSentenceDetectorConfig, AiTellsDetectorConfig } from './config.js';
+import { mergeConfig, applyWordListOverrides, applyNominalizationOverrides, applyAiTellsVocabOverrides, applyAiTellsPhraseOverrides } from './config.js';
+import { allWeaselWords, nominalizations, hedgingPhrases, fillerAdverbs, aiTellsVocabulary, aiTellsPhrases } from './words.js';
 import {
   detectWeaselWords,
   detectPassiveVoice,
@@ -9,6 +9,7 @@ import {
   detectNominalizations,
   detectHedging,
   detectAdverbs,
+  detectAiTells,
 } from './detector.js';
 
 export interface AnalysisResult {
@@ -20,6 +21,7 @@ export interface AnalysisResult {
     nominalizations: Array<{ word: string; suggestion: string; index: number; length: number }>;
     hedging: Array<{ phrase: string; index: number; length: number }>;
     adverbs: Array<{ word: string; index: number; length: number }>;
+    aiTells: Array<{ text: string; index: number; length: number; reason: string }>;
   };
   summary: {
     total: number;
@@ -30,6 +32,7 @@ export interface AnalysisResult {
     nominalizations: number;
     hedging: number;
     adverbs: number;
+    aiTells: number;
   };
   meta: {
     characterCount: number;
@@ -51,6 +54,7 @@ export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
   const nm = d.nominalizations! as NominalizationDetectorConfig;
   const hd = d.hedging! as WordListDetectorConfig;
   const ad = d.adverbs! as WordListDetectorConfig;
+  const at = d.aiTells! as AiTellsDetectorConfig;
 
   const weaselWordList = ww.enabled
     ? applyWordListOverrides(allWeaselWords, ww.add, ww.remove)
@@ -68,6 +72,14 @@ export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
     ? applyWordListOverrides(fillerAdverbs, ad.add, ad.remove)
     : [];
 
+  const aiVocabList = at.enabled
+    ? applyAiTellsVocabOverrides(aiTellsVocabulary, at.add, at.remove)
+    : [];
+
+  const aiPhraseList = at.enabled
+    ? applyAiTellsPhraseOverrides(aiTellsPhrases, at.addPhrases, at.removePhrases)
+    : [];
+
   const issues = {
     weaselWords: ww.enabled ? detectWeaselWords(text, weaselWordList) : [],
     passiveVoice: pv.enabled ? detectPassiveVoice(text) : [],
@@ -76,6 +88,7 @@ export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
     nominalizations: nm.enabled ? detectNominalizations(text, nominalizationList) : [],
     hedging: hd.enabled ? detectHedging(text, hedgingList) : [],
     adverbs: ad.enabled ? detectAdverbs(text, adverbList) : [],
+    aiTells: at.enabled ? detectAiTells(text, aiVocabList, aiPhraseList) : [],
   };
 
   const summary = {
@@ -87,9 +100,11 @@ export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
     nominalizations: issues.nominalizations.length,
     hedging: issues.hedging.length,
     adverbs: issues.adverbs.length,
+    aiTells: issues.aiTells.length,
   };
   summary.total = summary.weaselWords + summary.passiveVoice + summary.duplicateWords +
-    summary.longSentences + summary.nominalizations + summary.hedging + summary.adverbs;
+    summary.longSentences + summary.nominalizations + summary.hedging + summary.adverbs +
+    summary.aiTells;
 
   const sentenceMatches = text.match(/[^.!?]*[.!?](?:\s|$)/g);
   const sentenceCount = sentenceMatches ? sentenceMatches.length : (text.trim() ? 1 : 0);

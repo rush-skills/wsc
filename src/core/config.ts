@@ -18,6 +18,13 @@ export interface LongSentenceDetectorConfig extends DetectorConfig {
   maxWords?: number;
 }
 
+export interface AiTellsDetectorConfig extends DetectorConfig {
+  add?: string[];
+  remove?: string[];
+  addPhrases?: string[];
+  removePhrases?: string[];
+}
+
 export interface WscConfig {
   $schema?: string;
   detectors?: {
@@ -28,6 +35,7 @@ export interface WscConfig {
     nominalizations?: NominalizationDetectorConfig;
     hedging?: WordListDetectorConfig;
     adverbs?: WordListDetectorConfig;
+    aiTells?: AiTellsDetectorConfig;
   };
 }
 
@@ -42,19 +50,21 @@ export const DEFAULT_CONFIG: Required<Pick<WscConfig, 'detectors'>> & WscConfig 
     nominalizations: { enabled: true },
     hedging: { enabled: true },
     adverbs: { enabled: true },
+    aiTells: { enabled: true },
   },
 };
 
 const KNOWN_TOP_LEVEL_KEYS = new Set(['$schema', 'detectors']);
 const KNOWN_DETECTOR_NAMES = new Set([
   'weaselWords', 'passiveVoice', 'duplicateWords',
-  'longSentences', 'nominalizations', 'hedging', 'adverbs',
+  'longSentences', 'nominalizations', 'hedging', 'adverbs', 'aiTells',
 ]);
 const WORD_LIST_DETECTORS = new Set(['weaselWords', 'hedging', 'adverbs']);
 const BASE_DETECTOR_KEYS = new Set(['enabled']);
 const WORD_LIST_DETECTOR_KEYS = new Set(['enabled', 'add', 'remove']);
 const LONG_SENTENCE_KEYS = new Set(['enabled', 'maxWords']);
 const NOMINALIZATION_KEYS = new Set(['enabled', 'add', 'remove']);
+const AI_TELLS_KEYS = new Set(['enabled', 'add', 'remove', 'addPhrases', 'removePhrases']);
 
 // === Functions ===
 
@@ -129,6 +139,56 @@ export function applyNominalizationOverrides(
   return result;
 }
 
+export function applyAiTellsVocabOverrides(
+  baseList: Array<{ word: string; reason: string }>,
+  add?: string[],
+  remove?: string[],
+): Array<{ word: string; reason: string }> {
+  let result = baseList.map(item => ({ ...item }));
+
+  if (remove && remove.length > 0) {
+    const removeLower = new Set(remove.map(w => w.toLowerCase()));
+    result = result.filter(item => !removeLower.has(item.word.toLowerCase()));
+  }
+
+  if (add && add.length > 0) {
+    const existingLower = new Set(result.map(item => item.word.toLowerCase()));
+    for (const word of add) {
+      if (!existingLower.has(word.toLowerCase())) {
+        result.push({ word, reason: `"${word}" flagged as AI vocabulary (custom rule)` });
+        existingLower.add(word.toLowerCase());
+      }
+    }
+  }
+
+  return result;
+}
+
+export function applyAiTellsPhraseOverrides(
+  baseList: Array<{ phrase: string; reason: string }>,
+  add?: string[],
+  remove?: string[],
+): Array<{ phrase: string; reason: string }> {
+  let result = baseList.map(item => ({ ...item }));
+
+  if (remove && remove.length > 0) {
+    const removeLower = new Set(remove.map(p => p.toLowerCase()));
+    result = result.filter(item => !removeLower.has(item.phrase.toLowerCase()));
+  }
+
+  if (add && add.length > 0) {
+    const existingLower = new Set(result.map(item => item.phrase.toLowerCase()));
+    for (const phrase of add) {
+      if (!existingLower.has(phrase.toLowerCase())) {
+        result.push({ phrase, reason: `"${phrase}" flagged as AI phrase (custom rule)` });
+        existingLower.add(phrase.toLowerCase());
+      }
+    }
+  }
+
+  return result;
+}
+
 export function validateConfig(config: unknown): string[] {
   const errors: string[] = [];
 
@@ -177,6 +237,8 @@ export function validateConfig(config: unknown): string[] {
       allowedKeys = LONG_SENTENCE_KEYS;
     } else if (name === 'nominalizations') {
       allowedKeys = NOMINALIZATION_KEYS;
+    } else if (name === 'aiTells') {
+      allowedKeys = AI_TELLS_KEYS;
     } else if (WORD_LIST_DETECTORS.has(name)) {
       allowedKeys = WORD_LIST_DETECTOR_KEYS;
     } else {
@@ -208,6 +270,16 @@ export function validateConfig(config: unknown): string[] {
       if (detObj.remove !== undefined) {
         if (!Array.isArray(detObj.remove) || !detObj.remove.every((v: unknown) => typeof v === 'string')) {
           errors.push(`detectors.${name}.remove must be an array of strings`);
+        }
+      }
+    }
+
+    if (name === 'aiTells') {
+      for (const field of ['add', 'remove', 'addPhrases', 'removePhrases']) {
+        if (detObj[field] !== undefined) {
+          if (!Array.isArray(detObj[field]) || !(detObj[field] as unknown[]).every((v: unknown) => typeof v === 'string')) {
+            errors.push(`detectors.${name}.${field} must be an array of strings`);
+          }
         }
       }
     }

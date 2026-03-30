@@ -8,6 +8,8 @@ import {
   hedgingPhrases as defaultHedgingPhrases,
   fillerAdverbs as defaultFillerAdverbs,
   abbreviations,
+  aiTellsVocabulary as defaultAiVocabulary,
+  aiTellsPhrases as defaultAiPhrases,
 } from "./words.js";
 
 export function detectWeaselWords(text: string, wordList?: string[]): Array<{
@@ -282,5 +284,57 @@ export function detectAdverbs(text: string, wordList?: string[]): Array<{
     });
   }
 
+  return results;
+}
+
+// ─── AI Tells Detector ─────────────────────────────────────────────────────
+
+function escapeForRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function detectAiTells(
+  text: string,
+  vocabularyList?: Array<{ word: string; reason: string }>,
+  phraseList?: Array<{ phrase: string; reason: string }>,
+): Array<{ text: string; index: number; length: number; reason: string }> {
+  const results: Array<{ text: string; index: number; length: number; reason: string }> = [];
+  const vocab = vocabularyList ?? defaultAiVocabulary;
+  const phrases = phraseList ?? defaultAiPhrases;
+
+  // Vocabulary tells: whole-word matches
+  for (const { word, reason } of vocab) {
+    const regex = new RegExp(`\\b${escapeForRegex(word)}\\b`, 'gi');
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      results.push({
+        text: match[0],
+        index: match.index,
+        length: match[0].length,
+        reason,
+      });
+    }
+  }
+
+  // Phrase tells: case-insensitive substring matches
+  const lowerText = text.toLowerCase();
+  for (const { phrase, reason } of phrases) {
+    const lowerPhrase = phrase.toLowerCase();
+    let startIdx = 0;
+    while (true) {
+      const idx = lowerText.indexOf(lowerPhrase, startIdx);
+      if (idx === -1) break;
+      results.push({
+        text: text.substring(idx, idx + phrase.length),
+        index: idx,
+        length: phrase.length,
+        reason,
+      });
+      startIdx = idx + 1;
+    }
+  }
+
+  // Sort by position
+  results.sort((a, b) => a.index - b.index);
   return results;
 }

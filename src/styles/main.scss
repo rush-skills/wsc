@@ -27,6 +27,7 @@
   --nominalization-bg: #d4b8ff;
   --hedging-bg: #b8e6cc;
   --adverb-bg: #ffb8d9;
+  --ai-tells-bg: #e0cdb5;
   --weasel-word-text: #664400;
   --passive-voice-text: #003366;
   --duplicate-word-text: #660000;
@@ -34,6 +35,7 @@
   --nominalization-text: #3d0066;
   --hedging-text: #004d26;
   --adverb-text: #660033;
+  --ai-tells-text: #5c4827;
 
   --button-hover: rgba(0, 0, 0, 0.04);
   --button-active: rgba(0, 0, 0, 0.07);
@@ -71,6 +73,7 @@
   --nominalization-bg: #d4b8ff;
   --hedging-bg: #b8e6cc;
   --adverb-bg: #ffb8d9;
+  --ai-tells-bg: #e0cdb5;
   --weasel-word-text: #664400;
   --passive-voice-text: #003366;
   --duplicate-word-text: #660000;
@@ -78,6 +81,7 @@
   --nominalization-text: #3d0066;
   --hedging-text: #004d26;
   --adverb-text: #660033;
+  --ai-tells-text: #5c4827;
 
   --button-hover: rgba(0, 0, 0, 0.04);
   --button-active: rgba(0, 0, 0, 0.07);
@@ -112,6 +116,7 @@
   --nominalization-bg: rgba(190, 150, 255, 0.25);
   --hedging-bg: rgba(100, 230, 170, 0.2);
   --adverb-bg: rgba(255, 150, 200, 0.25);
+  --ai-tells-bg: rgba(200, 180, 140, 0.25);
   --weasel-word-text: #ffee99;
   --passive-voice-text: #99ddff;
   --duplicate-word-text: #ffaaaa;
@@ -119,6 +124,7 @@
   --nominalization-text: #d4b8ff;
   --hedging-text: #b8e6cc;
   --adverb-text: #ffb8d9;
+  --ai-tells-text: #e0cdb5;
 
   --button-hover: rgba(255, 255, 255, 0.05);
   --button-active: rgba(255, 255, 255, 0.08);
@@ -548,6 +554,7 @@ main {
 .nominalization-highlight { background-color: var(--nominalization-bg); }
 .hedging-highlight { background-color: var(--hedging-bg); }
 .adverb-highlight { background-color: var(--adverb-bg); }
+.ai-tells-highlight { background-color: var(--ai-tells-bg); }
 
 .duplicate-highlight-container {
   position: absolute;
@@ -636,6 +643,7 @@ main {
 .nominalization-icon { background-color: var(--nominalization-bg); color: var(--nominalization-text); }
 .hedging-icon { background-color: var(--hedging-bg); color: var(--hedging-text); }
 .adverb-icon { background-color: var(--adverb-bg); color: var(--adverb-text); }
+.ai-tells-icon { background-color: var(--ai-tells-bg); color: var(--ai-tells-text); }
 
 .stat-label {
   font-weight: 500;
@@ -821,6 +829,7 @@ main {
 .nominalization-example { background-color: var(--nominalization-bg); color: var(--nominalization-text); }
 .hedging-example { background-color: var(--hedging-bg); color: var(--hedging-text); }
 .adverb-example { background-color: var(--adverb-bg); color: var(--adverb-text); }
+.ai-tells-example { background-color: var(--ai-tells-bg); color: var(--ai-tells-text); }
 
 .word-count-badge,
 .suggestion-badge {

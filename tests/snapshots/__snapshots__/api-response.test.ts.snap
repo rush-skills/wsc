@@ -4,6 +4,7 @@ exports[`API response snapshots > clean text response structure 1`] = `
 {
   "issues": {
     "adverbs": [],
+    "aiTells": [],
     "duplicateWords": [],
     "hedging": [],
     "longSentences": [],
@@ -18,6 +19,7 @@ exports[`API response snapshots > clean text response structure 1`] = `
   },
   "summary": {
     "adverbs": 0,
+    "aiTells": 0,
     "duplicateWords": 0,
     "hedging": 0,
     "longSentences": 0,
@@ -33,6 +35,7 @@ exports[`API response snapshots > text with weasel word and passive voice 1`] = 
 {
   "issues": {
     "adverbs": [],
+    "aiTells": [],
     "duplicateWords": [],
     "hedging": [],
     "longSentences": [],
@@ -65,6 +68,7 @@ exports[`API response snapshots > text with weasel word and passive voice 1`] = 
   },
   "summary": {
     "adverbs": 0,
+    "aiTells": 0,
     "duplicateWords": 0,
     "hedging": 0,
     "longSentences": 0,

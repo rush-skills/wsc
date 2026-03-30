@@ -6,6 +6,7 @@
   export let nominalizationResults: Array<{ word: string; suggestion: string; index: number; length: number }>;
   export let hedgingResults: Array<{ phrase: string; index: number; length: number }>;
   export let adverbResults: Array<{ word: string; index: number; length: number }>;
+  export let aiTellsResults: Array<{ text: string; index: number; length: number; reason: string }>;
 
   export let weaselCount: number;
   export let passiveCount: number;
@@ -14,6 +15,7 @@
   export let nominalizationCount: number;
   export let hedgingCount: number;
   export let adverbCount: number;
+  export let aiTellsCount: number;
 
   export let formatPosition: (index: number) => string;
   export let goToPosition: (index: number) => void;
@@ -137,6 +139,24 @@
       {#each adverbResults as { word, index }}
         <div class="issue-item">
           <span class="adverb-example">{word}</span>
+          <span class="position-indicator">{formatPosition(index)}</span>
+          <button class="goto-button" on:click={() => goToPosition(index)}>
+            Go to
+          </button>
+        </div>
+      {/each}
+    </div>
+  </div>
+{/if}
+
+{#if aiTellsCount > 0}
+  <div class="issue-section" id="issues-aiTells">
+    <h3>AI Tells</h3>
+    <div class="issue-list">
+      {#each aiTellsResults as { text, index, reason }}
+        <div class="issue-item">
+          <span class="ai-tells-example">{text}</span>
+          <span class="suggestion-badge">{reason}</span>
           <span class="position-indicator">{formatPosition(index)}</span>
           <button class="goto-button" on:click={() => goToPosition(index)}>
             Go to

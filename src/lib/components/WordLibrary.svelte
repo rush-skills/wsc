@@ -2,18 +2,23 @@
   import {
     allWeaselWords, nominalizations, hedgingPhrases,
     fillerAdverbs, irregularVerbs, abbreviations,
+    aiTellsVocabulary, aiTellsPhrases,
   } from '../../core';
 
   let searchQuery = '';
   let activeGroup = 'weaselWords';
 
   const abbreviationsList = [...abbreviations];
+  const aiVocabWords = aiTellsVocabulary.map(v => v.word);
+  const aiPhraseStrings = aiTellsPhrases.map(p => p.phrase);
 
   const groups = [
     { key: 'weaselWords', label: 'Weasel Words', count: allWeaselWords.length, color: 'var(--weasel-word-bg)', textColor: 'var(--weasel-word-text)' },
     { key: 'nominalizations', label: 'Nominalizations', count: nominalizations.length, color: 'var(--nominalization-bg)', textColor: 'var(--nominalization-text)' },
     { key: 'hedging', label: 'Hedging Phrases', count: hedgingPhrases.length, color: 'var(--hedging-bg)', textColor: 'var(--hedging-text)' },
     { key: 'adverbs', label: 'Filler Adverbs', count: fillerAdverbs.length, color: 'var(--adverb-bg)', textColor: 'var(--adverb-text)' },
+    { key: 'aiTellsVocab', label: 'AI Tells (Words)', count: aiVocabWords.length, color: 'var(--ai-tells-bg)', textColor: 'var(--ai-tells-text)' },
+    { key: 'aiTellsPhrases', label: 'AI Tells (Phrases)', count: aiPhraseStrings.length, color: 'var(--ai-tells-bg)', textColor: 'var(--ai-tells-text)' },
     { key: 'irregularVerbs', label: 'Irregular Verbs', count: irregularVerbs.length, color: 'var(--passive-voice-bg)', textColor: 'var(--passive-voice-text)' },
     { key: 'abbreviations', label: 'Abbreviations', count: abbreviationsList.length, color: 'var(--long-sentence-bg)', textColor: 'var(--long-sentence-text)' },
   ] as const;
@@ -36,6 +41,8 @@
   $: filteredNom = filterNominalizations();
   $: filteredHedging = filterStrings(hedgingPhrases);
   $: filteredAdverbs = filterStrings(fillerAdverbs);
+  $: filteredAiVocab = filterStrings(aiVocabWords);
+  $: filteredAiPhrases = filterStrings(aiPhraseStrings);
   $: filteredVerbs = filterStrings(irregularVerbs);
   $: filteredAbbrevs = filterStrings(abbreviationsList);
 
@@ -45,6 +52,8 @@
       case 'nominalizations': return { items: filteredNom, total: nominalizations.length };
       case 'hedging': return { items: filteredHedging, total: hedgingPhrases.length };
       case 'adverbs': return { items: filteredAdverbs, total: fillerAdverbs.length };
+      case 'aiTellsVocab': return { items: filteredAiVocab, total: aiVocabWords.length };
+      case 'aiTellsPhrases': return { items: filteredAiPhrases, total: aiPhraseStrings.length };
       case 'irregularVerbs': return { items: filteredVerbs, total: irregularVerbs.length };
       case 'abbreviations': return { items: filteredAbbrevs, total: abbreviationsList.length };
       default: return { items: [], total: 0 };

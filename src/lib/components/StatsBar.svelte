@@ -8,6 +8,7 @@
   export let nominalizationCount: number;
   export let hedgingCount: number;
   export let adverbCount: number;
+  export let aiTellsCount: number;
 
   const dispatch = createEventDispatcher<{ statclick: { detector: string } }>();
 
@@ -19,6 +20,7 @@
     { key: 'nominalizations', icon: 'N', iconClass: 'nominalization-icon', label: 'Nominalizations', count: nominalizationCount },
     { key: 'hedging', icon: 'H', iconClass: 'hedging-icon', label: 'Hedging', count: hedgingCount },
     { key: 'adverbs', icon: 'A', iconClass: 'adverb-icon', label: 'Filler Adverbs', count: adverbCount },
+    { key: 'aiTells', icon: 'AI', iconClass: 'ai-tells-icon', label: 'AI Tells', count: aiTellsCount },
   ];
 
   function handleClick(detector: string) {
