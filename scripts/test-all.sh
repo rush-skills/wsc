@@ -308,7 +308,7 @@ MCP_LIST=$(curl -s -X POST "$BASE/mcp" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}')
 MCP_TOOL_COUNT=$(echo "$MCP_LIST" | json_field "len(d['result']['tools'])")
 MCP_HAS_LWL=$(echo "$MCP_LIST" | json_field "str('list_word_lists' in [t['name'] for t in d['result']['tools']]).lower()")
-check "MCP tools/list returns 4 tools" "$([ "$MCP_TOOL_COUNT" = "4" ] && echo true || echo false)"
+check "MCP tools/list returns 3 tools" "$([ "$MCP_TOOL_COUNT" = "3" ] && echo true || echo false)"
 check "MCP has list_word_lists tool" "$MCP_HAS_LWL"
 
 echo "  check_text — all detectors..."
@@ -335,13 +335,6 @@ MCP_FIX=$(curl -s -X POST "$BASE/mcp" \
   -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"fix_duplicates","arguments":{"text":"The the code is is good."}}}')
 MCP_FIX_TEXT=$(echo "$MCP_FIX" | json_field "d['result']['content'][0]['text']")
 check "MCP fix_duplicates removes duplicates" "$(echo "$MCP_FIX_TEXT" | grep -q "Removed" && echo true || echo false)"
-
-echo "  list_weasel_words..."
-MCP_LWW=$(curl -s -X POST "$BASE/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"list_weasel_words","arguments":{}}}')
-MCP_LWW_TEXT=$(echo "$MCP_LWW" | json_field "d['result']['content'][0]['text']")
-check "MCP list_weasel_words returns list" "$(echo "$MCP_LWW_TEXT" | grep -q "very" && echo true || echo false)"
 
 echo "  list_word_lists..."
 MCP_LWLS=$(curl -s -X POST "$BASE/mcp" \
