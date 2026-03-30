@@ -1077,12 +1077,21 @@ footer a:hover {
 
 @media (max-width: 768px) {
   .integration-tabs {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .integration-tab {
     font-size: 0.85rem;
     padding: 0.5rem 0.8rem;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .tools-grid {
