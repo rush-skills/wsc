@@ -44,13 +44,30 @@ node cli/dist/cli/index.js check "**/*.md"  # Run check
 All consumers call `analyzeText()` rather than individual detectors. Adding a new detector means updating `analyzer.ts` once, not every consumer.
 
 ### Surfaces
-- **Web Editor** (`src/lib/App.svelte`) — Svelte 5 client-side editor. Calls `analyzeText()` directly. Shows all 7 detector types with color-coded highlights.
+- **Web Editor** (`src/lib/App.svelte`) — Svelte 5 client-side editor with extracted components in `src/lib/components/`. Calls `analyzeText()` with optional `WscConfig` from ConfigPanel. Shows all 7 detector types with color-coded highlights.
+- **Layout** (`src/routes/+layout.svelte`) — Shared header (logo, nav: Editor/Word Library/Docs, theme switcher), footer. Theme state in `src/lib/stores/theme.ts`.
+- **Docs Page** (`src/routes/docs/+page.svelte`) — Documentation rendered from Markdown files in `src/docs/` using `marked`. Supports `?section=` deep-linking.
+- **Word Library** (`src/routes/words/+page.svelte`) — Searchable browser for all word/phrase lists with suggest-a-word form.
 - **HTTP API** (`src/routes/api/check/+server.ts`) — `POST /api/check` accepts `{text, config?}`. GET returns API docs. `GET /api/detectors` lists all detectors with counts.
 - **MCP Route** (`src/routes/mcp/+server.ts`) — Streamable HTTP transport. Delegates to `src/mcp/handler.ts` with 4 tools: `check_text` (with config), `fix_duplicates`, `list_weasel_words`, `list_word_lists`.
 - **Standalone MCP Server** (`mcp-server/`) — npm package `wsc-mcp`. Adds `check_file` with auto-discovery of `.wscrc.json`. Both `check_text` and `check_file` accept config param.
 - **CLI** (`cli/`) — `wsc check`, `wsc list`, `wsc init`. Output formats: text, json, github. Auto-discovers `.wscrc.json`.
 - **Health** (`src/routes/health/+server.ts`) — `GET /health` runs a known-text smoke test.
 - **GitHub Action** (`action/action.yml`) — Composite action using wsc-cli.
+
+### Web App Components (`src/lib/components/`)
+- `StatsBar.svelte` — Clickable stat boxes (reactive `$:` array pattern for Svelte 4 compat)
+- `IssueList.svelte` — 7 issue sections with scroll-target `id="issues-{detector}"`
+- `ConfigPanel.svelte` — Toggle switches, word list editors, JSON preview. Reactive `$:` array for detector toggles.
+- `IntegrationSection.svelte` — Cards linking to `/docs?section=` + embedded ApiTester
+- `ApiTester.svelte` — Interactive POST /api/check tester
+- `Legend.svelte` — How-to-use legend with link to /words
+- `WordLibrary.svelte` — Searchable word list browser with tab groups
+- `SuggestWord.svelte` — GitHub issue pre-filler for word suggestions
+- `DocsPage.svelte` — Loads `.md` files from `src/docs/` via `?raw` imports, renders with `marked`
+
+### Documentation Content (`src/docs/`)
+Markdown files imported at build time: `getting-started.md`, `config.md`, `api.md`, `mcp.md`, `cli.md`, `github-action.md`, `contributing.md`. Edit these files to update website documentation.
 
 ### Config System
 `.wscrc.json` files configure detectors. JSON Schema at `static/schema.json`. Config supports `enabled`, `add`/`remove` word list overrides, and `maxWords` for long sentences. The API and MCP tools accept inline config objects.

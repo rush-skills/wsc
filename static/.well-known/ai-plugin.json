@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Writing Style Checker",
+  "name_for_model": "writing_style_checker",
+  "description_for_human": "Detect weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs in your writing.",
+  "description_for_model": "A writing analysis tool that detects 7 types of writing issues: weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging language, and filler adverbs. Send text via POST /api/check to receive structured results with issue positions and context. Supports custom configuration via a config object to enable/disable detectors and customize word lists. Also available as an MCP server at /mcp.",
+  "api": {
+    "type": "openapi",
+    "url": "https://wsc.theserverless.dev/api/check"
+  },
+  "auth": {
+    "type": "none"
+  },
+  "logo_url": "https://wsc.theserverless.dev/images/logo-small.png",
+  "contact_email": "hello@anks.in",
+  "legal_info_url": "https://github.com/theserverlessdev/wsc/blob/master/LICENSE"
+}

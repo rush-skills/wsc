@@ -1,0 +1,251 @@
+# Writing Style Checker (WSC) — Full LLM Context
+
+> Free tool to detect weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs in technical writing.
+
+## Overview
+
+Writing Style Checker detects 7 types of writing issues in real-time. It runs entirely client-side in the web editor (no data sent to servers). Available as a web app, HTTP API, MCP server, CLI tool, and GitHub Action.
+
+Website: https://wsc.theserverless.dev
+Repository: https://github.com/theserverlessdev/wsc
+License: MIT
+
+---
+
+## Detectors
+
+### 1. Weasel Words
+Words that sound good without conveying specific information.
+Examples: very, extremely, various, fairly, several, quite, remarkably, significantly, substantially, clearly, relatively, completely, virtually, somewhat, basically, generally, arguably, almost, apparently
+Total: 95 words. Configurable with add/remove overrides.
+
+### 2. Passive Voice
+Constructions where the subject receives the action (auxiliary verb + past participle).
+Pattern: auxiliary verbs (am, are, is, was, were, be, been, being) + irregular past participle.
+Examples: "was written", "has been done", "will be created"
+Uses 262 irregular verb forms. Pattern-based, not configurable via word lists.
+
+### 3. Duplicate Words
+Adjacent repeated words, often typos.
+Pattern: detects any word repeated immediately after itself (case-insensitive).
+Examples: "the the", "is is", "and and"
+Pattern-based, not configurable via word lists.
+
+### 4. Long Sentences
+Sentences exceeding a configurable word count threshold.
+Default: 30 words. Configurable via maxWords (integer, min 1).
+
+### 5. Nominalizations
+Nouns derived from verbs that could be replaced with the stronger verb form.
+Each entry has a word and a suggestion.
+Examples: implementation → implement, optimization → optimize, utilization → use, establishment → establish
+Total: 230 pairs. Configurable with add (word+suggestion pairs) / remove overrides.
+
+### 6. Hedging Language
+Phrases that weaken assertions and reduce confidence in writing.
+Examples: I think, it seems, perhaps, could be, might be, sort of, to some extent, in my opinion, it appears
+Total: 100 phrases. Configurable with add/remove overrides.
+
+### 7. Filler Adverbs
+Adverbs that add emphasis without substance.
+Examples: totally, utterly, basically, literally, actually, really, simply, honestly, frankly, clearly
+Total: 140 adverbs. Configurable with add/remove overrides.
+
+---
+
+## HTTP API
+
+### POST /api/check
+
+Analyze text for all 7 writing issues.
+
+Request:
+```json
+{
+  "text": "The code was written very quickly.",
+  "config": {
+    "detectors": {
+      "adverbs": { "enabled": false }
+    }
+  }
+}
+```
+
+Response:
+```json
+{
+  "summary": {
+    "total": 2,
+    "weaselWords": 1,
+    "passiveVoice": 1,
+    "duplicateWords": 0,
+    "longSentences": 0,
+    "nominalizations": 0,
+    "hedging": 0,
+    "adverbs": 0
+  },
+  "issues": {
+    "weaselWords": [{ "word": "very", "index": 21, "length": 4, "line": 1, "column": 22, "context": "...written very quickly..." }],
+    "passiveVoice": [{ "phrase": "was written", "index": 9, "length": 11, "line": 1, "column": 10, "context": "...code was written very..." }],
+    "duplicateWords": [],
+    "longSentences": [],
+    "nominalizations": [],
+    "hedging": [],
+    "adverbs": []
+  },
+  "meta": {
+    "characterCount": 34,
+    "wordCount": 6,
+    "processingTimeMs": 2
+  }
+}
+```
+
+Limits: 100,000 characters per request. CORS enabled for all origins.
+
+### GET /api/detectors
+
+Returns metadata about all detectors and their word/phrase counts.
+
+### GET /health
+
+Returns health check with a smoke test result.
+
+---
+
+## MCP Server
+
+### Remote (Streamable HTTP)
+URL: https://wsc.theserverless.dev/mcp
+Protocol: MCP over Streamable HTTP transport
+No installation required.
+
+Config for Claude Desktop / Claude Code:
+```json
+{
+  "mcpServers": {
+    "writing-style-checker": {
+      "type": "url",
+      "url": "https://wsc.theserverless.dev/mcp"
+    }
+  }
+}
+```
+
+### Local (stdio)
+Package: wsc-mcp (npm)
+Protocol: MCP over stdio transport
+
+Config for Claude Desktop:
+```json
+{
+  "mcpServers": {
+    "writing-style-checker": {
+      "command": "npx",
+      "args": ["wsc-mcp"]
+    }
+  }
+}
+```
+
+### MCP Tools
+
+1. **check_text** — Analyze text for all 7 writing issues. Accepts optional config object.
+2. **check_file** — Read a file and analyze it (local MCP only). Auto-discovers .wscrc.json config.
+3. **fix_duplicates** — Remove duplicate adjacent words and return cleaned text.
+4. **list_weasel_words** — Return the complete list of flagged weasel words.
+5. **list_word_lists** — Return info about all detector word/phrase lists with counts.
+
+---
+
+## CLI
+
+Package: wsc-cli (npm)
+
+### Commands
+
+```bash
+# Check files
+npx wsc-cli check "**/*.md"
+npx wsc-cli check "docs/**/*.md" --config .wscrc.json
+echo "text" | npx wsc-cli check --stdin
+
+# List word lists
+npx wsc-cli list weaselWords
+
+# Create config file
+npx wsc-cli init
+```
+
+### Output Formats
+- `--format text` (default): Human-readable with file:line:column
+- `--format json`: Structured JSON
+- `--format github`: ::warning annotations for GitHub Actions
+
+---
+
+## GitHub Action
+
+```yaml
+- uses: theserverlessdev/wsc@master
+  with:
+    files: "**/*.md"           # Glob pattern (default: **/*.md)
+    config: ".wscrc.json"      # Path to config file (optional)
+    max-warnings: "10"         # Max warnings before failing (default: unlimited)
+    only-changed: "true"       # Only check PR-changed files (default: false)
+```
+
+Output: `total-issues` — total number of issues found.
+
+---
+
+## Configuration (.wscrc.json)
+
+JSON Schema: https://wsc.theserverless.dev/schema.json
+
+```json
+{
+  "$schema": "https://wsc.theserverless.dev/schema.json",
+  "detectors": {
+    "weaselWords": {
+      "enabled": true,
+      "add": ["arguably"],
+      "remove": ["many"]
+    },
+    "passiveVoice": {
+      "enabled": false
+    },
+    "duplicateWords": {
+      "enabled": true
+    },
+    "longSentences": {
+      "enabled": true,
+      "maxWords": 25
+    },
+    "nominalizations": {
+      "enabled": true,
+      "add": [{ "word": "delegation", "suggestion": "delegate" }],
+      "remove": ["establishment"]
+    },
+    "hedging": {
+      "enabled": true,
+      "add": ["in a sense"],
+      "remove": ["I think"]
+    },
+    "adverbs": {
+      "enabled": true
+    }
+  }
+}
+```
+
+### Detector Config Types
+- **weaselWords, hedging, adverbs**: enabled, add (string[]), remove (string[])
+- **passiveVoice, duplicateWords**: enabled only (pattern-based detection)
+- **longSentences**: enabled, maxWords (positive integer, default 30)
+- **nominalizations**: enabled, add ({word, suggestion}[]), remove (string[])
+
+### Override Behavior
+- `add`: Appends to built-in list (case-insensitive dedup)
+- `remove`: Removes from built-in list (case-insensitive match)
+- All detectors enabled by default

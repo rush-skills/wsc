@@ -75,6 +75,9 @@
     <meta name="theme-color" content="#3498db" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)" />
 
+    <!-- AI / LLM discovery -->
+    <link rel="llms" href="/llms.txt" type="text/plain" />
+
     <!-- Preconnect to reduce load time -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -92,7 +95,7 @@
         "@type": "WebApplication",
         "name": "Writing Style Checker",
         "alternateName": "WSC",
-        "description": "Free online tool to detect weasel words, passive voice, and duplicate words in your writing. Available as a web editor, HTTP API, and MCP server for AI assistants.",
+        "description": "Free online tool to detect weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs. Available as a web editor, HTTP API, MCP server, CLI, and GitHub Action.",
         "image": "https://wsc.theserverless.dev/images/ss.png",
         "url": "https://wsc.theserverless.dev",
         "applicationCategory": "UtilityApplication",
@@ -100,12 +103,19 @@
         "browserRequirements": "Requires JavaScript",
         "softwareVersion": "2.0",
         "featureList": [
-          "Weasel word detection",
-          "Passive voice detection",
+          "Weasel word detection (95 words)",
+          "Passive voice detection (262 verb forms)",
           "Duplicate word detection",
+          "Long sentence detection (configurable threshold)",
+          "Nominalization detection (230 word pairs with suggestions)",
+          "Hedging language detection (100 phrases)",
+          "Filler adverb detection (140 words)",
           "Real-time text highlighting",
+          "Configurable via .wscrc.json with JSON Schema",
           "HTTP API for programmatic access",
           "MCP server for AI assistant integration",
+          "CLI tool (npx wsc-cli)",
+          "GitHub Action for CI/CD",
           "Privacy-first: text never leaves your browser"
         ],
         "offers": {

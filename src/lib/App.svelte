@@ -6,24 +6,23 @@
     analyzeText,
     removeDuplicateWord,
   } from "../core";
-  import type { AnalysisResult } from "../core";
-  import "../styles/main.scss";
+  import type { AnalysisResult, WscConfig } from "../core";
+  import StatsBar from "./components/StatsBar.svelte";
+  import IssueList from "./components/IssueList.svelte";
+  import Legend from "./components/Legend.svelte";
+  import IntegrationSection from "./components/IntegrationSection.svelte";
+  import ConfigPanel from "./components/ConfigPanel.svelte";
 
   let editor: HTMLTextAreaElement;
   let lineNumbersContainer: HTMLDivElement;
   let highlightOverlay: HTMLDivElement;
-  let theme: "light" | "dark" | "system" = "system";
-  let currentTheme: "light" | "dark" = "light";
   let mounted = false;
-  let showAbout = false; // State for the expandable section
-  let activeTab: 'api' | 'mcp-remote' | 'mcp-local' | 'cli' = 'api';
-  let copiedId: string | null = null;
+  let showConfig = false;
+  let toastMessage = '';
+  let toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
-    copiedId = text;
-    setTimeout(() => { copiedId = null; }, 2000);
-  }
+  let userConfig: WscConfig = {};
+
   let editorContent = `Type or paste your text here.
 This editor will highlight weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs.
 
@@ -37,8 +36,8 @@ For example:
 - Filler adverbs: The system is totally and utterly broken.`;
 
   // Font measurements
-  let charWidth = 7.8; // Will be measured precisely
-  let lineHeight = 20; // Will be measured precisely
+  let charWidth = 7.8;
+  let lineHeight = 20;
 
   // Statistics
   let weaselCount = 0;
@@ -63,16 +62,9 @@ For example:
   let linePositions: number[] = [];
   let lineCount = 0;
 
-  // Toggle the about section
-  function toggleAbout() {
-    showAbout = !showAbout;
-  }
-
-  // Measure character dimensions for precise positioning
   function measureCharacterDimensions() {
     if (!editor) return;
 
-    // Create a more accurate measurement span
     const span = document.createElement("span");
     span.textContent = "X";
     span.style.fontFamily = getComputedStyle(editor).fontFamily;
@@ -86,29 +78,23 @@ For example:
     charWidth = span.getBoundingClientRect().width;
     document.body.removeChild(span);
 
-    // Get computed line height for more accuracy
     const computedStyle = getComputedStyle(editor);
     const computedLineHeight = computedStyle.lineHeight;
 
     if (computedLineHeight === "normal") {
-      // If line-height is 'normal', use a multiplier of font size
       lineHeight = parseFloat(computedStyle.fontSize) * 1.2;
     } else {
       lineHeight = parseFloat(computedLineHeight);
     }
   }
 
-  // Handle text changes and perform analysis
   function handleTextChange() {
     if (!browser) return;
 
     const text = editorContent;
-
-    // Calculate line positions for faster lookup
     calculateLinePositions(text);
 
-    // Run unified analysis
-    const result = analyzeText(text);
+    const result = analyzeText(text, userConfig);
     weaselWords = result.issues.weaselWords;
     passiveVoices = result.issues.passiveVoice;
     duplicateWords = result.issues.duplicateWords;
@@ -117,7 +103,6 @@ For example:
     hedgingResults = result.issues.hedging;
     adverbResults = result.issues.adverbs;
 
-    // Update counts
     weaselCount = weaselWords.length;
     passiveCount = passiveVoices.length;
     duplicateCount = duplicateWords.length;
@@ -127,100 +112,81 @@ For example:
     adverbCount = adverbResults.length;
     totalIssues = result.summary.total;
 
-    // Update line numbers and highlighting
     updateLineNumbers();
     updateHighlights();
   }
 
-  // Calculate line positions for finding line numbers of issues
   function calculateLinePositions(text: string) {
-    linePositions = [0]; // First line starts at index 0
+    linePositions = [0];
     let pos = 0;
 
     while (pos < text.length) {
       pos = text.indexOf("\n", pos) + 1;
-      if (pos === 0) break; // No more newlines
+      if (pos === 0) break;
       linePositions.push(pos);
     }
 
     lineCount = linePositions.length;
   }
 
-  // Get line and column for a character position (1-indexed)
   function getLineAndColumn(index: number): { line: number; column: number } {
-    // Find which line contains this index
     let lineIndex = 0;
     for (let i = 1; i < linePositions.length; i++) {
       if (linePositions[i] > index) break;
       lineIndex = i;
     }
 
-    // Column is the distance from the line start (1-indexed)
     const column = index - linePositions[lineIndex] + 1;
-
     return { line: lineIndex + 1, column };
   }
 
-  // Format position as "line:column"
   function formatPosition(index: number): string {
     const { line, column } = getLineAndColumn(index);
     return `${line}:${column}`;
   }
 
-  // Update line numbers
   function updateLineNumbers() {
     if (!lineNumbersContainer) return;
 
-    lineNumbersContainer.innerHTML = "";
+    // Note: This uses innerHTML for performance with trusted numeric content only
+    let html = '';
     const linesCount = (editorContent.match(/\n/g) || []).length + 1;
-
     for (let i = 1; i <= linesCount; i++) {
-      const lineNumber = document.createElement("div");
-      lineNumber.className = "line-number";
-      lineNumber.textContent = String(i);
-      lineNumbersContainer.appendChild(lineNumber);
+      html += `<div class="line-number">${i}</div>`;
     }
+    lineNumbersContainer.innerHTML = html;
   }
 
-  // Enhanced scroll handling for precise highlight positioning
   function handleScroll() {
-    // Sync line numbers with editor
     if (lineNumbersContainer && editor) {
       lineNumbersContainer.scrollTop = editor.scrollTop;
     }
 
-    // Sync highlights with editor for both vertical and horizontal scrolling
     if (highlightOverlay && editor) {
-      // Use direct assignment for more precise positioning
       highlightOverlay.scrollTop = editor.scrollTop;
       highlightOverlay.scrollLeft = editor.scrollLeft;
     }
   }
 
-  // Update the highlight overlay to handle vertical scrolling correctly
   function updateHighlights() {
     if (!highlightOverlay || !editor) return;
 
-    // Clear existing highlights
-    highlightOverlay.innerHTML = "";
+    // Clear existing highlights using DOM methods
+    while (highlightOverlay.firstChild) {
+      highlightOverlay.removeChild(highlightOverlay.firstChild);
+    }
 
-    // Get the total content dimensions
     const contentWidth = Math.max(editor.scrollWidth, editor.clientWidth);
     const contentHeight = Math.max(editor.scrollHeight, editor.clientHeight);
 
-    // Create a wrapper for highlights that exactly matches the content
     const highlightsWrapper = document.createElement("div");
     highlightsWrapper.style.position = "relative";
-
-    // Set exact dimensions to match the editor content
     highlightsWrapper.style.width = contentWidth + "px";
     highlightsWrapper.style.height = contentHeight + "px";
     highlightsWrapper.style.minHeight = "100%";
 
-    // Add the wrapper to the highlight overlay
     highlightOverlay.appendChild(highlightsWrapper);
 
-    // Add highlights to the wrapper
     addHighlightsToWrapper(weaselWords, "weasel-highlight", highlightsWrapper);
     addHighlightsToWrapper(passiveVoices, "passive-highlight", highlightsWrapper);
     addHighlightsDuplicateToWrapper(duplicateWords, highlightsWrapper);
@@ -229,11 +195,9 @@ For example:
     addHighlightsToWrapper(hedgingResults, "hedging-highlight", highlightsWrapper);
     addHighlightsToWrapper(adverbResults, "adverb-highlight", highlightsWrapper);
 
-    // Initialize the scroll position
     handleScroll();
   }
 
-  // Modified function to add highlights to the wrapper
   function addHighlightsToWrapper(
     issues: Array<{ index: number; length: number }>,
     className: string,
@@ -245,7 +209,6 @@ For example:
       const highlight = document.createElement("div");
       highlight.className = `text-highlight ${className}`;
 
-      // Position the highlight
       const position = getPositionInEditor(issue.index, issue.length);
       if (position) {
         highlight.style.left = `${position.left}px`;
@@ -258,7 +221,6 @@ For example:
     }
   }
 
-  // Modified function to add duplicate highlights to the wrapper
   function addHighlightsDuplicateToWrapper(
     issues: Array<{ word: string; index: number; length: number }>,
     wrapper: HTMLElement
@@ -280,7 +242,6 @@ For example:
         handleRemoveDuplicate(issue.index, issue.length);
       };
 
-      // Position the highlight and button
       const position = getPositionInEditor(issue.index, issue.length);
       if (position) {
         container.style.left = `${position.left}px`;
@@ -301,22 +262,17 @@ For example:
     }
   }
 
-  // Helper function to get accurate positions even after scrolling
   function getPositionInEditor(index: number, length: number) {
     if (!editor) return null;
 
-    // Get line and column information
     const { line, column } = getLineAndColumn(index);
 
-    // Get editor padding from computed style
     const editorStyle = getComputedStyle(editor);
-    const paddingLeft = parseFloat(editorStyle.paddingLeft) || 8; // Use 8px as default
+    const paddingLeft = parseFloat(editorStyle.paddingLeft) || 8;
     const paddingTop = parseFloat(editorStyle.paddingTop) || 1;
 
-    // Apply a precise adjustment to fix the 1-character offset issue
-    const characterOffset = 1.0; // Exact 1 character width offset
+    const characterOffset = 1.0;
 
-    // Calculate position with precise measurements
     return {
       left:
         (column - 1) * charWidth + paddingLeft - characterOffset * charWidth,
@@ -326,68 +282,38 @@ For example:
     };
   }
 
-  // Set up theme
-  function updateTheme() {
-    if (!browser) return;
-
-    if (theme === "system") {
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      currentTheme = prefersDark ? "dark" : "light";
-    } else {
-      currentTheme = theme;
-    }
-
-    document.documentElement.setAttribute("data-theme", currentTheme);
-  }
-
-  // Handle removing duplicate words
   function handleRemoveDuplicate(index: number, length: number) {
     editorContent = removeDuplicateWord(editorContent, index, length);
     handleTextChange();
   }
 
-  // Improved Go To function with horizontal scrolling and visual highlight
   function goToPosition(index: number) {
     if (!editor) return;
 
-    // Clear any existing target highlights
     const existingHighlights = document.querySelectorAll(".target-highlight");
     existingHighlights.forEach((el) => el.remove());
 
-    // Focus the editor
     editor.focus();
 
-    // Get line and column information for scrolling
     const { line, column } = getLineAndColumn(index);
 
-    // Set cursor position - select the issue
     editor.setSelectionRange(index, index + 1);
 
-    // Calculate vertical scroll position (a few lines above for context)
     const scrollPositionY = Math.max(0, (line - 3) * lineHeight);
-
-    // Calculate horizontal scroll position
-    // First character visible should be a few characters before the target
-    const contextChars = 10; // Show 10 characters before the highlighted one
+    const contextChars = 10;
     const scrollPositionX = Math.max(0, (column - contextChars) * charWidth);
 
-    // Scroll to position (both vertically and horizontally)
     editor.scrollTop = scrollPositionY;
     editor.scrollLeft = scrollPositionX;
 
-    // Force synchronization of highlight overlay scroll
     if (highlightOverlay) {
       highlightOverlay.scrollTop = editor.scrollTop;
       highlightOverlay.scrollLeft = editor.scrollLeft;
     }
 
-    // Add a temporary highlight effect to make it easier to find
     const targetHighlight = document.createElement("div");
     targetHighlight.className = "target-highlight";
 
-    // Position the highlight
     const position = getPositionInEditor(index, 1);
     if (position && highlightOverlay) {
       targetHighlight.style.left = `${position.left}px`;
@@ -395,35 +321,50 @@ For example:
       targetHighlight.style.width = `${position.width}px`;
       targetHighlight.style.height = `${position.height}px`;
 
-      // Add the highlight to the overlay
       const wrapper = highlightOverlay.querySelector("div");
       if (wrapper) {
         wrapper.appendChild(targetHighlight);
 
-        // Remove the highlight after animation completes
         setTimeout(() => {
           targetHighlight.remove();
-        }, 4500); // 1.5s × 3 iterations = 4.5s
+        }, 4500);
       }
     }
   }
 
-  // Ensure highlights update on resize and scroll
+  function handleStatClick(event: CustomEvent<{ detector: string }>) {
+    const { detector } = event.detail;
+    const id = `issues-${detector}`;
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      showToast('No issues found');
+    }
+  }
+
+  function showToast(message: string) {
+    toastMessage = message;
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      toastMessage = '';
+      toastTimeout = null;
+    }, 2000);
+  }
+
+  function handleConfigChange() {
+    handleTextChange();
+  }
+
   onMount(() => {
     mounted = true;
-    updateTheme();
 
-    // Measure character dimensions for precise positioning
     measureCharacterDimensions();
-
-    // Initial analysis
     handleTextChange();
 
     if (editor) {
-      // Use passive event listener for better performance
       editor.addEventListener("scroll", handleScroll, { passive: true });
 
-      // Setup throttled scroll handler to reduce performance impact
       let ticking = false;
       editor.addEventListener(
         "scroll",
@@ -439,7 +380,6 @@ For example:
         { passive: true }
       );
 
-      // Update highlights when editor dimensions change
       const resizeObserver = new ResizeObserver(() => {
         measureCharacterDimensions();
         updateHighlights();
@@ -454,685 +394,101 @@ For example:
     }
   });
 
-  // After the DOM updates, recalculate highlight positions
   afterUpdate(() => {
     if (mounted) {
       updateHighlights();
     }
   });
 
-  // Update theme when it changes
-  $: if (mounted && theme) {
-    updateTheme();
-  }
-
-  // Analyze text when it changes
   $: if (mounted && editorContent !== undefined) {
     handleTextChange();
   }
 </script>
 
-<div class="container" data-theme={currentTheme}>
-  <header>
-    <div class="header-top">
-      <div class="logo-title">
-        <img
-          src="/images/logo-small.png"
-          alt="Writing Style Checker Logo"
-          class="logo"
-        />
-        <div class="title-container">
-          <h1>Writing Style Checker</h1>
-          <div class="subtitle-container">
-            <button
-              class="subtitle-button"
-              on:click={toggleAbout}
-              aria-expanded={showAbout}
-            >
-              <p class="subtitle">
-                Improve your technical writing by detecting common issues
-              </p>
-              <span class="dropdown-arrow" class:open={showAbout}>
-                <svg
-                  width="12"
-                  height="8"
-                  viewBox="0 0 12 8"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M1 1L6 6L11 1"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                  />
-                </svg>
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="theme-switcher">
-        <button
-          class={theme === "light" ? "active" : ""}
-          on:click={() => (theme = "light")}
-          title="Light Theme"
-        >
-          <span class="icon">☀️</span>
-          <span class="label">Light</span>
-        </button>
-        <button
-          class={theme === "dark" ? "active" : ""}
-          on:click={() => (theme = "dark")}
-          title="Dark Theme"
-        >
-          <span class="icon">🌙</span>
-          <span class="label">Dark</span>
-        </button>
-        <button
-          class={theme === "system" ? "active" : ""}
-          on:click={() => (theme = "system")}
-          title="System Theme"
-        >
-          <span class="icon">⚙️</span>
-          <span class="label">System</span>
-        </button>
+<div class="editor-wrapper">
+  <div class="editor-header">
+    <div class="editor-title">Editor</div>
+    <div class="editor-stats">
+      <div class="stat-item" class:has-issues={totalIssues > 0}>
+        <span class="stat-value">{totalIssues}</span>
+        <span class="stat-label">total issues</span>
       </div>
     </div>
-    {#if showAbout}
-      <div class="about-content" transition:slide={{ duration: 300 }}>
-        <p>
-          Good writing is clear, precise, and free from clutter. But even
-          experienced writers fall into common traps: using vague "weasel
-          words," hiding behind passive voice, or accidentally repeating words.
-          This tool helps you catch these issues in real-time.
-        </p>
-        <p>
-          Inspired by Matt Might's shell scripts for writing improvement, this
-          interactive tool brings those command-line utilities to the web. Just
-          type or paste your text, and see immediate feedback about potential
-          improvements. You don't need to eliminate every highlight - just make
-          conscious choices about your writing.
-        </p>
-        <p>
-          <strong>Your privacy is protected</strong>: This tool runs entirely in
-          your browser. Your text is never sent to any server, stored in
-          databases, or shared with third parties. All analysis happens locally
-          in your device.
-        </p>
-      </div>
-    {/if}
-  </header>
+  </div>
 
-  <main>
-    <div class="editor-wrapper">
-      <div class="editor-header">
-        <div class="editor-title">Editor</div>
-        <div class="editor-stats">
-          <div class="stat-item" class:has-issues={totalIssues > 0}>
-            <span class="stat-value">{totalIssues}</span>
-            <span class="stat-label">total issues</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="editor-container">
-        <div class="line-numbers" bind:this={lineNumbersContainer}></div>
-        <div class="editor-content-wrapper">
-          <textarea
-            bind:value={editorContent}
-            bind:this={editor}
-            class="editor-textarea"
-            spellcheck="false"
-            on:scroll={handleScroll}
-          ></textarea>
-          <div class="highlight-overlay" bind:this={highlightOverlay}></div>
-        </div>
-      </div>
-
-      <div class="stats">
-        <div class="stat-item" class:has-issues={weaselCount > 0}>
-          <div class="stat-icon weasel-icon">W</div>
-          <span class="stat-label">Weasel Words:</span>
-          <span class="stat-value">{weaselCount}</span>
-        </div>
-        <div class="stat-item" class:has-issues={passiveCount > 0}>
-          <div class="stat-icon passive-icon">P</div>
-          <span class="stat-label">Passive Voice:</span>
-          <span class="stat-value">{passiveCount}</span>
-        </div>
-        <div class="stat-item" class:has-issues={duplicateCount > 0}>
-          <div class="stat-icon duplicate-icon">D</div>
-          <span class="stat-label">Duplicate Words:</span>
-          <span class="stat-value">{duplicateCount}</span>
-        </div>
-        <div class="stat-item" class:has-issues={longSentenceCount > 0}>
-          <div class="stat-icon long-sentence-icon">S</div>
-          <span class="stat-label">Long Sentences:</span>
-          <span class="stat-value">{longSentenceCount}</span>
-        </div>
-        <div class="stat-item" class:has-issues={nominalizationCount > 0}>
-          <div class="stat-icon nominalization-icon">N</div>
-          <span class="stat-label">Nominalizations:</span>
-          <span class="stat-value">{nominalizationCount}</span>
-        </div>
-        <div class="stat-item" class:has-issues={hedgingCount > 0}>
-          <div class="stat-icon hedging-icon">H</div>
-          <span class="stat-label">Hedging:</span>
-          <span class="stat-value">{hedgingCount}</span>
-        </div>
-        <div class="stat-item" class:has-issues={adverbCount > 0}>
-          <div class="stat-icon adverb-icon">A</div>
-          <span class="stat-label">Filler Adverbs:</span>
-          <span class="stat-value">{adverbCount}</span>
-        </div>
-      </div>
+  <div class="editor-container">
+    <div class="line-numbers" bind:this={lineNumbersContainer}></div>
+    <div class="editor-content-wrapper">
+      <textarea
+        bind:value={editorContent}
+        bind:this={editor}
+        class="editor-textarea"
+        spellcheck="false"
+        on:scroll={handleScroll}
+      ></textarea>
+      <div class="highlight-overlay" bind:this={highlightOverlay}></div>
     </div>
+  </div>
 
-    {#if weaselCount > 0}
-      <div class="issue-section">
-        <h3>Weasel Words</h3>
-        <div class="issue-list">
-          {#each weaselWords as { word, index }}
-            <div class="issue-item">
-              <span class="weasel-word-example">{word}</span>
-              <span class="position-indicator">{formatPosition(index)}</span>
-              <button class="goto-button" on:click={() => goToPosition(index)}>
-                Go to
-              </button>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    {#if passiveCount > 0}
-      <div class="issue-section">
-        <h3>Passive Voice</h3>
-        <div class="issue-list">
-          {#each passiveVoices as { phrase, index }}
-            <div class="issue-item">
-              <span class="passive-voice-example">{phrase}</span>
-              <span class="position-indicator">{formatPosition(index)}</span>
-              <button class="goto-button" on:click={() => goToPosition(index)}>
-                Go to
-              </button>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    {#if duplicateCount > 0}
-      <div class="issue-section">
-        <h3>Duplicate Words</h3>
-        <div class="issue-list">
-          {#each duplicateWords as { word, index, length }}
-            <div class="issue-item">
-              <span class="duplicate-word-example">{word}</span>
-              <span class="position-indicator">{formatPosition(index)}</span>
-              <button
-                class="fix-button"
-                on:click={() => handleRemoveDuplicate(index, length)}
-              >
-                Fix
-              </button>
-              <button class="goto-button" on:click={() => goToPosition(index)}>
-                Go to
-              </button>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    {#if longSentenceCount > 0}
-      <div class="issue-section">
-        <h3>Long Sentences</h3>
-        <div class="issue-list">
-          {#each longSentences as { sentence, wordCount, index }}
-            <div class="issue-item">
-              <span class="long-sentence-example">{sentence}</span>
-              <span class="word-count-badge">{wordCount} words</span>
-              <span class="position-indicator">{formatPosition(index)}</span>
-              <button class="goto-button" on:click={() => goToPosition(index)}>
-                Go to
-              </button>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    {#if nominalizationCount > 0}
-      <div class="issue-section">
-        <h3>Nominalizations</h3>
-        <div class="issue-list">
-          {#each nominalizationResults as { word, suggestion, index }}
-            <div class="issue-item">
-              <span class="nominalization-example">{word}</span>
-              <span class="suggestion-badge">try: {suggestion}</span>
-              <span class="position-indicator">{formatPosition(index)}</span>
-              <button class="goto-button" on:click={() => goToPosition(index)}>
-                Go to
-              </button>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    {#if hedgingCount > 0}
-      <div class="issue-section">
-        <h3>Hedging Language</h3>
-        <div class="issue-list">
-          {#each hedgingResults as { phrase, index }}
-            <div class="issue-item">
-              <span class="hedging-example">{phrase}</span>
-              <span class="position-indicator">{formatPosition(index)}</span>
-              <button class="goto-button" on:click={() => goToPosition(index)}>
-                Go to
-              </button>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    {#if adverbCount > 0}
-      <div class="issue-section">
-        <h3>Filler Adverbs</h3>
-        <div class="issue-list">
-          {#each adverbResults as { word, index }}
-            <div class="issue-item">
-              <span class="adverb-example">{word}</span>
-              <span class="position-indicator">{formatPosition(index)}</span>
-              <button class="goto-button" on:click={() => goToPosition(index)}>
-                Go to
-              </button>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    <div class="legend">
-      <h3>How to use this tool:</h3>
-      <p>
-        This tool highlights common writing issues that can weaken your writing:
-      </p>
-      <div class="legend-items">
-        <div class="legend-item">
-          <span class="weasel-word-example">Weasel Words</span>
-          <p>Words that sound good without conveying information (very, extremely, various, etc.)</p>
-        </div>
-        <div class="legend-item">
-          <span class="passive-voice-example">Passive Voice</span>
-          <p>Constructions where the subject receives the action rather than performing it</p>
-        </div>
-        <div class="legend-item">
-          <span class="duplicate-word-example">Duplicate Words</span>
-          <p>Repeated adjacent words (click on highlighted duplicates to remove them)</p>
-        </div>
-        <div class="legend-item">
-          <span class="long-sentence-example">Long Sentences</span>
-          <p>Sentences exceeding 30 words that may be hard to follow</p>
-        </div>
-        <div class="legend-item">
-          <span class="nominalization-example">Nominalizations</span>
-          <p>Nouns that could be replaced with stronger verbs (utilization &rarr; use)</p>
-        </div>
-        <div class="legend-item">
-          <span class="hedging-example">Hedging Language</span>
-          <p>Phrases that weaken assertions (I think, it seems, etc.)</p>
-        </div>
-        <div class="legend-item">
-          <span class="adverb-example">Filler Adverbs</span>
-          <p>Adverbs that add emphasis without substance (totally, utterly, etc.)</p>
-        </div>
-      </div>
-      <p class="legend-note">
-        Note: The goal is not to eliminate all highlighted issues, but to make conscious choices about their use.
-      </p>
-    </div>
-
-    <div class="integration-section">
-      <h2>API, MCP & CLI Integration</h2>
-      <p class="integration-intro">
-        Use the Writing Style Checker programmatically via the HTTP API, connect it to AI assistants via MCP, or check files from the command line.
-      </p>
-
-      <div class="integration-tabs">
-        <button
-          class="integration-tab"
-          class:active={activeTab === 'api'}
-          on:click={() => (activeTab = 'api')}
-        >
-          HTTP API
-        </button>
-        <button
-          class="integration-tab"
-          class:active={activeTab === 'mcp-remote'}
-          on:click={() => (activeTab = 'mcp-remote')}
-        >
-          MCP Server (Remote)
-        </button>
-        <button
-          class="integration-tab"
-          class:active={activeTab === 'mcp-local'}
-          on:click={() => (activeTab = 'mcp-local')}
-        >
-          MCP Server (Local)
-        </button>
-        <button
-          class="integration-tab"
-          class:active={activeTab === 'cli'}
-          on:click={() => (activeTab = 'cli')}
-        >
-          CLI
-        </button>
-      </div>
-
-      <div class="integration-content">
-        {#if activeTab === 'api'}
-          <div class="integration-panel">
-            <h3>POST /api/check</h3>
-            <p>Send text and receive structured results with issue positions, line numbers, and context snippets.</p>
-
-            <div class="code-block">
-              <div class="code-block-header">
-                <span>Request</span>
-                <button class="copy-button" on:click={() => copyToClipboard(`curl -X POST https://wsc.theserverless.dev/api/check \\
-  -H "Content-Type: application/json" \\
-  -d '{"text":"The code was written very quickly."}'`)}>
-                  {copiedId === 'api-req' ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
-              <pre><code>curl -X POST https://wsc.theserverless.dev/api/check \
-  -H "Content-Type: application/json" \
-  -d '{`{`}"text":"The code was written very quickly."{`}`}'</code></pre>
-            </div>
-
-            <div class="code-block">
-              <div class="code-block-header"><span>Response</span></div>
-              <pre><code>{`{
-  "summary": {
-    "total": 2, "weaselWords": 1, "passiveVoice": 1,
-    "duplicateWords": 0, "longSentences": 0,
-    "nominalizations": 0, "hedging": 0, "adverbs": 0
-  },
-  "issues": {
-    "weaselWords": [{ "word": "very", "index": 21, "line": 1, ... }],
-    "passiveVoice": [{ "phrase": "was written", "index": 9, ... }],
-    "duplicateWords": [], "longSentences": [],
-    "nominalizations": [], "hedging": [], "adverbs": []
-  },
-  "meta": { "characterCount": 34, "wordCount": 6, "processingTimeMs": 2 }
-}`}</code></pre>
-            </div>
-
-            <p>Pass an optional <code>config</code> object to customize detectors:</p>
-            <div class="code-block">
-              <div class="code-block-header"><span>With Config</span></div>
-              <pre><code>{`curl -X POST https://wsc.theserverless.dev/api/check \\
-  -H "Content-Type: application/json" \\
-  -d '{"text":"...", "config":{"detectors":{"adverbs":{"enabled":false}}}}'`}</code></pre>
-            </div>
-
-            <div class="integration-details">
-              <div class="detail-item">
-                <strong>Limit:</strong> 100,000 characters per request
-              </div>
-              <div class="detail-item">
-                <strong>CORS:</strong> Enabled for all origins
-              </div>
-              <div class="detail-item">
-                <strong>Errors:</strong> 400 for missing/invalid text or exceeding limits
-              </div>
-            </div>
-          </div>
-        {:else if activeTab === 'mcp-remote'}
-          <div class="integration-panel">
-            <h3>Remote MCP Server</h3>
-            <p>
-              Connect any <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener noreferrer">MCP</a>-compatible
-              AI assistant to the hosted server. No installation required.
-            </p>
-
-            <h4>Available Tools</h4>
-            <div class="tools-grid">
-              <div class="tool-card">
-                <div class="tool-name">check_text</div>
-                <div class="tool-desc">Analyze text for all 7 writing style issues. Accepts optional config.</div>
-              </div>
-              <div class="tool-card">
-                <div class="tool-name">fix_duplicates</div>
-                <div class="tool-desc">Remove duplicate adjacent words and return cleaned text</div>
-              </div>
-              <div class="tool-card">
-                <div class="tool-name">list_weasel_words</div>
-                <div class="tool-desc">Return the complete list of flagged weasel words</div>
-              </div>
-              <div class="tool-card">
-                <div class="tool-name">list_word_lists</div>
-                <div class="tool-desc">Return info about all detector word/phrase lists</div>
-              </div>
-            </div>
-
-            <h4>Claude Desktop / Claude Code</h4>
-            <p>Add this to your MCP configuration:</p>
-            <div class="code-block">
-              <div class="code-block-header">
-                <span>Config</span>
-                <button class="copy-button" on:click={() => copyToClipboard(`{
-  "mcpServers": {
-    "writing-style-checker": {
-      "type": "url",
-      "url": "https://wsc.theserverless.dev/mcp"
-    }
-  }
-}`)}>
-                  {copiedId === 'mcp-remote-config' ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
-              <pre><code>{`{
-  "mcpServers": {
-    "writing-style-checker": {
-      "type": "url",
-      "url": "https://wsc.theserverless.dev/mcp"
-    }
-  }
-}`}</code></pre>
-            </div>
-
-            <h4>Test with curl</h4>
-            <div class="code-block">
-              <div class="code-block-header">
-                <span>Initialize + Check Text</span>
-                <button class="copy-button" on:click={() => copyToClipboard(`curl -X POST https://wsc.theserverless.dev/mcp \\
-  -H "Content-Type: application/json" \\
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"check_text","arguments":{"text":"The the code was written very quickly."}}}'`)}>
-                  {copiedId === 'mcp-remote-curl' ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
-              <pre><code>curl -X POST https://wsc.theserverless.dev/mcp \
-  -H "Content-Type: application/json" \
-  -d '{`{`}"jsonrpc":"2.0","id":1,"method":"tools/call","params":{`{`}"name":"check_text","arguments":{`{`}"text":"The the code was written very quickly."{`}`}{`}`}{`}`}'</code></pre>
-            </div>
-          </div>
-        {:else if activeTab === 'mcp-local'}
-          <div class="integration-panel">
-            <h3>Local MCP Server (stdio)</h3>
-            <p>
-              Run the MCP server locally for use with Claude Desktop, Claude Code, or other MCP clients.
-              The local server includes <strong>check_file</strong> for analyzing files from disk with auto-discovery of <code>.wscrc.json</code> config.
-            </p>
-
-            <h4>Available Tools</h4>
-            <div class="tools-grid">
-              <div class="tool-card">
-                <div class="tool-name">check_text</div>
-                <div class="tool-desc">Analyze text for all 7 issues. Accepts optional config.</div>
-              </div>
-              <div class="tool-card">
-                <div class="tool-name">check_file</div>
-                <div class="tool-desc">Read a file and analyze it. Auto-discovers .wscrc.json.</div>
-              </div>
-              <div class="tool-card">
-                <div class="tool-name">fix_duplicates</div>
-                <div class="tool-desc">Remove duplicate adjacent words</div>
-              </div>
-              <div class="tool-card">
-                <div class="tool-name">list_weasel_words</div>
-                <div class="tool-desc">List all flagged weasel words</div>
-              </div>
-            </div>
-
-            <h4>Claude Desktop Config</h4>
-            <div class="code-block">
-              <div class="code-block-header">
-                <span>Config</span>
-                <button class="copy-button" on:click={() => copyToClipboard(`{
-  "mcpServers": {
-    "writing-style-checker": {
-      "command": "npx",
-      "args": ["wsc-mcp"]
-    }
-  }
-}`)}>
-                  {copiedId === 'mcp-local-config' ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
-              <pre><code>{`{
-  "mcpServers": {
-    "writing-style-checker": {
-      "command": "npx",
-      "args": ["wsc-mcp"]
-    }
-  }
-}`}</code></pre>
-            </div>
-
-            <h4>Build from Source</h4>
-            <div class="code-block">
-              <div class="code-block-header">
-                <span>Shell</span>
-                <button class="copy-button" on:click={() => copyToClipboard(`cd mcp-server
-npm install
-npm run build
-node dist/mcp-server/index.js`)}>
-                  {copiedId === 'mcp-local-build' ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
-              <pre><code>cd mcp-server
-npm install
-npm run build
-node dist/mcp-server/index.js</code></pre>
-            </div>
-          </div>
-        {:else if activeTab === 'cli'}
-          <div class="integration-panel">
-            <h3>Command-Line Tool</h3>
-            <p>
-              Check files for writing style issues from the terminal. Supports glob patterns, JSON output, and GitHub Actions annotations.
-            </p>
-
-            <h4>Quick Start</h4>
-            <div class="code-block">
-              <div class="code-block-header">
-                <span>Shell</span>
-                <button class="copy-button" on:click={() => copyToClipboard(`npx wsc-cli check "**/*.md"`)}>
-                  {copiedId === 'cli-check' ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
-              <pre><code>npx wsc-cli check "**/*.md"</code></pre>
-            </div>
-
-            <h4>Commands</h4>
-            <div class="tools-grid">
-              <div class="tool-card">
-                <div class="tool-name">wsc check &lt;files&gt;</div>
-                <div class="tool-desc">Check files for writing issues. Supports --format, --config, --stdin.</div>
-              </div>
-              <div class="tool-card">
-                <div class="tool-name">wsc list [detector]</div>
-                <div class="tool-desc">List word/phrase lists for a detector</div>
-              </div>
-              <div class="tool-card">
-                <div class="tool-name">wsc init</div>
-                <div class="tool-desc">Create a .wscrc.json config file</div>
-              </div>
-            </div>
-
-            <h4>Output Formats</h4>
-            <div class="code-block">
-              <div class="code-block-header"><span>Text (default)</span></div>
-              <pre><code>README.md:3:15  weasel-word  "very"
-README.md:5:1   passive-voice  "was written"
-Found 2 issues in 1 file.</code></pre>
-            </div>
-
-            <div class="integration-details">
-              <div class="detail-item">
-                <strong>--format json</strong> Structured JSON output
-              </div>
-              <div class="detail-item">
-                <strong>--format github</strong> ::warning annotations for CI
-              </div>
-              <div class="detail-item">
-                <strong>--stdin</strong> Read from stdin
-              </div>
-            </div>
-          </div>
-        {/if}
-      </div>
-    </div>
-  </main>
-
-  <footer>
-    <p>
-      Based on <a
-        href="https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Shell scripts for passive voice, weasel words, duplicates
-      </a>
-      by
-      <a href="https://matt.might.net" target="_blank" rel="noopener noreferrer"
-        >Matt Might</a
-      >
-    </p>
-    <p class="footer-credits">
-      Made by <a
-        href="https://anks.in"
-        target="_blank"
-        rel="noopener noreferrer">Ankur Singh</a
-      >
-      <a
-        href="https://github.com/theserverlessdev/wsc"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="github-link"
-        aria-label="GitHub repository"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="github-icon"
-        >
-          <path
-            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
-          ></path>
-        </svg>
-      </a>
-    </p>
-  </footer>
+  <StatsBar
+    {weaselCount}
+    {passiveCount}
+    {duplicateCount}
+    {longSentenceCount}
+    {nominalizationCount}
+    {hedgingCount}
+    {adverbCount}
+    on:statclick={handleStatClick}
+  />
 </div>
+
+{#if toastMessage}
+  <div class="toast" transition:slide={{ duration: 200 }}>
+    {toastMessage}
+  </div>
+{/if}
+
+<div class="config-toggle-row">
+  <button class="config-toggle-button" on:click={() => (showConfig = !showConfig)}>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.2"/>
+      <path d="M8 0.5V3M8 13V15.5M15.5 8H13M3 8H0.5M13.3 2.7L11.5 4.5M4.5 11.5L2.7 13.3M13.3 13.3L11.5 11.5M4.5 4.5L2.7 2.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    {showConfig ? 'Hide' : 'Show'} Config
+    <span class="dropdown-arrow" class:open={showConfig}>
+      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </span>
+  </button>
+</div>
+
+{#if showConfig}
+  <div transition:slide={{ duration: 300 }}>
+    <ConfigPanel bind:config={userConfig} on:change={handleConfigChange} />
+  </div>
+{/if}
+
+<IssueList
+  {weaselWords}
+  {passiveVoices}
+  {duplicateWords}
+  {longSentences}
+  nominalizationResults={nominalizationResults}
+  {hedgingResults}
+  {adverbResults}
+  {weaselCount}
+  {passiveCount}
+  {duplicateCount}
+  {longSentenceCount}
+  {nominalizationCount}
+  {hedgingCount}
+  {adverbCount}
+  {formatPosition}
+  {goToPosition}
+  {handleRemoveDuplicate}
+/>
+
+<Legend />
+
+<IntegrationSection />

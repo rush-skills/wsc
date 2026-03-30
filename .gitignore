@@ -35,3 +35,4 @@ src/core/*.d.ts
 coverage
 
 .wrangler
+.playwright-mcp

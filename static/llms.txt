@@ -1,0 +1,65 @@
+# Writing Style Checker (WSC)
+
+> Free tool to detect weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs in technical writing.
+
+## Overview
+
+Writing Style Checker detects 7 types of writing issues:
+- Weasel words (very, extremely, various, etc.)
+- Passive voice (was written, has been done, etc.)
+- Duplicate adjacent words (the the, is is, etc.)
+- Long sentences (over 30 words by default)
+- Nominalizations (implementation → implement, optimization → optimize)
+- Hedging language (I think, it seems, etc.)
+- Filler adverbs (totally, utterly, basically, etc.)
+
+## Interfaces
+
+- Web editor: https://wsc.theserverless.dev
+- HTTP API: POST https://wsc.theserverless.dev/api/check
+- Remote MCP server: https://wsc.theserverless.dev/mcp
+- Local MCP server: npx wsc-mcp (npm package)
+- CLI: npx wsc-cli check "**/*.md" (npm package)
+- GitHub Action: theserverlessdev/wsc@master
+
+## Documentation
+
+- Full docs: https://wsc.theserverless.dev/docs
+- Word library: https://wsc.theserverless.dev/words
+- JSON Schema: https://wsc.theserverless.dev/schema.json
+- Detailed LLM context: https://wsc.theserverless.dev/llms-full.txt
+
+## API Quick Reference
+
+POST /api/check
+Content-Type: application/json
+
+Request body:
+- text (string, required): Text to analyze (max 100,000 chars)
+- config (object, optional): Override detector settings
+
+Response:
+- summary: issue counts per detector and total
+- issues: arrays of detected issues with word/phrase, index, line, column
+- meta: characterCount, wordCount, processingTimeMs
+
+## MCP Tools
+
+- check_text: Analyze text for all 7 writing issues (accepts optional config)
+- check_file: Read and analyze a file (local MCP only, auto-discovers .wscrc.json)
+- fix_duplicates: Remove duplicate adjacent words
+- list_weasel_words: Return the complete weasel word list
+- list_word_lists: Return info about all detector word/phrase lists
+
+## Configuration
+
+Create .wscrc.json in project root. Add "$schema": "https://wsc.theserverless.dev/schema.json" for editor autocompletion.
+
+Detectors with word list overrides (add/remove): weaselWords, hedging, adverbs
+Detectors with specialized config: longSentences (maxWords), nominalizations (add with word+suggestion)
+Pattern-based detectors (enabled only): passiveVoice, duplicateWords
+
+## Source
+
+GitHub: https://github.com/theserverlessdev/wsc
+License: MIT

@@ -206,11 +206,18 @@ See the [`wsc-cli` README](cli/README.md) for full documentation.
 ## GitHub Action
 
 ```yaml
-- uses: theserverlessdev/wsc-action@v1
+- uses: theserverlessdev/wsc@master
   with:
     files: '**/*.md'
     max-warnings: 20
 ```
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `files` | `**/*.md` | Glob pattern for files to check |
+| `config` | — | Path to `.wscrc.json` config file |
+| `max-warnings` | unlimited | Max warnings before failing |
+| `only-changed` | `false` | Only check files changed in this PR |
 
 ---
 
@@ -232,14 +239,20 @@ The web editor runs **entirely in your browser** - text is never sent to any ser
 │   │   ├── config-node.ts       # Node-only: file loading, discovery
 │   │   ├── analyzer.ts          # Unified analyzeText() entry point
 │   │   └── index.ts             # Public API exports
+│   ├── docs/                    # Documentation content (Markdown files)
 │   ├── mcp/
 │   │   └── handler.ts           # MCP JSON-RPC 2.0 handler
 │   ├── lib/
-│   │   └── App.svelte           # Main application component
+│   │   ├── App.svelte           # Main editor page component
+│   │   ├── stores/theme.ts      # Theme store (light/dark/system)
+│   │   └── components/          # UI components (StatsBar, ConfigPanel, etc.)
 │   ├── routes/
+│   │   ├── +layout.svelte       # Shared layout (header, nav, footer)
 │   │   ├── api/check/+server.ts # HTTP API endpoint
 │   │   ├── mcp/+server.ts       # MCP endpoint
-│   │   └── health/+server.ts    # Health check endpoint
+│   │   ├── health/+server.ts    # Health check endpoint
+│   │   ├── docs/+page.svelte    # Documentation page
+│   │   └── words/+page.svelte   # Word library browser
 │   └── styles/
 │       └── main.scss            # Global styles (light + dark themes)
 ├── mcp-server/                  # Standalone stdio MCP server (npm: wsc-mcp)
@@ -247,7 +260,9 @@ The web editor runs **entirely in your browser** - text is never sent to any ser
 ├── action/                      # GitHub Action (composite)
 ├── tests/                       # 341 tests across 18 files
 ├── static/
-│   └── schema.json              # JSON Schema for .wscrc.json
+│   ├── schema.json              # JSON Schema for .wscrc.json
+│   ├── llms.txt                 # AI/LLM discovery file
+│   └── llms-full.txt            # Detailed LLM context
 ├── wrangler.toml                # Cloudflare Workers config
 └── svelte.config.js             # SvelteKit configuration
 ```

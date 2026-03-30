@@ -30,5 +30,8 @@
   "type": "module",
   "overrides": {
     "sass-embedded": "npm:sass@^1.77.8"
+  },
+  "dependencies": {
+    "marked": "^17.0.5"
   }
 }

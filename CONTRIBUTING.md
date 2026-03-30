@@ -57,8 +57,9 @@ All consumers (API, MCP, CLI, frontend) call `analyzeText()` from `src/core/anal
 4. **Wire into analyzer** in `src/core/analyzer.ts` — add the detector call and include results in `AnalysisResult`
 5. **Export** from `src/core/index.ts`
 6. **Add tests**: `tests/core/detector-{name}.test.ts` with standard patterns (empty, clean, detected, case-insensitive, correct index/length, custom word list)
-7. **Update frontend** in `src/lib/App.svelte` — highlight class, stats icon, issue section, legend item
+7. **Update frontend** components — highlight class in `App.svelte`, stat in `StatsBar.svelte`, issue section in `IssueList.svelte`, legend item in `Legend.svelte`
 8. **Update styles** in `src/styles/main.scss` — CSS variables for light + dark themes
+9. **Update docs** in `src/docs/` — add the new detector to the config reference table
 
 No changes needed to API, MCP, or CLI — they all go through `analyzeText()`.
 
@@ -83,7 +84,7 @@ All config types support `enabled` (boolean). Word-list detectors also support `
 - **Word lists**: Add to `src/core/words.ts`. Ensure no duplicates and no overlap with other lists.
 - **New detectors**: Follow the pattern above.
 - **Bug fixes and UI improvements**: PRs welcome.
-- **Documentation**: Keep README, CONTRIBUTING, TESTING updated.
+- **Documentation**: Update `src/docs/*.md` files (rendered on the website), README, and CONTRIBUTING.
 
 ## Pull Request Process
 

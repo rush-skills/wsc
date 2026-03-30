@@ -9,6 +9,7 @@ This document covers how to deploy the Writing Style Checker to Cloudflare Worke
 - [Cloudflare Workers Deployment](#cloudflare-workers-deployment)
 - [npm Package Publishing (wsc-mcp)](#npm-package-publishing-wsc-mcp)
 - [npm Package Publishing (wsc-cli)](#npm-package-publishing-wsc-cli)
+- [GitHub Action](#github-action)
 - [DNS Setup](#dns-setup)
 - [Rollback](#rollback)
 
@@ -288,6 +289,64 @@ echo "very good" | npx wsc-cli check --stdin
 
 ---
 
+## GitHub Action
+
+The GitHub Action lives in `action/action.yml` and is a composite action that uses `wsc-cli` under the hood. Users reference it directly from the repo.
+
+### How It Works
+
+The action:
+1. Sets up Node.js 22
+2. Installs and builds `wsc-cli` from source (via `npm ci` + `npm run build`)
+3. Optionally fetches changed files in PRs (when `only-changed: "true"`)
+4. Runs `wsc check` with `--format github` to produce inline annotations
+
+### Usage
+
+Users add this to their workflow:
+
+```yaml
+- uses: theserverlessdev/wsc@master
+  with:
+    files: "**/*.md"
+```
+
+### Inputs
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `files` | `**/*.md` | Glob pattern for files to check |
+| `config` | _(none)_ | Path to `.wscrc.json` config file |
+| `max-warnings` | `-1` (unlimited) | Maximum warnings before failing |
+| `only-changed` | `false` | Only check files changed in this PR |
+
+### Outputs
+
+| Output | Description |
+|--------|-------------|
+| `total-issues` | Total number of issues found |
+
+### Releasing Updates
+
+The action is referenced by branch (`@master`), not by npm version. Any changes to `action/action.yml`, `cli/`, or `src/core/` that affect the action's behavior are live as soon as they're pushed to `master`.
+
+To pin a stable version, users can reference a tag:
+```yaml
+- uses: theserverlessdev/wsc@v2.0.0
+```
+
+### Testing the Action Locally
+
+```bash
+# Build the CLI (the action depends on it)
+cd cli && npm ci && npm run build && cd ..
+
+# Simulate what the action runs
+node cli/dist/cli/index.js check "**/*.md" --format github
+```
+
+---
+
 ## DNS Setup
 
 To set up `wsc.theserverless.dev` (or your own domain):
@@ -383,6 +442,7 @@ git add mcp-server/package.json mcp-server/package-lock.json cli/package.json cl
 git commit -m "release: wsc-mcp + wsc-cli"
 
 # 8. Tag and push
+# Note: pushing to master also updates the GitHub Action for all users
 git tag v$(node -p "require('./package.json').version")
 git push && git push --tags
 ```
