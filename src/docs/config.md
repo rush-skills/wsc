@@ -23,7 +23,7 @@ npx wsc-cli init
 
 ### Detector Reference
 
-All 7 detectors are enabled by default. Set `enabled: false` to disable any detector.
+All 8 detectors are enabled by default. Set `enabled: false` to disable any detector.
 
 | Detector | Options |
 |----------|---------|
@@ -34,6 +34,7 @@ All 7 detectors are enabled by default. Set `enabled: false` to disable any dete
 | `nominalizations` | `enabled`, `add` (array of `{word, suggestion}`), `remove` |
 | `hedging` | `enabled`, `add`, `remove` |
 | `adverbs` | `enabled`, `add`, `remove` |
+| `aiTells` | `enabled`, `add`, `remove` (vocabulary), `addPhrases`, `removePhrases` |
 
 ### Word List Overrides
 
@@ -66,6 +67,10 @@ Browse the full built-in word lists on the [Word Library](/words) page.
     },
     "hedging": {
       "remove": ["I think"]
+    },
+    "aiTells": {
+      "remove": ["robust"],
+      "addPhrases": ["circle back"]
     }
   }
 }

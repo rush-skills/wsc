@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/wsc-mcp)](https://www.npmjs.com/package/wsc-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A tool that detects common writing issues: **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, and **filler adverbs**. Available as a web editor, HTTP API, MCP server, CLI tool, and GitHub Action.
+A tool that detects common writing issues: **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, **filler adverbs**, and **AI tells**. Available as a web editor, HTTP API, MCP server, CLI tool, and GitHub Action.
 
 **[Live: wsc.theserverless.dev](https://wsc.theserverless.dev)**
 
@@ -33,8 +33,9 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 | **Nominalizations** | 230 word pairs | Nouns replaceable with verbs ("utilization" → "use") |
 | **Hedging** | 100 phrases | Phrases that weaken assertions ("I think", "it seems") |
 | **Filler Adverbs** | 140 words | Adverbs adding emphasis without substance ("totally", "utterly") |
+| **AI Tells** | 37 words + 31 phrases | Words/phrases overrepresented in AI-generated text ("delve", "tapestry", "let's dive in") |
 
-Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/), expanded significantly.
+Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/), expanded significantly. AI tells based on GPTZero corpus analysis and CMU PNAS study.
 
 ---
 

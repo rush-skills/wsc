@@ -22,6 +22,7 @@ curl -X POST https://wsc.theserverless.dev/api/check \
   "issues": {
     "weaselWords": [{ "word": "very", "index": 21, "line": 1, ... }],
     "passiveVoice": [{ "phrase": "was written", "index": 9, ... }],
+    "aiTells": [{ "text": "delve", "index": 5, "reason": "...", ... }],
     ...
   },
   "meta": { "characterCount": 34, "wordCount": 6, "processingTimeMs": 2 }

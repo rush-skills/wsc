@@ -1,7 +1,7 @@
 ## Getting Started
 
-The Writing Style Checker (WSC) detects 7 types of writing issues: weasel words, passive voice,
-duplicate words, long sentences, nominalizations, hedging language, and filler adverbs.
+The Writing Style Checker (WSC) detects 8 types of writing issues: weasel words, passive voice,
+duplicate words, long sentences, nominalizations, hedging language, filler adverbs, and AI tells.
 
 ### Use it online
 

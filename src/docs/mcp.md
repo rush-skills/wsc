@@ -38,7 +38,7 @@ Run locally for `check_file` support with auto-discovery of `.wscrc.json`.
 
 | Tool | Description |
 |------|-------------|
-| `check_text` | Analyze text for all 7 writing style issues. Accepts optional config. |
+| `check_text` | Analyze text for all 8 writing style issues. Accepts optional config. |
 | `check_file` | Read a file and analyze it (local only). Auto-discovers `.wscrc.json`. |
 | `fix_duplicates` | Remove duplicate adjacent words and return cleaned text. |
 | `list_weasel_words` | Return the complete list of weasel words the checker flags. |
