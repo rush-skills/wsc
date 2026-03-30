@@ -55,8 +55,6 @@
 </script>
 
 <div class="api-tester">
-  <h4>Try the API</h4>
-
   <textarea
     class="api-input"
     placeholder="Enter text to analyze..."
@@ -107,16 +105,7 @@
 
 <style>
   .api-tester {
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--border-color);
-  }
-
-  .api-tester h4 {
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-    color: var(--primary-text);
-    font-size: 1rem;
+    margin-top: 0.5rem;
   }
 
   .api-input, .api-config-input {

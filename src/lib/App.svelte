@@ -448,20 +448,26 @@ For example:
   </div>
 {/if}
 
-<div class="config-toggle-row">
-  <button class="config-toggle-button" on:click={() => (showConfig = !showConfig)}>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.2"/>
-      <path d="M8 0.5V3M8 13V15.5M15.5 8H13M3 8H0.5M13.3 2.7L11.5 4.5M4.5 11.5L2.7 13.3M13.3 13.3L11.5 11.5M4.5 4.5L2.7 2.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-    </svg>
-    {showConfig ? 'Hide' : 'Show'} Config
-    <span class="dropdown-arrow" class:open={showConfig}>
-      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+<button class="config-card" on:click={() => (showConfig = !showConfig)}>
+  <div class="config-card-left">
+    <div class="config-card-icon">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M8 0.5V3M8 13V15.5M15.5 8H13M3 8H0.5M13.3 2.7L11.5 4.5M4.5 11.5L2.7 13.3M13.3 13.3L11.5 11.5M4.5 4.5L2.7 2.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
       </svg>
-    </span>
-  </button>
-</div>
+    </div>
+    <div class="config-card-text">
+      <span class="config-card-title">Config Builder</span>
+      <span class="config-card-desc">Toggle detectors, customize word lists, adjust thresholds</span>
+    </div>
+  </div>
+  <span class="config-card-toggle">
+    {showConfig ? 'Hide' : 'Open'}
+    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" class:config-arrow-open={showConfig}>
+      <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </span>
+</button>
 
 {#if showConfig}
   <div transition:slide={{ duration: 300 }}>

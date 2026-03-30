@@ -31,20 +31,20 @@
               aria-expanded={showAbout}
             >
               <p class="subtitle">
-                Improve your technical writing by detecting common issues
+                Improve your technical writing
               </p>
               <span class="dropdown-arrow" class:open={showAbout}>
                 <svg
-                  width="12"
-                  height="8"
-                  viewBox="0 0 12 8"
+                  width="10"
+                  height="6"
+                  viewBox="0 0 10 6"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
-                    d="M1 1L6 6L11 1"
+                    d="M1 1L5 5L9 1"
                     stroke="currentColor"
-                    stroke-width="2"
+                    stroke-width="1.5"
                     stroke-linecap="round"
                   />
                 </svg>
@@ -56,7 +56,7 @@
       <div class="header-right">
         <nav class="main-nav">
           <a href="/" class="nav-link" class:active={$page.url.pathname === '/'}>Editor</a>
-          <a href="/words" class="nav-link" class:active={$page.url.pathname === '/words'}>Word Library</a>
+          <a href="/words" class="nav-link" class:active={$page.url.pathname === '/words'}>Words</a>
           <a href="/docs" class="nav-link" class:active={$page.url.pathname === '/docs'}>Docs</a>
         </nav>
         <div class="theme-switcher">
@@ -65,24 +65,21 @@
             on:click={() => theme.set('light')}
             title="Light Theme"
           >
-            <span class="icon">&#9728;&#65039;</span>
-            <span class="label">Light</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           </button>
           <button
             class={$theme === 'dark' ? 'active' : ''}
             on:click={() => theme.set('dark')}
             title="Dark Theme"
           >
-            <span class="icon">&#127769;</span>
-            <span class="label">Dark</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           </button>
           <button
             class={$theme === 'system' ? 'active' : ''}
             on:click={() => theme.set('system')}
             title="System Theme"
           >
-            <span class="icon">&#9881;&#65039;</span>
-            <span class="label">System</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           </button>
         </div>
       </div>
@@ -99,14 +96,11 @@
           Inspired by Matt Might's shell scripts for writing improvement, this
           interactive tool brings those command-line utilities to the web. Just
           type or paste your text, and see immediate feedback about potential
-          improvements. You don't need to eliminate every highlight - just make
-          conscious choices about your writing.
+          improvements.
         </p>
         <p>
-          <strong>Your privacy is protected</strong>: This tool runs entirely in
-          your browser. Your text is never sent to any server, stored in
-          databases, or shared with third parties. All analysis happens locally
-          in your device.
+          <strong>Your privacy is protected</strong>: all analysis runs
+          entirely in your browser. Your text is never sent to any server.
         </p>
       </div>
     {/if}
@@ -122,13 +116,9 @@
         href="https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/"
         target="_blank"
         rel="noopener noreferrer"
-      >
-        Shell scripts for passive voice, weasel words, duplicates
-      </a>
+      >Shell scripts for passive voice, weasel words, duplicates</a>
       by
-      <a href="https://matt.might.net" target="_blank" rel="noopener noreferrer"
-        >Matt Might</a
-      >
+      <a href="https://matt.might.net" target="_blank" rel="noopener noreferrer">Matt Might</a>
     </p>
     <p class="footer-credits">
       Made by <a
@@ -145,8 +135,8 @@
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
