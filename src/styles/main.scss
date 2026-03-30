@@ -786,6 +786,10 @@ footer a:hover {
     align-items: center;
   }
 
+  h1 {
+    font-size: 1.4rem;
+  }
+
   .header-left {
     flex-direction: row;
     align-items: center;
@@ -795,10 +799,11 @@ footer a:hover {
   }
 
   .logo {
-    width: 32px;
-    height: 32px;
-    margin-right: 10px;
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
     margin-top: 0;
+    padding: 3px;
   }
 
   .header-top {
@@ -807,8 +812,17 @@ footer a:hover {
   }
 
   .logo-title {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     align-items: center;
+  }
+
+  .title-container {
+    align-items: center;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    text-align: center;
   }
 
   .theme-switcher {
@@ -816,11 +830,19 @@ footer a:hover {
     margin-top: 0;
   }
 
+  .theme-switcher .label {
+    display: none;
+  }
+
+  .theme-switcher button {
+    padding: 0.4rem 0.6rem;
+  }
+
   .subtitle-button {
     justify-content: center;
     text-align: center;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
   }
 
   .about-content {
