@@ -941,6 +941,9 @@ footer a {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
 }
 
 .config-card-icon {

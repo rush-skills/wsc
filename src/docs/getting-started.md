@@ -24,7 +24,13 @@ npx wsc-cli check "**/*.md"
 
 ### Use via AI assistants (MCP)
 
-Add WSC as a remote MCP server in Claude Desktop, Claude Code, or any MCP client:
+Add WSC to Claude Code with a single command:
+
+```shell
+claude mcp add writing-style-checker --transport http https://wsc.theserverless.dev/mcp
+```
+
+Or add to Claude Desktop / other MCP clients:
 
 ```json
 {

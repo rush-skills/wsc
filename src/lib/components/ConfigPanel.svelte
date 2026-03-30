@@ -30,6 +30,10 @@
   let adverbRemove: string[] = [];
   let nomAdd: Array<{ word: string; suggestion: string }> = [];
   let nomRemove: string[] = [];
+  let aiVocabAdd: string[] = [];
+  let aiVocabRemove: string[] = [];
+  let aiPhraseAdd: string[] = [];
+  let aiPhraseRemove: string[] = [];
 
   // Input fields
   let weaselAddInput = '';
@@ -38,6 +42,10 @@
   let hedgingRemoveInput = '';
   let adverbAddInput = '';
   let adverbRemoveInput = '';
+  let aiVocabAddInput = '';
+  let aiVocabRemoveInput = '';
+  let aiPhraseAddInput = '';
+  let aiPhraseRemoveInput = '';
   let nomAddWord = '';
   let nomAddSuggestion = '';
   let nomRemoveInput = '';
@@ -67,7 +75,9 @@
     buildConfig();
   }
 
-  function addWord(list: 'weaselAdd' | 'weaselRemove' | 'hedgingAdd' | 'hedgingRemove' | 'adverbAdd' | 'adverbRemove' | 'nomRemove') {
+  type WordListKey = 'weaselAdd' | 'weaselRemove' | 'hedgingAdd' | 'hedgingRemove' | 'adverbAdd' | 'adverbRemove' | 'nomRemove' | 'aiVocabAdd' | 'aiVocabRemove' | 'aiPhraseAdd' | 'aiPhraseRemove';
+
+  function addWord(list: WordListKey) {
     let input: string;
     switch (list) {
       case 'weaselAdd': input = weaselAddInput.trim(); if (input && !weaselAdd.includes(input)) { weaselAdd = [...weaselAdd, input]; } weaselAddInput = ''; break;
@@ -77,11 +87,15 @@
       case 'adverbAdd': input = adverbAddInput.trim(); if (input && !adverbAdd.includes(input)) { adverbAdd = [...adverbAdd, input]; } adverbAddInput = ''; break;
       case 'adverbRemove': input = adverbRemoveInput.trim(); if (input && !adverbRemove.includes(input)) { adverbRemove = [...adverbRemove, input]; } adverbRemoveInput = ''; break;
       case 'nomRemove': input = nomRemoveInput.trim(); if (input && !nomRemove.includes(input)) { nomRemove = [...nomRemove, input]; } nomRemoveInput = ''; break;
+      case 'aiVocabAdd': input = aiVocabAddInput.trim(); if (input && !aiVocabAdd.includes(input)) { aiVocabAdd = [...aiVocabAdd, input]; } aiVocabAddInput = ''; break;
+      case 'aiVocabRemove': input = aiVocabRemoveInput.trim(); if (input && !aiVocabRemove.includes(input)) { aiVocabRemove = [...aiVocabRemove, input]; } aiVocabRemoveInput = ''; break;
+      case 'aiPhraseAdd': input = aiPhraseAddInput.trim(); if (input && !aiPhraseAdd.includes(input)) { aiPhraseAdd = [...aiPhraseAdd, input]; } aiPhraseAddInput = ''; break;
+      case 'aiPhraseRemove': input = aiPhraseRemoveInput.trim(); if (input && !aiPhraseRemove.includes(input)) { aiPhraseRemove = [...aiPhraseRemove, input]; } aiPhraseRemoveInput = ''; break;
     }
     buildConfig();
   }
 
-  function removeWord(list: 'weaselAdd' | 'weaselRemove' | 'hedgingAdd' | 'hedgingRemove' | 'adverbAdd' | 'adverbRemove' | 'nomRemove', word: string) {
+  function removeWord(list: WordListKey, word: string) {
     switch (list) {
       case 'weaselAdd': weaselAdd = weaselAdd.filter(w => w !== word); break;
       case 'weaselRemove': weaselRemove = weaselRemove.filter(w => w !== word); break;
@@ -89,6 +103,10 @@
       case 'hedgingRemove': hedgingRemove = hedgingRemove.filter(w => w !== word); break;
       case 'adverbAdd': adverbAdd = adverbAdd.filter(w => w !== word); break;
       case 'adverbRemove': adverbRemove = adverbRemove.filter(w => w !== word); break;
+      case 'aiVocabAdd': aiVocabAdd = aiVocabAdd.filter(w => w !== word); break;
+      case 'aiVocabRemove': aiVocabRemove = aiVocabRemove.filter(w => w !== word); break;
+      case 'aiPhraseAdd': aiPhraseAdd = aiPhraseAdd.filter(w => w !== word); break;
+      case 'aiPhraseRemove': aiPhraseRemove = aiPhraseRemove.filter(w => w !== word); break;
       case 'nomRemove': nomRemove = nomRemove.filter(w => w !== word); break;
     }
     buildConfig();
@@ -156,8 +174,14 @@
         ...(adverbRemove.length && { remove: [...adverbRemove] }),
       };
     }
-    if (!aiTellsEnabled) {
-      cfg.detectors!.aiTells = { enabled: false };
+    if (!aiTellsEnabled || aiVocabAdd.length || aiVocabRemove.length || aiPhraseAdd.length || aiPhraseRemove.length) {
+      cfg.detectors!.aiTells = {
+        ...(!aiTellsEnabled && { enabled: false }),
+        ...(aiVocabAdd.length && { add: [...aiVocabAdd] }),
+        ...(aiVocabRemove.length && { remove: [...aiVocabRemove] }),
+        ...(aiPhraseAdd.length && { addPhrases: [...aiPhraseAdd] }),
+        ...(aiPhraseRemove.length && { removePhrases: [...aiPhraseRemove] }),
+      };
     }
 
     // Clean empty detectors object
@@ -171,6 +195,7 @@
 
   function resetConfig() {
     weaselEnabled = passiveEnabled = duplicateEnabled = longSentencesEnabled = nominalizationsEnabled = hedgingEnabled = adverbsEnabled = aiTellsEnabled = true;
+    aiVocabAdd = []; aiVocabRemove = []; aiPhraseAdd = []; aiPhraseRemove = [];
     maxWords = 30;
     weaselAdd = []; weaselRemove = [];
     hedgingAdd = []; hedgingRemove = [];
@@ -268,6 +293,37 @@
   </div>
   {/if}
 
+  {#if nominalizationsEnabled}
+  <div class="config-section" transition:slide={{ duration: 200 }}>
+    <h4>Nominalizations</h4>
+    <div class="word-editor">
+      <div class="word-input-row nom-row">
+        <input type="text" placeholder="Word..." bind:value={nomAddWord} on:keydown={(e) => handleKeydown(e, addNominalization)} />
+        <input type="text" placeholder="Suggestion..." bind:value={nomAddSuggestion} on:keydown={(e) => handleKeydown(e, addNominalization)} />
+        <button class="add-btn" on:click={addNominalization}>Add</button>
+      </div>
+      {#if nomAdd.length}
+        <div class="chip-list">
+          {#each nomAdd as nom}
+            <span class="chip chip-add"><span class="chip-prefix">+</span>{nom.word} &rarr; {nom.suggestion}<button class="chip-remove" on:click={() => removeNominalization(nom.word)} aria-label="Remove {nom.word}">&times;</button></span>
+          {/each}
+        </div>
+      {/if}
+      <div class="word-input-row">
+        <input type="text" placeholder="Remove nominalization..." bind:value={nomRemoveInput} on:keydown={(e) => handleKeydown(e, () => addWord('nomRemove'))} />
+        <button class="add-btn remove-btn" on:click={() => addWord('nomRemove')}>Remove</button>
+      </div>
+      {#if nomRemove.length}
+        <div class="chip-list">
+          {#each nomRemove as word}
+            <span class="chip chip-remove-item"><span class="chip-prefix">-</span>{word}<button class="chip-remove" on:click={() => removeWord('nomRemove', word)} aria-label="Remove {word}">&times;</button></span>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  </div>
+  {/if}
+
   {#if hedgingEnabled}
   <div class="config-section" transition:slide={{ duration: 200 }}>
     <h4>Hedging Phrases</h4>
@@ -328,30 +384,53 @@
   </div>
   {/if}
 
-  {#if nominalizationsEnabled}
+  {#if aiTellsEnabled}
   <div class="config-section" transition:slide={{ duration: 200 }}>
-    <h4>Nominalizations</h4>
+    <h4>AI Tells</h4>
     <div class="word-editor">
-      <div class="word-input-row nom-row">
-        <input type="text" placeholder="Word..." bind:value={nomAddWord} on:keydown={(e) => handleKeydown(e, addNominalization)} />
-        <input type="text" placeholder="Suggestion..." bind:value={nomAddSuggestion} on:keydown={(e) => handleKeydown(e, addNominalization)} />
-        <button class="add-btn" on:click={addNominalization}>Add</button>
+      <p class="config-note" style="margin-bottom: 0.5rem;">Vocabulary words flagged as AI-overused</p>
+      <div class="word-input-row">
+        <input type="text" placeholder="Add AI vocabulary word..." bind:value={aiVocabAddInput} on:keydown={(e) => handleKeydown(e, () => addWord('aiVocabAdd'))} />
+        <button class="add-btn" on:click={() => addWord('aiVocabAdd')}>Add</button>
       </div>
-      {#if nomAdd.length}
+      {#if aiVocabAdd.length}
         <div class="chip-list">
-          {#each nomAdd as nom}
-            <span class="chip chip-add"><span class="chip-prefix">+</span>{nom.word} &rarr; {nom.suggestion}<button class="chip-remove" on:click={() => removeNominalization(nom.word)} aria-label="Remove {nom.word}">&times;</button></span>
+          {#each aiVocabAdd as word}
+            <span class="chip chip-add"><span class="chip-prefix">+</span>{word}<button class="chip-remove" on:click={() => removeWord('aiVocabAdd', word)} aria-label="Remove {word}">&times;</button></span>
           {/each}
         </div>
       {/if}
       <div class="word-input-row">
-        <input type="text" placeholder="Remove nominalization..." bind:value={nomRemoveInput} on:keydown={(e) => handleKeydown(e, () => addWord('nomRemove'))} />
-        <button class="add-btn remove-btn" on:click={() => addWord('nomRemove')}>Remove</button>
+        <input type="text" placeholder="Remove AI vocabulary word..." bind:value={aiVocabRemoveInput} on:keydown={(e) => handleKeydown(e, () => addWord('aiVocabRemove'))} />
+        <button class="add-btn remove-btn" on:click={() => addWord('aiVocabRemove')}>Remove</button>
       </div>
-      {#if nomRemove.length}
+      {#if aiVocabRemove.length}
         <div class="chip-list">
-          {#each nomRemove as word}
-            <span class="chip chip-remove-item"><span class="chip-prefix">-</span>{word}<button class="chip-remove" on:click={() => removeWord('nomRemove', word)} aria-label="Remove {word}">&times;</button></span>
+          {#each aiVocabRemove as word}
+            <span class="chip chip-remove-item"><span class="chip-prefix">-</span>{word}<button class="chip-remove" on:click={() => removeWord('aiVocabRemove', word)} aria-label="Remove {word}">&times;</button></span>
+          {/each}
+        </div>
+      {/if}
+      <p class="config-note" style="margin-top: 0.75rem; margin-bottom: 0.5rem;">Phrases flagged as AI patterns</p>
+      <div class="word-input-row">
+        <input type="text" placeholder="Add AI phrase..." bind:value={aiPhraseAddInput} on:keydown={(e) => handleKeydown(e, () => addWord('aiPhraseAdd'))} />
+        <button class="add-btn" on:click={() => addWord('aiPhraseAdd')}>Add</button>
+      </div>
+      {#if aiPhraseAdd.length}
+        <div class="chip-list">
+          {#each aiPhraseAdd as word}
+            <span class="chip chip-add"><span class="chip-prefix">+</span>{word}<button class="chip-remove" on:click={() => removeWord('aiPhraseAdd', word)} aria-label="Remove {word}">&times;</button></span>
+          {/each}
+        </div>
+      {/if}
+      <div class="word-input-row">
+        <input type="text" placeholder="Remove AI phrase..." bind:value={aiPhraseRemoveInput} on:keydown={(e) => handleKeydown(e, () => addWord('aiPhraseRemove'))} />
+        <button class="add-btn remove-btn" on:click={() => addWord('aiPhraseRemove')}>Remove</button>
+      </div>
+      {#if aiPhraseRemove.length}
+        <div class="chip-list">
+          {#each aiPhraseRemove as word}
+            <span class="chip chip-remove-item"><span class="chip-prefix">-</span>{word}<button class="chip-remove" on:click={() => removeWord('aiPhraseRemove', word)} aria-label="Remove {word}">&times;</button></span>
           {/each}
         </div>
       {/if}

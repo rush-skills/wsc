@@ -4,6 +4,14 @@ Connect any [MCP](https://modelcontextprotocol.io/)-compatible AI assistant (Cla
 
 ### Remote Server (no install)
 
+**Claude Code one-liner:**
+
+```shell
+claude mcp add writing-style-checker --transport http https://wsc.theserverless.dev/mcp
+```
+
+**Claude Desktop / other MCP clients:**
+
 ```json
 {
   "mcpServers": {
@@ -20,6 +28,14 @@ Connect any [MCP](https://modelcontextprotocol.io/)-compatible AI assistant (Cla
 ### Local Server (stdio)
 
 Run locally for `check_file` support with auto-discovery of `.wscrc.json`.
+
+**Claude Code one-liner:**
+
+```shell
+claude mcp add writing-style-checker -- npx wsc-mcp
+```
+
+**Claude Desktop / other MCP clients:**
 
 ```json
 {
