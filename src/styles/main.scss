@@ -568,9 +568,11 @@ main {
 .issue-item {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-right: 0.75rem;
   margin-bottom: 0.75rem;
+  max-width: 100%;
 }
 
 .position-indicator {
@@ -686,7 +688,7 @@ main {
   padding: 3px 8px;
   border-radius: 4px;
   font-weight: 500;
-  max-width: 300px;
+  max-width: min(300px, 60vw);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -834,6 +836,25 @@ footer a:hover {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+
+  .issue-section {
+    padding: 1rem;
+    overflow: hidden;
+  }
+
+  .issue-list {
+    flex-direction: column;
+  }
+
+  .issue-item {
+    margin-right: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .long-sentence-example {
+    max-width: 100%;
   }
 
   .legend-items {
