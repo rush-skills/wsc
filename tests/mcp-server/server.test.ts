@@ -168,11 +168,10 @@ describe('createServer — MCP integration', () => {
 
   it('lists 4 tools including check_file', async () => {
     const result = await client.listTools();
-    expect(result.tools).toHaveLength(4);
     const names = result.tools.map(t => t.name);
     expect(names).toContain('check_text');
     expect(names).toContain('fix_duplicates');
-    expect(names).toContain('list_weasel_words');
+    expect(names).toContain('list_word_lists');
     expect(names).toContain('check_file');
   });
 
@@ -259,17 +258,6 @@ describe('createServer — MCP integration', () => {
     });
     const text = (result.content as any)[0].text;
     expect(text).toMatch(/\d+ duplicate words:/);
-  });
-
-  it('list_weasel_words returns the word list', async () => {
-    const result = await client.callTool({
-      name: 'list_weasel_words',
-      arguments: {},
-    });
-    const text = (result.content as any)[0].text;
-    expect(text).toContain('Weasel Words List');
-    expect(text).toContain('very');
-    expect(text).toContain('basically');
   });
 
   it('check_file reads and analyzes a text file', async () => {

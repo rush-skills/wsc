@@ -2,6 +2,12 @@ import {
   detectDuplicateWords,
   removeDuplicateWord,
   allWeaselWords,
+  nominalizations,
+  hedgingPhrases,
+  fillerAdverbs,
+  irregularVerbs,
+  aiTellsVocabulary,
+  aiTellsPhrases,
   analyzeText,
   validateConfig,
 } from '../core';
@@ -24,7 +30,7 @@ interface JsonRpcResponse {
 const TOOLS = [
   {
     name: 'check_text',
-    description: 'Analyze text for writing style issues (weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs). Returns structured results with issue positions and context.',
+    description: 'Analyze text for writing style issues (weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, AI tells). Returns structured results with issue positions and context.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -55,17 +61,8 @@ const TOOLS = [
     },
   },
   {
-    name: 'list_weasel_words',
-    description: 'Return the complete list of weasel words that the checker flags.',
-    inputSchema: {
-      type: 'object',
-      properties: {},
-      required: [],
-    },
-  },
-  {
     name: 'list_word_lists',
-    description: 'Return all word/phrase lists used by the detectors.',
+    description: 'Return all word/phrase lists used by the detectors with their counts and sample entries.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -125,6 +122,7 @@ function handleCheckText(args: Record<string, unknown>): { content: Array<{ type
       { label: 'NOMINALIZATIONS', items: issues.nominalizations.map(n => ({ display: `${n.word} → ${n.suggestion}`, ...n })) },
       { label: 'HEDGING', items: issues.hedging.map(h => ({ display: h.phrase, ...h })) },
       { label: 'FILLER ADVERBS', items: issues.adverbs.map(a => ({ display: a.word, ...a })) },
+      { label: 'AI TELLS', items: issues.aiTells.map(a => ({ display: `${a.text} — ${a.reason}`, ...a })) },
     ];
 
     for (const section of sections) {
@@ -168,26 +166,34 @@ function handleFixDuplicates(args: Record<string, unknown>): { content: Array<{ 
   return { content: [{ type: 'text', text: output }] };
 }
 
-function handleListWeaselWords(): { content: Array<{ type: string; text: string }> } {
-  const output = `Weasel Words List (${allWeaselWords.length} words)\n${'='.repeat(40)}\n\n${allWeaselWords.join(', ')}`;
-  return { content: [{ type: 'text', text: output }] };
-}
-
 function handleListWordLists(): { content: Array<{ type: string; text: string }> } {
-  // Import all lists dynamically would require top-level imports, so reference via analyzeText
-  const result = analyzeText('');
-  const cfg = result.config;
-  const output = [
-    `Detector Word Lists`,
-    `===================`,
-    ``,
-    `Detectors: weaselWords, passiveVoice, duplicateWords, longSentences, nominalizations, hedging, adverbs`,
-    ``,
-    `All detectors are enabled by default. Use the config parameter in check_text to customize.`,
-    `For the complete weasel words list, use the list_weasel_words tool.`,
-  ].join('\n');
+  const lists = [
+    { name: 'Weasel Words', count: allWeaselWords.length, configKey: 'weaselWords', sample: allWeaselWords.slice(0, 10) },
+    { name: 'Irregular Verbs (Passive Voice)', count: irregularVerbs.length, configKey: 'passiveVoice', sample: irregularVerbs.slice(0, 10) },
+    { name: 'Nominalizations', count: nominalizations.length, configKey: 'nominalizations', sample: nominalizations.slice(0, 5).map(n => `${n.word} → ${n.suggestion}`) },
+    { name: 'Hedging Phrases', count: hedgingPhrases.length, configKey: 'hedging', sample: hedgingPhrases.slice(0, 10) },
+    { name: 'Filler Adverbs', count: fillerAdverbs.length, configKey: 'adverbs', sample: fillerAdverbs.slice(0, 10) },
+    { name: 'AI Tells (Vocabulary)', count: aiTellsVocabulary.length, configKey: 'aiTells', sample: aiTellsVocabulary.slice(0, 10).map(v => v.word) },
+    { name: 'AI Tells (Phrases)', count: aiTellsPhrases.length, configKey: 'aiTells', sample: aiTellsPhrases.slice(0, 10).map(p => p.phrase) },
+  ];
 
-  return { content: [{ type: 'text', text: output }] };
+  const lines = [
+    'Detector Word Lists',
+    '===================',
+    '',
+  ];
+
+  for (const list of lists) {
+    lines.push(`${list.name} (${list.count} entries) [config: detectors.${list.configKey}]`);
+    lines.push(`  Sample: ${list.sample.join(', ')}`);
+    lines.push('');
+  }
+
+  lines.push('All 8 detectors are enabled by default. Use the config parameter in check_text to customize.');
+  lines.push('Word lists can be customized with add/remove overrides in .wscrc.json config files.');
+  lines.push('Browse the full lists at: https://wsc.theserverless.dev/words');
+
+  return { content: [{ type: 'text', text: lines.join('\n') }] };
 }
 
 export async function handleMcpRequest(request: JsonRpcRequest): Promise<JsonRpcResponse> {
@@ -236,9 +242,6 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<JsonRpc
             break;
           case 'fix_duplicates':
             result = handleFixDuplicates(args);
-            break;
-          case 'list_weasel_words':
-            result = handleListWeaselWords();
             break;
           case 'list_word_lists':
             result = handleListWordLists();

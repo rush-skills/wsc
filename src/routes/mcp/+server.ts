@@ -45,7 +45,7 @@ export const GET: RequestHandler = async () => {
     name: 'Writing Style Checker MCP Server',
     description: 'MCP server for detecting writing style issues: weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs.',
     version: '1.0.0',
-    tools: ['check_text', 'fix_duplicates', 'list_weasel_words', 'list_word_lists'],
+    tools: ['check_text', 'fix_duplicates', 'list_word_lists'],
     docs: 'https://wsc.theserverless.dev',
     protocol: 'MCP (Model Context Protocol) over Streamable HTTP',
     usage: 'POST JSON-RPC 2.0 requests to this endpoint'

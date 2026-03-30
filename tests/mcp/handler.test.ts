@@ -122,11 +122,10 @@ describe('handleMcpRequest — tools/list', () => {
     });
     expect(res.error).toBeUndefined();
     const result = res.result as any;
-    expect(result.tools).toHaveLength(4);
+    expect(result.tools).toHaveLength(3);
     const names = result.tools.map((t: any) => t.name);
     expect(names).toContain('check_text');
     expect(names).toContain('fix_duplicates');
-    expect(names).toContain('list_weasel_words');
     expect(names).toContain('list_word_lists');
   });
 
@@ -148,14 +147,6 @@ describe('handleMcpRequest — tools/list', () => {
     const res = await handleMcpRequest({ jsonrpc: '2.0', id: 3, method: 'tools/list' });
     const tools = (res.result as any).tools;
     expect(tools.find((t: any) => t.name === 'fix_duplicates')).toBeDefined();
-  });
-
-  it('returns list_weasel_words tool with no required params', async () => {
-    const res = await handleMcpRequest({ jsonrpc: '2.0', id: 4, method: 'tools/list' });
-    const tools = (res.result as any).tools;
-    const listTool = tools.find((t: any) => t.name === 'list_weasel_words');
-    expect(listTool).toBeDefined();
-    expect(listTool.inputSchema.required).toEqual([]);
   });
 });
 
@@ -496,40 +487,6 @@ describe('handleMcpRequest — tools/call fix_duplicates', () => {
 // ============================================================================
 // tools/call — list_weasel_words
 // ============================================================================
-
-describe('handleMcpRequest — tools/call list_weasel_words', () => {
-  it('returns the full weasel word list', async () => {
-    const res = await handleMcpRequest({
-      jsonrpc: '2.0',
-      id: 40,
-      method: 'tools/call',
-      params: {
-        name: 'list_weasel_words',
-        arguments: {},
-      },
-    });
-    expect(res.error).toBeUndefined();
-    const text = (res.result as any).content[0].text;
-    expect(text).toContain('Weasel Words List');
-    expect(text).toContain(`${allWeaselWords.length} words`);
-    // Check that at least a few known words are present
-    expect(text).toContain('very');
-    expect(text).toContain('basically');
-    expect(text).toContain('obviously');
-  });
-
-  it('works with no arguments at all', async () => {
-    const res = await handleMcpRequest({
-      jsonrpc: '2.0',
-      id: 41,
-      method: 'tools/call',
-      params: {
-        name: 'list_weasel_words',
-      },
-    });
-    expect(res.error).toBeUndefined();
-  });
-});
 
 // ============================================================================
 // tools/call — list_word_lists

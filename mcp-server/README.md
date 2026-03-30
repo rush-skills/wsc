@@ -1,15 +1,15 @@
 # wsc-mcp
 
-A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for the [Writing Style Checker](https://wsc.theserverless.dev). Detects **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, and **filler adverbs** — directly from your AI assistant.
+A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for the [Writing Style Checker](https://wsc.theserverless.dev). Detects **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, **filler adverbs**, and **AI tells** — directly from your AI assistant.
 
 ## Tools
 
 | Tool | Description |
 |------|-------------|
-| `check_text` | Analyze text for all 7 writing style issues with positions and context. Accepts optional `config` to customize detectors. |
+| `check_text` | Analyze text for all 8 writing style issues with positions and context. Accepts optional `config` to customize detectors. |
 | `check_file` | Read a file from disk and analyze it. Auto-discovers `.wscrc.json` config. Accepts optional `config` override. |
 | `fix_duplicates` | Remove all duplicate adjacent words and return the cleaned text |
-| `list_weasel_words` | Return the complete list of weasel words the checker flags |
+| `list_word_lists` | Return all detector word/phrase lists with counts and sample entries |
 
 ## Setup
 
@@ -66,7 +66,7 @@ If you don't need local file analysis, you can use the hosted MCP server instead
 }
 ```
 
-The remote server provides `check_text`, `fix_duplicates`, `list_weasel_words`, and `list_word_lists` (no `check_file` since it runs on Cloudflare Workers).
+The remote server provides `check_text`, `fix_duplicates`, and `list_word_lists` (no `check_file` since it runs on Cloudflare Workers).
 
 ## Configuration
 
@@ -92,7 +92,7 @@ Once connected, ask your AI assistant:
 - "Analyze the file at ~/Documents/essay.md for writing style problems"
 - "Fix duplicate words in: The the code is is working"
 - "Check this text but disable the adverbs detector"
-- "What weasel words does the checker look for?"
+- "What word lists does the checker use?"
 
 ## Detection Rules
 
@@ -105,6 +105,7 @@ Once connected, ask your AI assistant:
 | Nominalizations | 230 | Nouns replaceable with verbs ("utilization" → "use") |
 | Hedging | 100 | Phrases that weaken assertions ("I think", "it seems") |
 | Filler Adverbs | 140 | Adverbs adding emphasis without substance ("totally", "utterly") |
+| AI Tells | 37+31 | Words/phrases overrepresented in AI text ("delve", "let's dive in") |
 
 ## Privacy
 

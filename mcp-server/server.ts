@@ -6,6 +6,12 @@ import {
   detectDuplicateWords,
   removeDuplicateWord,
   allWeaselWords,
+  nominalizations,
+  hedgingPhrases,
+  fillerAdverbs,
+  irregularVerbs,
+  aiTellsVocabulary,
+  aiTellsPhrases,
   analyzeText as coreAnalyzeText,
   validateConfig,
 } from '../src/core/index.js';
@@ -123,12 +129,28 @@ export function createServer(): McpServer {
   );
 
   server.tool(
-    'list_weasel_words',
-    'Return the complete list of weasel words that the checker flags.',
+    'list_word_lists',
+    'Return all word/phrase lists used by the detectors with their counts and sample entries.',
     {},
     async () => {
-      const output = `Weasel Words List (${allWeaselWords.length} words)\n${'='.repeat(40)}\n\n${allWeaselWords.join(', ')}`;
-      return { content: [{ type: 'text', text: output }] };
+      const lists = [
+        { name: 'Weasel Words', count: allWeaselWords.length, configKey: 'weaselWords', sample: allWeaselWords.slice(0, 10) },
+        { name: 'Irregular Verbs (Passive Voice)', count: irregularVerbs.length, configKey: 'passiveVoice', sample: irregularVerbs.slice(0, 10) },
+        { name: 'Nominalizations', count: nominalizations.length, configKey: 'nominalizations', sample: nominalizations.slice(0, 5).map(n => `${n.word} → ${n.suggestion}`) },
+        { name: 'Hedging Phrases', count: hedgingPhrases.length, configKey: 'hedging', sample: hedgingPhrases.slice(0, 10) },
+        { name: 'Filler Adverbs', count: fillerAdverbs.length, configKey: 'adverbs', sample: fillerAdverbs.slice(0, 10) },
+        { name: 'AI Tells (Vocabulary)', count: aiTellsVocabulary.length, configKey: 'aiTells', sample: aiTellsVocabulary.slice(0, 10).map(v => v.word) },
+        { name: 'AI Tells (Phrases)', count: aiTellsPhrases.length, configKey: 'aiTells', sample: aiTellsPhrases.slice(0, 10).map(p => p.phrase) },
+      ];
+      const lines = ['Detector Word Lists', '===================', ''];
+      for (const list of lists) {
+        lines.push(`${list.name} (${list.count} entries) [config: detectors.${list.configKey}]`);
+        lines.push(`  Sample: ${list.sample.join(', ')}`);
+        lines.push('');
+      }
+      lines.push('All 8 detectors are enabled by default.');
+      lines.push('Browse the full lists at: https://wsc.theserverless.dev/words');
+      return { content: [{ type: 'text', text: lines.join('\n') }] };
     }
   );
 

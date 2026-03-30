@@ -23,7 +23,7 @@ claude mcp add writing-style-checker --transport http https://wsc.theserverless.
 }
 ```
 
-**Tools:** `check_text`, `fix_duplicates`, `list_weasel_words`, `list_word_lists`
+**Tools:** `check_text`, `fix_duplicates`, `list_word_lists`
 
 ### Local Server (stdio)
 
@@ -57,8 +57,7 @@ claude mcp add writing-style-checker -- npx wsc-mcp
 | `check_text` | Analyze text for all 8 writing style issues. Accepts optional config. |
 | `check_file` | Read a file and analyze it (local only). Auto-discovers `.wscrc.json`. |
 | `fix_duplicates` | Remove duplicate adjacent words and return cleaned text. |
-| `list_weasel_words` | Return the complete list of weasel words the checker flags. |
-| `list_word_lists` | Return info about all detector word/phrase lists with counts. |
+| `list_word_lists` | Return all detector word/phrase lists with counts and sample entries. |
 
 ### Build from Source
 
