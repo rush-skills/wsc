@@ -91,7 +91,7 @@ export const GET: RequestHandler = async () => {
     },
     detectors: [
       'weaselWords', 'passiveVoice', 'duplicateWords',
-      'longSentences', 'nominalizations', 'hedging', 'adverbs',
+      'longSentences', 'nominalizations', 'hedging', 'adverbs', 'aiTells',
     ],
     docs: 'https://wsc.theserverless.dev',
   }, { headers: CORS_HEADERS });

@@ -1,10 +1,10 @@
 # Writing Style Checker (WSC)
 
-> Free tool to detect weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs in technical writing.
+> Free tool to detect weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and AI tells in technical writing.
 
 ## Overview
 
-Writing Style Checker detects 7 types of writing issues:
+Writing Style Checker detects 8 types of writing issues:
 - Weasel words (very, extremely, various, etc.)
 - Passive voice (was written, has been done, etc.)
 - Duplicate adjacent words (the the, is is, etc.)
@@ -12,6 +12,7 @@ Writing Style Checker detects 7 types of writing issues:
 - Nominalizations (implementation → implement, optimization → optimize)
 - Hedging language (I think, it seems, etc.)
 - Filler adverbs (totally, utterly, basically, etc.)
+- AI tells (delve, tapestry, "let's dive in", etc.)
 
 ## Interfaces
 
@@ -45,11 +46,10 @@ Response:
 
 ## MCP Tools
 
-- check_text: Analyze text for all 7 writing issues (accepts optional config)
+- check_text: Analyze text for all 8 writing issues (accepts optional config)
 - check_file: Read and analyze a file (local MCP only, auto-discovers .wscrc.json)
 - fix_duplicates: Remove duplicate adjacent words
-- list_weasel_words: Return the complete weasel word list
-- list_word_lists: Return info about all detector word/phrase lists
+- list_word_lists: Return info about all detector word/phrase lists with counts
 
 ## Configuration
 
@@ -57,6 +57,7 @@ Create .wscrc.json in project root. Add "$schema": "https://wsc.theserverless.de
 
 Detectors with word list overrides (add/remove): weaselWords, hedging, adverbs
 Detectors with specialized config: longSentences (maxWords), nominalizations (add with word+suggestion)
+AI tells detector: aiTells (add/remove for vocabulary, addPhrases/removePhrases for phrases)
 Pattern-based detectors (enabled only): passiveVoice, duplicateWords
 
 ## Source

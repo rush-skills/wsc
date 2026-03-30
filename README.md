@@ -12,7 +12,7 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 
 ## Features
 
-- **Web Editor** - Real-time highlighting with inline fix buttons for all 7 detectors
+- **Web Editor** - Real-time highlighting with inline fix buttons for all 8 detectors
 - **HTTP API** - POST text with optional config, get structured JSON results
 - **MCP Server (Remote)** - Connect AI assistants via Streamable HTTP transport
 - **MCP Server (Local)** - Stdio-based server via [`wsc-mcp`](https://www.npmjs.com/package/wsc-mcp) on npm
@@ -115,7 +115,7 @@ Returns API documentation as JSON.
 
 ### `GET /api/detectors`
 
-Returns the list of all 7 detectors with descriptions, configurability, and word counts.
+Returns the list of all 8 detectors with descriptions, configurability, and word counts.
 
 ### `GET /health`
 
@@ -133,7 +133,7 @@ The Writing Style Checker is available as an [MCP](https://modelcontextprotocol.
 
 | Tool | Description |
 |------|-------------|
-| `check_text` | Analyze text for all 7 writing style issues. Accepts optional `config`. |
+| `check_text` | Analyze text for all 8 writing style issues. Accepts optional `config`. |
 | `fix_duplicates` | Remove duplicate adjacent words and return cleaned text |
 | `list_weasel_words` | Return the complete list of weasel words the checker flags |
 | `list_word_lists` | Return info about all detector word lists |
@@ -234,7 +234,7 @@ The web editor runs **entirely in your browser** - text is never sent to any ser
 .
 ├── src/
 │   ├── core/                    # Shared detection engine
-│   │   ├── detector.ts          # 7 detection algorithms
+│   │   ├── detector.ts          # 8 detection algorithms
 │   │   ├── words.ts             # Word/phrase lists (800+ entries)
 │   │   ├── config.ts            # Config types, merging, validation
 │   │   ├── config-node.ts       # Node-only: file loading, discovery

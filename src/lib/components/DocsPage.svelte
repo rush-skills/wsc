@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount, afterUpdate } from 'svelte';
   import { browser } from '$app/environment';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { marked } from 'marked';
 
   // Import markdown docs as raw strings at build time
@@ -35,9 +37,7 @@
   function setSection(id: string) {
     activeSection = id;
     if (browser) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('section', id);
-      history.replaceState({}, '', url.toString());
+      goto(`/docs?section=${id}`, { replaceState: true, noScroll: true, keepFocus: true });
     }
   }
 
@@ -45,11 +45,9 @@
 
   function addCopyButtons() {
     if (!contentEl) return;
-    // Remove any existing copy buttons first
     contentEl.querySelectorAll('.code-copy-btn').forEach(b => b.remove());
 
     contentEl.querySelectorAll('pre').forEach(pre => {
-      // Make pre position relative for the button
       pre.style.position = 'relative';
       const btn = document.createElement('button');
       btn.className = 'code-copy-btn';
@@ -65,10 +63,10 @@
     });
   }
 
+  // Read section from URL on mount
   onMount(() => {
     if (browser) {
-      const params = new URLSearchParams(window.location.search);
-      const section = params.get('section');
+      const section = $page.url.searchParams.get('section');
       if (section && sections.some(s => s.id === section)) {
         activeSection = section;
       }

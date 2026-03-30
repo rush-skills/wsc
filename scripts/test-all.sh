@@ -196,7 +196,7 @@ fi
 section "5. HTTP API"
 # ============================================================================
 
-echo "  POST /api/check — all 7 detectors..."
+echo "  POST /api/check — all 8 detectors..."
 API_OUT=$(curl -s -X POST "$BASE/api/check" \
   -H "Content-Type: application/json" \
   -d '{"text":"The utilization was written very quickly. I think it is totally fine. The the code."}')
@@ -224,9 +224,9 @@ check "API meta has characterCount" "$API_META"
 check "API meta has processingTimeMs" "$API_TIME"
 check "API meta has sentenceCount" "$API_SENT"
 
-echo "  POST /api/check — all 7 issue arrays present..."
+echo "  POST /api/check — all 8 issue arrays present..."
 API_KEYS=$(echo "$API_OUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(sorted(d['issues'].keys()))" 2>/dev/null)
-check "API issues has all 7 keys" "$(echo "$API_KEYS" | grep -q "adverbs.*duplicateWords.*hedging.*longSentences.*nominalizations.*passiveVoice.*weaselWords" && echo true || echo false)"
+check "API issues has all 8 keys" "$(echo "$API_KEYS" | grep -q "adverbs.*aiTells.*duplicateWords.*hedging.*longSentences.*nominalizations.*passiveVoice.*weaselWords" && echo true || echo false)"
 
 echo "  POST /api/check — with config..."
 API_CFG=$(curl -s -X POST "$BASE/api/check" \
@@ -273,12 +273,12 @@ check "API OPTIONS returns 200 or 204" "$([ "$API_OPT" = "200" ] || [ "$API_OPT"
 echo "  GET /api/check — docs..."
 API_DOCS=$(curl -s "$BASE/api/check")
 API_DOCS_DET=$(echo "$API_DOCS" | json_field "len(d['detectors'])")
-check "GET /api/check lists 7 detectors" "$([ "$API_DOCS_DET" = "7" ] && echo true || echo false)"
+check "GET /api/check lists 8 detectors" "$([ "$API_DOCS_DET" = "8" ] && echo true || echo false)"
 
 echo "  GET /api/detectors..."
 API_DET=$(curl -s "$BASE/api/detectors")
 API_DET_COUNT=$(echo "$API_DET" | json_field "len(d['detectors'])")
-check "GET /api/detectors returns 7 detectors" "$([ "$API_DET_COUNT" = "7" ] && echo true || echo false)"
+check "GET /api/detectors returns 8 detectors" "$([ "$API_DET_COUNT" = "8" ] && echo true || echo false)"
 
 echo "  GET /health..."
 HEALTH=$(curl -s "$BASE/health")
@@ -292,8 +292,8 @@ section "6. Remote MCP"
 echo "  GET /mcp — info..."
 MCP_INFO=$(curl -s "$BASE/mcp")
 MCP_TOOLS=$(echo "$MCP_INFO" | json_field "len(d['tools'])")
-check "GET /mcp lists 4 tools" "$([ "$MCP_TOOLS" = "4" ] && echo true || echo false)"
-check "GET /mcp description mentions 7 detectors" "$(echo "$MCP_INFO" | grep -q "adverbs" && echo true || echo false)"
+check "GET /mcp lists 3 tools" "$([ "$MCP_TOOLS" = "3" ] && echo true || echo false)"
+check "GET /mcp description mentions detectors" "$(echo "$MCP_INFO" | grep -q "adverbs" && echo true || echo false)"
 
 echo "  initialize..."
 MCP_INIT=$(curl -s -X POST "$BASE/mcp" \

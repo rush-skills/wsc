@@ -44,7 +44,7 @@ node cli/dist/cli/index.js check "**/*.md"  # Run check
 All consumers call `analyzeText()` rather than individual detectors. Adding a new detector means updating `analyzer.ts` once, not every consumer.
 
 ### Surfaces
-- **Web Editor** (`src/lib/App.svelte`) — Svelte 5 client-side editor with extracted components in `src/lib/components/`. Calls `analyzeText()` with optional `WscConfig` from ConfigPanel. Shows all 7 detector types with color-coded highlights.
+- **Web Editor** (`src/lib/App.svelte`) — Svelte 5 client-side editor with extracted components in `src/lib/components/`. Calls `analyzeText()` with optional `WscConfig` from ConfigPanel. Shows all 8 detector types with color-coded highlights.
 - **Layout** (`src/routes/+layout.svelte`) — Shared header (logo, nav: Editor/Word Library/Docs, theme switcher), footer. Theme state in `src/lib/stores/theme.ts`.
 - **Docs Page** (`src/routes/docs/+page.svelte`) — Documentation rendered from Markdown files in `src/docs/` using `marked`. Supports `?section=` deep-linking.
 - **Word Library** (`src/routes/words/+page.svelte`) — Searchable browser for all word/phrase lists with suggest-a-word form.
@@ -57,7 +57,7 @@ All consumers call `analyzeText()` rather than individual detectors. Adding a ne
 
 ### Web App Components (`src/lib/components/`)
 - `StatsBar.svelte` — Clickable stat boxes (reactive `$:` array pattern for Svelte 4 compat)
-- `IssueList.svelte` — 7 issue sections with scroll-target `id="issues-{detector}"`
+- `IssueList.svelte` — 8 issue sections with scroll-target `id="issues-{detector}"`
 - `ConfigPanel.svelte` — Toggle switches, word list editors, JSON preview. Reactive `$:` array for detector toggles.
 - `IntegrationSection.svelte` — Cards linking to `/docs?section=` + embedded ApiTester
 - `ApiTester.svelte` — Interactive POST /api/check tester

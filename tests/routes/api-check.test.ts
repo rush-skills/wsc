@@ -51,7 +51,7 @@ describe('POST /api/check', () => {
     expect(typeof data.meta.processingTimeMs).toBe('number');
   });
 
-  it('returns all 7 issue types in response', async () => {
+  it('returns all 8 issue types in response', async () => {
     const request = makeRequest({ text: 'Hello world.' });
     const response = await POST({ request } as any);
     const data = await response.json();
@@ -207,7 +207,7 @@ describe('GET /api/check', () => {
     expect(data.name).toBeDefined();
     expect(data.detectors).toContain('weaselWords');
     expect(data.detectors).toContain('nominalizations');
-    expect(data.detectors).toHaveLength(7);
+    expect(data.detectors).toHaveLength(8);
   });
 });
 

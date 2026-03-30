@@ -5,7 +5,7 @@ import { DEFAULT_CONFIG } from '../../src/core/config';
 const SAMPLE = 'The utilization was written very quickly done done. I think it seems like the totally wrong approach.';
 
 describe('analyzeText', () => {
-  it('runs all 7 detectors with default config', () => {
+  it('runs all 8 detectors with default config', () => {
     const result = analyzeText(SAMPLE);
     expect(result.issues.weaselWords.length).toBeGreaterThan(0);
     expect(result.issues.passiveVoice.length).toBeGreaterThan(0);

@@ -19,7 +19,7 @@ export const GET: RequestHandler = async () => {
         weaselWords: result.summary.weaselWords === EXPECTED_WEASEL,
         passiveVoice: result.summary.passiveVoice === EXPECTED_PASSIVE,
       },
-      detectors: 7,
+      detectors: 8,
       timestamp: new Date().toISOString(),
     }, {
       status: healthy ? 200 : 503,

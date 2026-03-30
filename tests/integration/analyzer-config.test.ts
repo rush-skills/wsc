@@ -7,7 +7,7 @@ The the code was basically done done by the team.
 This is a long sentence that goes on and on and on with many many words to ensure we exceed the default threshold of thirty words which should definitely trigger the long sentence detector here.`;
 
 describe('analyzer + config integration', () => {
-  it('default config detects all 7 issue types in realistic text', () => {
+  it('default config detects all 8 issue types in realistic text', () => {
     const result = analyzeText(REALISTIC);
     expect(result.summary.weaselWords).toBeGreaterThan(0);
     expect(result.summary.passiveVoice).toBeGreaterThan(0);

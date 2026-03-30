@@ -1,10 +1,10 @@
 # Writing Style Checker (WSC) — Full LLM Context
 
-> Free tool to detect weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs in technical writing.
+> Free tool to detect weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and AI tells in technical writing.
 
 ## Overview
 
-Writing Style Checker detects 7 types of writing issues in real-time. It runs entirely client-side in the web editor (no data sent to servers). Available as a web app, HTTP API, MCP server, CLI tool, and GitHub Action.
+Writing Style Checker detects 8 types of writing issues in real-time. It runs entirely client-side in the web editor (no data sent to servers). Available as a web app, HTTP API, MCP server, CLI tool, and GitHub Action.
 
 Website: https://wsc.theserverless.dev
 Repository: https://github.com/theserverlessdev/wsc
@@ -51,13 +51,20 @@ Adverbs that add emphasis without substance.
 Examples: totally, utterly, basically, literally, actually, really, simply, honestly, frankly, clearly
 Total: 140 adverbs. Configurable with add/remove overrides.
 
+### 8. AI Tells
+Words and phrases that appear 10x-200x more often in AI-generated text than human writing.
+Vocabulary examples: delve, tapestry, multifaceted, comprehensive, pivotal, holistic, leveraging, landscape
+Phrase examples: "let's dive in", "it's important to note that", "in today's fast-paced world", "great question"
+Total: 37 vocabulary words + 31 phrases. Sources: GPTZero corpus analysis, CMU PNAS study.
+Configurable with add/remove (vocabulary) and addPhrases/removePhrases overrides.
+
 ---
 
 ## HTTP API
 
 ### POST /api/check
 
-Analyze text for all 7 writing issues.
+Analyze text for all 8 writing issues.
 
 Request:
 ```json
@@ -150,11 +157,10 @@ Config for Claude Desktop:
 
 ### MCP Tools
 
-1. **check_text** — Analyze text for all 7 writing issues. Accepts optional config object.
+1. **check_text** — Analyze text for all 8 writing issues. Accepts optional config object.
 2. **check_file** — Read a file and analyze it (local MCP only). Auto-discovers .wscrc.json config.
 3. **fix_duplicates** — Remove duplicate adjacent words and return cleaned text.
-4. **list_weasel_words** — Return the complete list of flagged weasel words.
-5. **list_word_lists** — Return info about all detector word/phrase lists with counts.
+4. **list_word_lists** — Return info about all detector word/phrase lists with counts and samples.
 
 ---
 
@@ -244,6 +250,7 @@ JSON Schema: https://wsc.theserverless.dev/schema.json
 - **passiveVoice, duplicateWords**: enabled only (pattern-based detection)
 - **longSentences**: enabled, maxWords (positive integer, default 30)
 - **nominalizations**: enabled, add ({word, suggestion}[]), remove (string[])
+- **aiTells**: enabled, add (string[]), remove (string[]), addPhrases (string[]), removePhrases (string[])
 
 ### Override Behavior
 - `add`: Appends to built-in list (case-insensitive dedup)

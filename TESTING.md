@@ -102,9 +102,9 @@ cd cli && npm ci && npm run build && cd ..
 
 Start the dev server: `npm run dev`
 
-### Editor (all 7 detectors)
+### Editor (all 8 detectors)
 
-- [ ] Default sample text triggers all 7 detector types
+- [ ] Default sample text triggers all 8 detector types
 - [ ] Weasel words highlighted yellow, passive voice blue, duplicates red
 - [ ] Long sentences highlighted orange, nominalizations purple, hedging green, adverbs pink
 - [ ] Stats bar shows W, P, D, S, N, H, A counts
@@ -120,7 +120,7 @@ Start the dev server: `npm run dev`
 ### Integration Section
 
 - [ ] 4 tabs: HTTP API, MCP Remote, MCP Local, CLI
-- [ ] API tab shows updated response with all 7 issue types + config example
+- [ ] API tab shows updated response with all 8 issue types + config example
 - [ ] MCP Remote tab lists 4 tools including list_word_lists
 - [ ] MCP Local tab lists 4 tools including check_file
 - [ ] CLI tab shows commands, output formats

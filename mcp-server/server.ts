@@ -52,6 +52,7 @@ export function formatAnalysis(text: string, config?: WscConfig): string {
       { label: 'NOMINALIZATIONS', items: issues.nominalizations.map(n => ({ display: `${n.word} → ${n.suggestion}`, ...n })) },
       { label: 'HEDGING', items: issues.hedging.map(h => ({ display: h.phrase, ...h })) },
       { label: 'FILLER ADVERBS', items: issues.adverbs.map(a => ({ display: a.word, ...a })) },
+      { label: 'AI TELLS', items: issues.aiTells.map(a => ({ display: `${a.text} — ${a.reason}`, ...a })) },
     ];
 
     for (const section of sections) {
@@ -80,7 +81,7 @@ export function createServer(): McpServer {
 
   server.tool(
     'check_text',
-    'Analyze text for writing style issues (weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs). Returns structured results with issue positions and context.',
+    'Analyze text for writing style issues (weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, AI tells). Returns structured results with issue positions and context.',
     {
       text: z.string().describe('The text to analyze for writing style issues'),
       config: z.any().optional().describe('Optional WscConfig JSON object to customize detectors'),
