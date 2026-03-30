@@ -5,7 +5,6 @@ set -euo pipefail
 # Writing Style Checker — Full Manual Test Suite
 # Run from the project root: ./scripts/test-all.sh
 # Requires: npm, node, curl, python3
-# The dev server must NOT be running — this script starts its own.
 # ============================================================================
 
 PASS=0
