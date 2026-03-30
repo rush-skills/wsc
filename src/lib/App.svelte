@@ -560,11 +560,6 @@ For example:
           databases, or shared with third parties. All analysis happens locally
           in your device.
         </p>
-        <p>
-          This project was built in a single day using Claude and SvelteKit. It
-          demonstrates how AI-assisted development can quickly transform useful
-          ideas into practical tools.
-        </p>
       </div>
     {/if}
   </header>
