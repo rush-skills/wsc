@@ -8,6 +8,7 @@ import { findConfigFile, loadConfigFromFile } from '../src/core/config-node.js';
 import { mergeConfig } from '../src/core/config.js';
 import type { WscConfig } from '../src/core/config.js';
 import { formatTextWithLineCol, formatJson, formatGitHub, formatSummary } from './formatter.js';
+import { maskMarkdown, isMarkdownFile } from './markdown.js';
 import type { AnalysisResult } from '../src/core/analyzer.js';
 
 export async function run(argv: string[] = process.argv): Promise<number> {
@@ -23,6 +24,7 @@ export async function run(argv: string[] = process.argv): Promise<number> {
     .option('--no-color', 'Disable colored output')
     .option('--quiet', 'Only show summary')
     .option('--max-warnings <n>', 'Fail (exit 1) when issue count exceeds N; -1 (default) never fails', { default: -1 })
+    .option('--no-markdown', 'Lint raw text; do not mask Markdown code blocks, inline code, and tables')
     .option('--stdin', 'Read from stdin instead of files')
     .action(async (files: string[], options: any) => {
       let config: WscConfig | undefined;
@@ -37,7 +39,8 @@ export async function run(argv: string[] = process.argv): Promise<number> {
           const configPath = await findConfigFile(process.cwd());
           if (configPath) config = await loadConfigFromFile(configPath);
         }
-        const result = analyzeText(text, config);
+        const analyzed = options.markdown === false ? text : maskMarkdown(text);
+        const result = analyzeText(analyzed, config);
         if (!options.quiet) {
           if (options.format === 'json') {
             process.stdout.write(formatJson([{ path: '<stdin>', result }]) + '\n');
@@ -60,12 +63,21 @@ export async function run(argv: string[] = process.argv): Promise<number> {
         return;
       }
 
+      // Resolve `ignore` globs from the root config (--config or the nearest
+      // .wscrc.json at the cwd), on top of the always-ignored dependency dirs.
+      let rootConfig = config;
+      if (!rootConfig) {
+        const rootConfigPath = await findConfigFile(process.cwd());
+        if (rootConfigPath) rootConfig = await loadConfigFromFile(rootConfigPath);
+      }
+      const ignore = ['**/node_modules/**', '**/.git/**', ...(rootConfig?.ignore ?? [])];
+
       // node_modules / .git are ignored by default so `**/*.md` behaves like
       // every other linter and never sweeps in dependency docs.
       const resolvedFiles = await glob(files, {
         cwd: process.cwd(),
         absolute: true,
-        ignore: ['**/node_modules/**', '**/.git/**'],
+        ignore,
       });
       if (resolvedFiles.length === 0) {
         process.stderr.write('Error: No files matched the given patterns.\n');
@@ -85,7 +97,11 @@ export async function run(argv: string[] = process.argv): Promise<number> {
           if (configPath) fileConfig = await loadConfigFromFile(configPath);
         }
 
-        const result = analyzeText(text, fileConfig);
+        // Mask Markdown structure (code/tables) before analysis; the original
+        // text is still used for formatting so line/col stay correct.
+        const analyzed =
+          isMarkdownFile(filePath) && options.markdown !== false ? maskMarkdown(text) : text;
+        const result = analyzeText(analyzed, fileConfig);
         totalIssues += result.summary.total;
 
         if (options.format === 'json') {

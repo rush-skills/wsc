@@ -111,3 +111,38 @@ describe('run() — glob ignores node_modules', () => {
     expect(results[0].file).not.toContain('node_modules');
   });
 });
+
+describe('run() — honors config ignore globs', () => {
+  let dir: string;
+  let cwd: string;
+  let out: ReturnType<typeof vi.spyOn>;
+  let captured: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'wsc-cfgignore-'));
+    writeFileSync(join(dir, '.wscrc.json'), JSON.stringify({ ignore: ['SKIP.md'] }));
+    writeFileSync(join(dir, 'doc.md'), NOISY);
+    writeFileSync(join(dir, 'SKIP.md'), NOISY);
+    captured = '';
+    out = vi.spyOn(process.stdout, 'write').mockImplementation((s: any) => {
+      captured += String(s);
+      return true;
+    });
+    cwd = process.cwd();
+    process.chdir(dir);
+  });
+
+  afterEach(() => {
+    process.chdir(cwd);
+    out.mockRestore();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('excludes files matched by the config ignore list', async () => {
+    await run(['node', 'wsc', 'check', '**/*.md', '--format', 'json']);
+    const results = JSON.parse(captured);
+    expect(results).toHaveLength(1);
+    expect(results[0].file).toContain('doc.md');
+    expect(results[0].file).not.toContain('SKIP.md');
+  });
+});

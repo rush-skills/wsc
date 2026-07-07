@@ -88,9 +88,9 @@ The `check_file` tool also auto-discovers `.wscrc.json` files by walking up from
 
 Once connected, ask your AI assistant:
 
-- "Check this text for writing issues: The report was written very quickly and is basically done."
+- "Check this text for writing issues: `The report was written very quickly and is basically done.`"
 - "Analyze the file at ~/Documents/essay.md for writing style problems"
-- "Fix duplicate words in: The the code is is working"
+- "Fix duplicate words in: `The the code is is working`"
 - "Check this text but disable the adverbs detector"
 - "What word lists does the checker use?"
 
@@ -109,7 +109,7 @@ Once connected, ask your AI assistant:
 
 ## Privacy
 
-The local MCP server runs entirely on your machine. Text is never sent to any external service. The remote server at `wsc.theserverless.dev` only processes text you explicitly send to it.
+The local MCP server runs on your machine. Text is never sent to any external service. The remote server at `wsc.theserverless.dev` only processes text you explicitly send to it.
 
 ## Links
 

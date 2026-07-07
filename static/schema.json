@@ -9,6 +9,11 @@
       "type": "string",
       "description": "JSON Schema reference"
     },
+    "ignore": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Glob patterns (relative to the working dir) to exclude from checking, e.g. internal docs like CHANGELOG.md"
+    },
     "detectors": {
       "type": "object",
       "additionalProperties": false,

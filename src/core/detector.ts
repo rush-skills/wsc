@@ -131,6 +131,23 @@ export function detectLongSentences(text: string, maxWords?: number): Array<{
 
   let i = 0;
   while (i < text.length) {
+    // Treat paragraph breaks (blank lines) and the start of a new list item
+    // or blockquote as sentence boundaries. A Markdown block is not one long
+    // running sentence just because it lacks terminal punctuation. (A single
+    // '\n' inside a paragraph — soft-wrapped prose — is NOT a boundary.)
+    if (text[i] === '\n') {
+      const rest = text.slice(i + 1);
+      const isParagraphBreak = /^[ \t]*\n/.test(rest);
+      const startsNewBlock = /^[ \t]*(?:[-*+]\s|\d+[.)]\s|>)/.test(rest);
+      if (isParagraphBreak || startsNewBlock) {
+        const sentenceText = text.substring(currentStart, i + 1).trim();
+        if (sentenceText) sentences.push({ text: sentenceText, index: currentStart });
+        i++;
+        while (i < text.length && /\s/.test(text[i])) i++;
+        currentStart = i;
+        continue;
+      }
+    }
     if (text[i] === '.' || text[i] === '!' || text[i] === '?') {
       // Check for ellipsis
       if (text[i] === '.' && text[i + 1] === '.' && text[i + 2] === '.') {

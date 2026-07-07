@@ -133,4 +133,27 @@ describe('detectLongSentences', () => {
     expect(results).toHaveLength(1);
     expect(results[0].wordCount).toBe(35);
   });
+
+  it('treats a blank line as a sentence boundary (paragraphs are separate)', () => {
+    const p1 = Array(35).fill('word').join(' ');
+    const p2 = Array(35).fill('word').join(' ');
+    const results = detectLongSentences(`${p1}\n\n${p2}`);
+    expect(results).toHaveLength(2);
+  });
+
+  it('treats each list item as its own sentence', () => {
+    const item = Array(20).fill('word').join(' ');
+    // Without list-boundary handling these three bullets merge into one
+    // 60-word "sentence"; with it, each is a separate 20-word bullet.
+    const results = detectLongSentences(`- ${item}\n- ${item}\n- ${item}`);
+    expect(results).toHaveLength(0);
+  });
+
+  it('does NOT treat a soft-wrapped single newline as a boundary', () => {
+    const first = Array(20).fill('word').join(' ');
+    const second = Array(20).fill('word').join(' ');
+    const results = detectLongSentences(`${first}\n${second}`);
+    expect(results).toHaveLength(1);
+    expect(results[0].wordCount).toBe(40);
+  });
 });

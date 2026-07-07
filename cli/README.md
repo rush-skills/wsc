@@ -8,7 +8,7 @@ A command-line tool for the [Writing Style Checker](https://wsc.theserverless.de
 npx wsc-lint check "**/*.md"
 ```
 
-Or install globally:
+Or do a global install:
 
 ```bash
 npm install -g wsc-lint

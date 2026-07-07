@@ -1,0 +1,29 @@
+{
+  "$schema": "https://wsc.theserverless.dev/schema.json",
+  "ignore": [
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+    "TESTING.md",
+    "RELEASE-AND-DEPLOYMENT.md"
+  ],
+  "detectors": {
+    "nominalizations": {
+      "enabled": true,
+      "remove": [
+        "compliance",
+        "deployment",
+        "description",
+        "detection",
+        "development",
+        "documentation",
+        "guidance",
+        "installation",
+        "integration",
+        "production",
+        "reference",
+        "specification",
+        "validation"
+      ]
+    }
+  }
+}

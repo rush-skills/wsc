@@ -27,6 +27,8 @@ export interface AiTellsDetectorConfig extends DetectorConfig {
 
 export interface WscConfig {
   $schema?: string;
+  /** Glob patterns (relative to the working dir) to exclude from checking. */
+  ignore?: string[];
   detectors?: {
     weaselWords?: WordListDetectorConfig;
     passiveVoice?: DetectorConfig;
@@ -54,7 +56,7 @@ export const DEFAULT_CONFIG: Required<Pick<WscConfig, 'detectors'>> & WscConfig 
   },
 };
 
-const KNOWN_TOP_LEVEL_KEYS = new Set(['$schema', 'detectors']);
+const KNOWN_TOP_LEVEL_KEYS = new Set(['$schema', 'detectors', 'ignore']);
 const KNOWN_DETECTOR_NAMES = new Set([
   'weaselWords', 'passiveVoice', 'duplicateWords',
   'longSentences', 'nominalizations', 'hedging', 'adverbs', 'aiTells',
@@ -207,6 +209,12 @@ export function validateConfig(config: unknown): string[] {
 
   if (obj.$schema !== undefined && typeof obj.$schema !== 'string') {
     errors.push('"$schema" must be a string');
+  }
+
+  if (obj.ignore !== undefined) {
+    if (!Array.isArray(obj.ignore) || !obj.ignore.every((v: unknown) => typeof v === 'string')) {
+      errors.push('"ignore" must be an array of strings');
+    }
   }
 
   if (obj.detectors === undefined) return errors;

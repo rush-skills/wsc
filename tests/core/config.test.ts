@@ -166,6 +166,22 @@ describe('validateConfig', () => {
     expect(errors[0]).toContain('Unknown top-level key');
   });
 
+  it('accepts a valid ignore array', () => {
+    expect(validateConfig({ ignore: ['CHANGELOG.md', 'docs/vendor/**'] })).toEqual([]);
+  });
+
+  it('rejects a non-array ignore', () => {
+    const errors = validateConfig({ ignore: 'CHANGELOG.md' });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('"ignore" must be an array of strings');
+  });
+
+  it('rejects non-string ignore entries', () => {
+    const errors = validateConfig({ ignore: ['ok.md', 123] });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('"ignore" must be an array of strings');
+  });
+
   it('unknown detector name', () => {
     const errors = validateConfig({ detectors: { unknown: {} } });
     expect(errors).toHaveLength(1);

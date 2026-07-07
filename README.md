@@ -224,7 +224,7 @@ See the [`wsc-lint` README](cli/README.md) for full documentation.
 
 ## Privacy
 
-The web editor runs **entirely in your browser** - text is never sent to any server. The API and MCP endpoints only process text you explicitly send to them.
+The web editor runs **in your browser** - text is never sent to any server. The API and MCP endpoints only process text you explicitly send to them.
 
 ---
 

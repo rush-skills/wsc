@@ -8,8 +8,11 @@ on:
 
 # Dogfoods the repo's own GitHub Action (./action) against its Markdown docs.
 # This doubles as an end-to-end test of the action on every push/PR.
-# Annotate-only: max-warnings is left at the default (-1) so writing issues
-# surface as inline ::warning annotations without ever failing the build.
+#
+# The docs are currently clean (0 warnings), so this gates at zero
+# (max-warnings: 0): any NEW writing issue fails the job and must be fixed,
+# suppressed via .wscrc.json (ignore / word-list remove), or acknowledged.
+# Detector tuning and the ignore list for internal docs live in .wscrc.json.
 jobs:
   docs:
     runs-on: ubuntu-latest
@@ -22,3 +25,4 @@ jobs:
         uses: ./action
         with:
           files: "**/*.md"
+          max-warnings: "0"
