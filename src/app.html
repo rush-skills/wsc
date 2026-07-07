@@ -4,6 +4,23 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <!-- Resolve the theme onto <html> before first paint (no flash of the wrong
+         theme). Mirrors src/lib/stores/theme.ts. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('wsc-theme');
+          var resolved =
+            t === 'light' || t === 'dark'
+              ? t
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+          document.documentElement.setAttribute('data-theme', resolved);
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Basic SEO -->
     <title>Writing Style Checker - Detect Weasel Words, Passive Voice & Duplicates</title>
     <meta

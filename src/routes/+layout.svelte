@@ -11,7 +11,7 @@
   }
 </script>
 
-<div class="container" data-theme={$currentTheme}>
+<div class="container">
   <header>
     <div class="header-top">
       <div class="logo-title">
