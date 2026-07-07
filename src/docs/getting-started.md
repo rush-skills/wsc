@@ -10,7 +10,7 @@ The fastest way to use WSC is the [web editor](/). Paste your text and see issue
 ### Use from the command line
 
 ```shell
-npx wsc-cli check "**/*.md"
+npx wsc-lint check "**/*.md"
 ```
 
 ### Use in CI

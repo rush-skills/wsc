@@ -115,7 +115,7 @@ The local MCP server runs entirely on your machine. Text is never sent to any ex
 
 - [Web App](https://wsc.theserverless.dev) — Interactive browser-based editor
 - [HTTP API](https://wsc.theserverless.dev/api/check) — POST endpoint for programmatic access
-- [CLI](https://www.npmjs.com/package/wsc-cli) — Command-line tool
+- [CLI](https://www.npmjs.com/package/wsc-lint) — Command-line tool
 - [GitHub](https://github.com/theserverlessdev/wsc) — Source code
 - [MCP Protocol](https://modelcontextprotocol.io/) — Model Context Protocol specification
 

@@ -31,7 +31,7 @@
     <a href="/docs?section=cli" class="integration-card">
       <div class="card-icon">CLI</div>
       <div class="card-title">Command Line</div>
-      <div class="card-desc">npx wsc-cli check "**/*.md"</div>
+      <div class="card-desc">npx wsc-lint check "**/*.md"</div>
     </a>
     <a href="/docs?section=github-action" class="integration-card">
       <div class="card-icon">CI</div>

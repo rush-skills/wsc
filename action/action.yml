@@ -28,7 +28,7 @@ runs:
       with:
         node-version: '22'
 
-    - name: Install wsc-cli
+    - name: Install wsc-lint
       shell: bash
       run: |
         cd ${{ github.action_path }}/..

@@ -166,21 +166,21 @@ Config for Claude Desktop:
 
 ## CLI
 
-Package: wsc-cli (npm)
+Package: wsc-lint (npm)
 
 ### Commands
 
 ```bash
 # Check files
-npx wsc-cli check "**/*.md"
-npx wsc-cli check "docs/**/*.md" --config .wscrc.json
-echo "text" | npx wsc-cli check --stdin
+npx wsc-lint check "**/*.md"
+npx wsc-lint check "docs/**/*.md" --config .wscrc.json
+echo "text" | npx wsc-lint check --stdin
 
 # List word lists
-npx wsc-cli list weaselWords
+npx wsc-lint list weaselWords
 
 # Create config file
-npx wsc-cli init
+npx wsc-lint init
 ```
 
 ### Output Formats

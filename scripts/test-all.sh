@@ -382,7 +382,7 @@ CLI_VER=$(python3 -c "import json; print(json.load(open('cli/package.json'))['ve
 
 check "Root version is 1.0.0" "$([ "$ROOT_VER" = "1.0.0" ] && echo true || echo false)"
 check "wsc-mcp version is 2.0.0" "$([ "$MCP_VER" = "2.0.0" ] && echo true || echo false)"
-check "wsc-cli version is 1.0.0" "$([ "$CLI_VER" = "1.0.0" ] && echo true || echo false)"
+check "wsc-lint version is 1.0.0" "$([ "$CLI_VER" = "1.0.0" ] && echo true || echo false)"
 
 # ============================================================================
 section "9. File Existence"

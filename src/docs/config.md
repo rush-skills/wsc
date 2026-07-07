@@ -18,7 +18,7 @@ You can find the full schema at `https://wsc.theserverless.dev/schema.json`.
 Generate a starter config with the CLI:
 
 ```shell
-npx wsc-cli init
+npx wsc-lint init
 ```
 
 ### Detector Reference

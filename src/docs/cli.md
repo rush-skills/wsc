@@ -6,13 +6,13 @@ Check files for writing style issues from the terminal.
 
 ```shell
 # Check all markdown files
-npx wsc-cli check "**/*.md"
+npx wsc-lint check "**/*.md"
 
 # Check with a custom config
-npx wsc-cli check "docs/**/*.md" --config .wscrc.json
+npx wsc-lint check "docs/**/*.md" --config .wscrc.json
 
 # Read from stdin
-echo "The code was written very quickly." | npx wsc-cli check --stdin
+echo "The code was written very quickly." | npx wsc-lint check --stdin
 ```
 
 ### Commands

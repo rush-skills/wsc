@@ -65,5 +65,5 @@ Check your writing for style issues in CI. Detects weasel words, passive voice, 
 ## Links
 
 - [Writing Style Checker](https://wsc.theserverless.dev)
-- [CLI Documentation](https://www.npmjs.com/package/wsc-cli)
+- [CLI Documentation](https://www.npmjs.com/package/wsc-lint)
 - [GitHub Repository](https://github.com/theserverlessdev/wsc)

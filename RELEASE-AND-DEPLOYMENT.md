@@ -8,7 +8,7 @@ This document covers how to deploy the Writing Style Checker to Cloudflare Worke
 
 - [Cloudflare Workers Deployment](#cloudflare-workers-deployment)
 - [npm Package Publishing (wsc-mcp)](#npm-package-publishing-wsc-mcp)
-- [npm Package Publishing (wsc-cli)](#npm-package-publishing-wsc-cli)
+- [npm Package Publishing (wsc-lint)](#npm-package-publishing-wsc-lint)
 - [GitHub Action](#github-action)
 - [DNS Setup](#dns-setup)
 - [Rollback](#rollback)
@@ -250,9 +250,9 @@ Users can now install via:
 
 ---
 
-## npm Package Publishing (wsc-cli)
+## npm Package Publishing (wsc-lint)
 
-The CLI tool lives in `cli/` and is published to npm as `wsc-cli`.
+The CLI tool lives in `cli/` and is published to npm as `wsc-lint`.
 
 ### Pre-Publish Checklist
 
@@ -283,21 +283,21 @@ npm publish
 ### Verify
 
 ```bash
-npx wsc-cli --help
-echo "very good" | npx wsc-cli check --stdin
+npx wsc-lint --help
+echo "very good" | npx wsc-lint check --stdin
 ```
 
 ---
 
 ## GitHub Action
 
-The GitHub Action lives in `action/action.yml` and is a composite action that uses `wsc-cli` under the hood. Users reference it directly from the repo.
+The GitHub Action lives in `action/action.yml` and is a composite action that uses `wsc-lint` under the hood. Users reference it directly from the repo.
 
 ### How It Works
 
 The action:
 1. Sets up Node.js 22
-2. Installs and builds `wsc-cli` from source (via `npm ci` + `npm run build`)
+2. Installs and builds `wsc-lint` from source (via `npm ci` + `npm run build`)
 3. Optionally fetches changed files in PRs (when `only-changed: "true"`)
 4. Runs `wsc check` with `--format github` to produce inline annotations
 
@@ -439,7 +439,7 @@ cd cli && npm version patch && npm publish && cd ..
 
 # 7. Commit version bumps
 git add mcp-server/package.json mcp-server/package-lock.json cli/package.json cli/package-lock.json
-git commit -m "release: wsc-mcp + wsc-cli"
+git commit -m "release: wsc-mcp + wsc-lint"
 
 # 8. Tag and push
 # Note: pushing to master also updates the GitHub Action for all users

@@ -16,7 +16,7 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 - **HTTP API** - POST text with optional config, get structured JSON results
 - **MCP Server (Remote)** - Connect AI assistants via Streamable HTTP transport
 - **MCP Server (Local)** - Stdio-based server via [`wsc-mcp`](https://www.npmjs.com/package/wsc-mcp) on npm
-- **CLI** - Check files from the command line via `wsc-cli`
+- **CLI** - Check files from the command line via `wsc-lint`
 - **GitHub Action** - Run checks in CI with `::warning` annotations
 - **Configurable** - Customize detectors with `.wscrc.json` files
 
@@ -185,22 +185,22 @@ Check files from the command line.
 
 ```bash
 # Check all markdown files
-npx wsc-cli check "**/*.md"
+npx wsc-lint check "**/*.md"
 
 # Read from stdin
-echo "The code was written very quickly." | npx wsc-cli check --stdin
+echo "The code was written very quickly." | npx wsc-lint check --stdin
 
 # JSON output for scripting
-npx wsc-cli check "**/*.md" --format json
+npx wsc-lint check "**/*.md" --format json
 
 # GitHub Actions annotations
-npx wsc-cli check "**/*.md" --format github
+npx wsc-lint check "**/*.md" --format github
 
 # Create a config file
-npx wsc-cli init
+npx wsc-lint init
 ```
 
-See the [`wsc-cli` README](cli/README.md) for full documentation.
+See the [`wsc-lint` README](cli/README.md) for full documentation.
 
 ---
 
@@ -257,7 +257,7 @@ The web editor runs **entirely in your browser** - text is never sent to any ser
 │   └── styles/
 │       └── main.scss            # Global styles (light + dark themes)
 ├── mcp-server/                  # Standalone stdio MCP server (npm: wsc-mcp)
-├── cli/                         # CLI tool (npm: wsc-cli)
+├── cli/                         # CLI tool (npm: wsc-lint)
 ├── action/                      # GitHub Action (composite)
 ├── tests/                       # 341 tests across 18 files
 ├── static/

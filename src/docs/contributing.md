@@ -26,7 +26,7 @@ npm test             # Run all tests
 | `src/routes/` | SvelteKit routes (pages, API, MCP endpoint) |
 | `src/docs/` | Documentation content as Markdown files |
 | `mcp-server/` | Standalone stdio MCP server (npm: `wsc-mcp`) |
-| `cli/` | CLI tool (npm: `wsc-cli`) |
+| `cli/` | CLI tool (npm: `wsc-lint`) |
 | `action/` | GitHub Action composite action |
 | `tests/` | Vitest test suites (mirrors `src/` structure) |
 

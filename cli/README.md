@@ -1,17 +1,17 @@
-# wsc-cli
+# wsc-lint
 
 A command-line tool for the [Writing Style Checker](https://wsc.theserverless.dev). Detects **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, and **filler adverbs** in text files.
 
 ## Install
 
 ```bash
-npx wsc-cli check "**/*.md"
+npx wsc-lint check "**/*.md"
 ```
 
 Or install globally:
 
 ```bash
-npm install -g wsc-cli
+npm install -g wsc-lint
 wsc check "**/*.md"
 ```
 

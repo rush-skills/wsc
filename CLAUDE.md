@@ -53,7 +53,7 @@ All consumers call `analyzeText()` rather than individual detectors. Adding a ne
 - **Standalone MCP Server** (`mcp-server/`) — npm package `wsc-mcp`. Adds `check_file` with auto-discovery of `.wscrc.json`. Both `check_text` and `check_file` accept config param.
 - **CLI** (`cli/`) — `wsc check`, `wsc list`, `wsc init`. Output formats: text, json, github. Auto-discovers `.wscrc.json`.
 - **Health** (`src/routes/health/+server.ts`) — `GET /health` runs a known-text smoke test.
-- **GitHub Action** (`action/action.yml`) — Composite action using wsc-cli.
+- **GitHub Action** (`action/action.yml`) — Composite action using wsc-lint.
 
 ### Web App Components (`src/lib/components/`)
 - `StatsBar.svelte` — Clickable stat boxes (reactive `$:` array pattern for Svelte 4 compat)
