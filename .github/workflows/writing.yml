@@ -1,0 +1,24 @@
+name: Writing Style
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# Dogfoods the repo's own GitHub Action (./action) against its Markdown docs.
+# This doubles as an end-to-end test of the action on every push/PR.
+# Annotate-only: max-warnings is left at the default (-1) so writing issues
+# surface as inline ::warning annotations without ever failing the build.
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check writing style in docs
+        uses: ./action
+        with:
+          files: "**/*.md"

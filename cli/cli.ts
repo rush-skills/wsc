@@ -13,12 +13,16 @@ import type { AnalysisResult } from '../src/core/analyzer.js';
 export async function run(argv: string[] = process.argv): Promise<number> {
   const cli = cac('wsc');
 
+  // cac discards the return value of an .action() callback, so we cannot use
+  // it to drive the process exit code. Capture the intended code here instead.
+  let resultCode = 0;
+
   cli.command('check [...files]', 'Check files for writing style issues')
     .option('--config <path>', 'Path to .wscrc.json config file')
     .option('--format <format>', 'Output format: text, json, github', { default: 'text' })
     .option('--no-color', 'Disable colored output')
     .option('--quiet', 'Only show summary')
-    .option('--max-warnings <n>', 'Exit with code 1 if more than N issues', { default: -1 })
+    .option('--max-warnings <n>', 'Fail (exit 1) when issue count exceeds N; -1 (default) never fails', { default: -1 })
     .option('--stdin', 'Read from stdin instead of files')
     .action(async (files: string[], options: any) => {
       let config: WscConfig | undefined;
@@ -46,18 +50,27 @@ export async function run(argv: string[] = process.argv): Promise<number> {
           }
         }
         process.stdout.write(formatSummary(result.summary.total, 1) + '\n');
-        return exitCode(result.summary.total, options.maxWarnings);
+        resultCode = exitCode(result.summary.total, options.maxWarnings);
+        return;
       }
 
       if (!files || files.length === 0) {
         process.stderr.write('Error: No files specified. Use --stdin to read from stdin.\n');
-        return 2;
+        resultCode = 2;
+        return;
       }
 
-      const resolvedFiles = await glob(files, { cwd: process.cwd(), absolute: true });
+      // node_modules / .git are ignored by default so `**/*.md` behaves like
+      // every other linter and never sweeps in dependency docs.
+      const resolvedFiles = await glob(files, {
+        cwd: process.cwd(),
+        absolute: true,
+        ignore: ['**/node_modules/**', '**/.git/**'],
+      });
       if (resolvedFiles.length === 0) {
         process.stderr.write('Error: No files matched the given patterns.\n');
-        return 2;
+        resultCode = 2;
+        return;
       }
 
       let totalIssues = 0;
@@ -94,7 +107,7 @@ export async function run(argv: string[] = process.argv): Promise<number> {
         process.stdout.write(formatSummary(totalIssues, resolvedFiles.length) + '\n');
       }
 
-      return exitCode(totalIssues, options.maxWarnings);
+      resultCode = exitCode(totalIssues, options.maxWarnings);
     });
 
   cli.command('list [detector]', 'List word lists for a detector')
@@ -156,14 +169,19 @@ export async function run(argv: string[] = process.argv): Promise<number> {
     return 2;
   }
 
-  return 0;
+  return resultCode;
 }
 
-function exitCode(totalIssues: number, maxWarnings: number): number {
-  if (totalIssues === 0) return 0;
-  if (maxWarnings >= 0 && totalIssues > maxWarnings) return 1;
-  if (maxWarnings < 0) return totalIssues > 0 ? 1 : 0;
-  return 0;
+/**
+ * Exit code policy:
+ *   maxWarnings < 0  -> unlimited: never fail (annotate-only, the default)
+ *   maxWarnings >= 0 -> fail (1) when issues exceed the threshold
+ * Pass `--max-warnings 0` to fail on any issue at all.
+ */
+export function exitCode(totalIssues: number, maxWarnings: number): number {
+  const max = Number(maxWarnings);
+  if (!Number.isFinite(max) || max < 0) return 0;
+  return totalIssues > max ? 1 : 0;
 }
 
 async function readStdin(): Promise<string> {

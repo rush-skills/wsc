@@ -1,5 +1,5 @@
 name: 'Writing Style Checker'
-description: 'Check your writing for weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs'
+description: 'Check your writing for weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and AI tells'
 inputs:
   files:
     description: 'Glob pattern for files to check'
@@ -28,31 +28,48 @@ runs:
       with:
         node-version: '22'
 
-    - name: Install wsc-lint
+    - name: Build wsc-lint CLI
       shell: bash
       run: |
-        cd ${{ github.action_path }}/..
+        cd "$GITHUB_ACTION_PATH/../cli"
         npm ci
-        cd cli && npm ci && npm run build
+        npm run build
 
     - name: Get changed files (PR only)
       id: changed
       if: inputs.only-changed == 'true' && github.event_name == 'pull_request'
       shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
-        FILES=$(gh pr diff ${{ github.event.pull_request.number }} --name-only | grep -E '\.(md|txt|rst)$' | tr '\n' ' ')
-        echo "files=$FILES" >> $GITHUB_OUTPUT
+        # `grep` exits 1 when a PR touches no doc files; swallow it so the
+        # step (bash runs with -eo pipefail) doesn't fail on an empty diff.
+        files=$(gh pr diff "$PR_NUMBER" --name-only | { grep -E '\.(md|txt|rst)$' || true; } | tr '\n' ' ')
+        echo "files=$files" >> "$GITHUB_OUTPUT"
 
     - name: Run wsc check
       id: check
       shell: bash
+      env:
+        WSC_FILES: ${{ steps.changed.outputs.files || inputs.files }}
+        WSC_CONFIG: ${{ inputs.config }}
+        WSC_MAX: ${{ inputs.max-warnings }}
       run: |
-        FILES="${{ steps.changed.outputs.files || inputs.files }}"
-        ARGS="check $FILES --format github"
-        if [ -n "${{ inputs.config }}" ]; then
-          ARGS="$ARGS --config ${{ inputs.config }}"
-        fi
-        if [ "${{ inputs.max-warnings }}" != "-1" ]; then
-          ARGS="$ARGS --max-warnings ${{ inputs.max-warnings }}"
-        fi
-        node ${{ github.action_path }}/../cli/dist/cli/index.js $ARGS || true
+        # Inputs come in via env (not ${{ }} interpolation) to avoid shell
+        # injection, and `set -f` stops the runner shell from pre-expanding
+        # globs like **/*.md — the CLI does its own, correct, glob matching.
+        set -f
+        args=(check $WSC_FILES --format github)
+        if [ -n "$WSC_CONFIG" ]; then args+=(--config "$WSC_CONFIG"); fi
+        if [ "$WSC_MAX" != "-1" ]; then args+=(--max-warnings "$WSC_MAX"); fi
+
+        # Capture output (so we can read the issue count) without tripping
+        # `set -e`, then re-emit it so ::warning annotations register.
+        output=$(node "$GITHUB_ACTION_PATH/../cli/dist/cli/index.js" "${args[@]}") || code=$?
+        : "${code:=0}"
+        printf '%s\n' "$output"
+
+        total=$(printf '%s\n' "$output" | grep -oE 'Found [0-9]+' | grep -oE '[0-9]+' | head -1 || true)
+        echo "total-issues=${total:-0}" >> "$GITHUB_OUTPUT"
+        exit "$code"
