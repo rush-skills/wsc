@@ -56,9 +56,9 @@ runs:
         WSC_CONFIG: ${{ inputs.config }}
         WSC_MAX: ${{ inputs.max-warnings }}
       run: |
-        # Inputs come in via env (not ${{ }} interpolation) to avoid shell
-        # injection, and `set -f` stops the runner shell from pre-expanding
-        # globs like **/*.md — the CLI does its own, correct, glob matching.
+        # Inputs arrive via env vars (not workflow-expression interpolation)
+        # to avoid shell injection, and `set -f` stops the runner shell from
+        # pre-expanding globs like **/*.md — the CLI globs them itself.
         set -f
         args=(check $WSC_FILES --format github)
         if [ -n "$WSC_CONFIG" ]; then args+=(--config "$WSC_CONFIG"); fi
