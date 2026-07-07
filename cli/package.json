@@ -1,6 +1,6 @@
 {
   "name": "wsc-cli",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "CLI for Writing Style Checker - detects weasel words, passive voice, duplicate words, and more",
   "main": "dist/cli/index.js",
   "bin": {
@@ -10,7 +10,8 @@
     "dist/"
   ],
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "writing",

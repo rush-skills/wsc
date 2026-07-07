@@ -11,7 +11,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "start": "node dist/mcp-server/index.js"
+    "start": "node dist/mcp-server/index.js",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
