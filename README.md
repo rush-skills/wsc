@@ -27,7 +27,7 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 | Detector | Items | Description |
 |----------|-------|-------------|
 | **Weasel Words** | 95 words/phrases | Vague terms like "very", "basically", "arguably", "numerous" |
-| **Passive Voice** | 262 irregular verbs | Auxiliary verbs + past participles (regular `-ed` + irregular) |
+| **Passive Voice** | 260 irregular verbs | Auxiliary verbs + past participles (regular `-ed` + irregular) |
 | **Duplicate Words** | — | Adjacent repeated words across whitespace, case-insensitive |
 | **Long Sentences** | threshold: 30 words | Sentences exceeding a configurable word count |
 | **Nominalizations** | 245 word pairs | Nouns replaceable with verbs ("utilization" → "use") |
@@ -135,7 +135,6 @@ The Writing Style Checker is available as an [MCP](https://modelcontextprotocol.
 |------|-------------|
 | `check_text` | Analyze text for all 8 writing style issues. Accepts optional `config`. |
 | `fix_duplicates` | Remove duplicate adjacent words and return cleaned text |
-| `list_weasel_words` | Return the complete list of weasel words the checker flags |
 | `list_word_lists` | Return info about all detector word lists |
 | `check_file` | *(Local only)* Read a file from disk and analyze it. Auto-discovers `.wscrc.json`. |
 
@@ -207,7 +206,7 @@ See the [`wsc-lint` README](cli/README.md) for full documentation.
 ## GitHub Action
 
 ```yaml
-- uses: theserverlessdev/wsc@master
+- uses: theserverlessdev/wsc/action@master
   with:
     files: '**/*.md'
     max-warnings: 20

@@ -1,6 +1,6 @@
 # wsc-lint
 
-A command-line tool for the [Writing Style Checker](https://wsc.theserverless.dev). Detects **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, and **filler adverbs** in text files.
+A command-line tool for the [Writing Style Checker](https://wsc.theserverless.dev). Detects **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, **filler adverbs**, and **AI tells** (words, phrases, and structures overrepresented in AI-generated text) in text files.
 
 ## Install
 
@@ -113,12 +113,13 @@ Create a `.wscrc.json` file to customize detector behavior. The CLI auto-discove
 | Detector | Count | Description |
 |----------|-------|-------------|
 | Weasel Words | 95 | Vague terms like "very", "basically", "arguably" |
-| Passive Voice | — | Auxiliary verbs + past participles (262 irregular + regular `-ed`) |
+| Passive Voice | — | Auxiliary verbs + past participles (260 irregular + regular `-ed`) |
 | Duplicate Words | — | Adjacent repeated words, case-insensitive |
 | Long Sentences | — | Sentences exceeding a word threshold (default: 30) |
-| Nominalizations | 230 | Nouns replaceable with verbs ("utilization" → "use") |
+| Nominalizations | 245 | Nouns replaceable with verbs ("utilization" → "use") |
 | Hedging | 100 | Phrases that weaken assertions ("I think", "it seems") |
-| Filler Adverbs | 140 | Adverbs adding emphasis without substance ("totally", "utterly") |
+| Filler Adverbs | 139 | Adverbs adding emphasis without substance ("totally", "utterly") |
+| AI Tells | 98+83+12 | Words, phrases, and structural patterns overrepresented in AI text ("delve", "It's not just X — it's Y") |
 
 ## Output Formats
 

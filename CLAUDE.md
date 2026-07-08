@@ -34,10 +34,11 @@ node cli/dist/cli/index.js check "**/*.md"  # Run check
 
 ### Core Detection Engine (`src/core/`)
 - `detector.ts` — 8 detector functions: `detectWeaselWords`, `detectPassiveVoice`, `detectDuplicateWords`, `detectLongSentences`, `detectNominalizations`, `detectHedging`, `detectAdverbs`, `detectAiTells`, plus `removeDuplicateWord`. All return match positions (index + length). Weasel words, nominalizations, hedging, adverbs, and AI tells accept optional custom word lists for config support.
-- `words.ts` — Word lists: 95 weasel words (`allWeaselWords`), 260 irregular verbs, 8 auxiliary verbs, 245 nominalizations (with suggestions), 100 hedging phrases, 139 filler adverbs, 99 abbreviations, 98 AI tells vocabulary entries (with optional inflected `variants` and reasons), 83 AI tells phrases (with reasons), 12 AI tells structural regex patterns (`aiTellsPatterns`, named + removable via config `removePatterns`).
+- `words.ts` — Word lists: 95 weasel words (`allWeaselWords`), 260 irregular verbs, 13 auxiliary verbs, 245 nominalizations (with suggestions), 100 hedging phrases, 139 filler adverbs, 99 abbreviations, 98 AI tells vocabulary entries (with optional inflected `variants` and reasons), 83 AI tells phrases (with reasons), 12 AI tells structural regex patterns (`aiTellsPatterns`, named + removable via config `removePatterns`).
 - `config.ts` — Browser-safe config types (`WscConfig`), `DEFAULT_CONFIG`, `mergeConfig()`, `applyWordListOverrides()`, `applyNominalizationOverrides()`, `validateConfig()`. No Node.js imports.
 - `config-node.ts` — Node-only: `loadConfigFromFile()`, `findConfigFile()`. Uses `node:fs/promises` and `node:path`. Only imported by mcp-server and CLI.
-- `analyzer.ts` — `analyzeText(text, config?)` — the single entry point all consumers call. Runs enabled detectors with config overrides, returns `AnalysisResult`.
+- `markdown.ts` — `maskMarkdown()` blanks non-prose Markdown regions (fenced code, inline code spans, tables, headings, HTML comments) while preserving length and line layout, so offsets still map back to the original text. `isMarkdownFile()` checks a path's extension.
+- `analyzer.ts` — `analyzeText(text, config?, options?: AnalyzeOptions)` — the single entry point all consumers call. `AnalyzeOptions.markdown` runs the text through `maskMarkdown()` before detection. Runs enabled detectors with config overrides, returns `AnalysisResult`.
 - `index.ts` — Public re-exports (does NOT export config-node functions).
 
 ### Key Architectural Principle
@@ -49,7 +50,7 @@ All consumers call `analyzeText()` rather than individual detectors. Adding a ne
 - **Docs Page** (`src/routes/docs/+page.svelte`) — Documentation rendered from Markdown files in `src/docs/` using `marked`. Supports `?section=` deep-linking.
 - **Word Library** (`src/routes/words/+page.svelte`) — Searchable browser for all word/phrase lists with suggest-a-word form.
 - **HTTP API** (`src/routes/api/check/+server.ts`) — `POST /api/check` accepts `{text, config?}`. GET returns API docs. `GET /api/detectors` lists all detectors with counts.
-- **MCP Route** (`src/routes/mcp/+server.ts`) — Streamable HTTP transport. Delegates to `src/mcp/handler.ts` with 4 tools: `check_text` (with config), `fix_duplicates`, `list_weasel_words`, `list_word_lists`.
+- **MCP Route** (`src/routes/mcp/+server.ts`) — Streamable HTTP transport. Delegates to `src/mcp/handler.ts` with 3 tools: `check_text` (with config), `fix_duplicates`, `list_word_lists`.
 - **Standalone MCP Server** (`mcp-server/`) — npm package `wsc-mcp`. Adds `check_file` with auto-discovery of `.wscrc.json`. Both `check_text` and `check_file` accept config param.
 - **CLI** (`cli/`) — `wsc check`, `wsc list`, `wsc init`. Output formats: text, json, github. Auto-discovers `.wscrc.json`.
 - **Health** (`src/routes/health/+server.ts`) — `GET /health` runs a known-text smoke test.

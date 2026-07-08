@@ -1,7 +1,10 @@
 {
   "name": "wsc-mcp",
   "version": "2.1.0",
-  "description": "MCP server for Writing Style Checker - detects weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs",
+  "description": "MCP server for prose linting + AI-slop detection: weasel words, passive voice, hedging, filler adverbs, and research-cited AI tells",
+  "repository": { "type": "git", "url": "git+https://github.com/theserverlessdev/wsc.git", "directory": "mcp-server" },
+  "homepage": "https://wsc.theserverless.dev",
+  "bugs": { "url": "https://github.com/theserverlessdev/wsc/issues" },
   "main": "dist/mcp-server/index.js",
   "bin": {
     "wsc-mcp": "dist/mcp-server/index.js"
@@ -19,7 +22,11 @@
     "writing",
     "style-checker",
     "weasel-words",
-    "passive-voice"
+    "passive-voice",
+    "mcp-server",
+    "ai-tells",
+    "ai-slop",
+    "prose-linter"
   ],
   "author": "Ankur Singh <hello@anks.in>",
   "license": "MIT",

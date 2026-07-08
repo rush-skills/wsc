@@ -1,6 +1,6 @@
 # Writing Style Checker GitHub Action
 
-Check your writing for style issues in CI. Detects weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging language, and filler adverbs.
+Check your writing for style issues in CI. Detects weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging language, filler adverbs, and AI tells (words, phrases, and structures overrepresented in AI-generated text).
 
 ## Usage
 

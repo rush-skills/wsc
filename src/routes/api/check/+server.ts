@@ -87,7 +87,7 @@ export const POST: RequestHandler = async ({ request }) => {
 export const GET: RequestHandler = async () => {
   return json({
     name: 'Writing Style Checker API',
-    version: '1.0.0',
+    version: '1.1.0',
     endpoint: 'POST /api/check',
     parameters: {
       text: { type: 'string', required: true, maxLength: MAX_TEXT_LENGTH },

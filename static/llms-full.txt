@@ -23,7 +23,7 @@ Total: 95 words. Configurable with add/remove overrides.
 Constructions where the subject receives the action (auxiliary verb + past participle).
 Pattern: auxiliary verbs (am, are, is, was, were, be, been, being) + irregular past participle.
 Examples: "was written", "has been done", "will be created"
-Uses 262 irregular verb forms. Pattern-based, not configurable via word lists.
+Uses 260 irregular verb forms. Pattern-based, not configurable via word lists.
 
 ### 3. Duplicate Words
 Adjacent repeated words, often typos.
@@ -39,7 +39,7 @@ Default: 30 words. Configurable via maxWords (integer, min 1).
 Nouns derived from verbs that could be replaced with the stronger verb form.
 Each entry has a word and a suggestion.
 Examples: implementation → implement, optimization → optimize, utilization → use, establishment → establish
-Total: 230 pairs. Configurable with add (word+suggestion pairs) / remove overrides.
+Total: 245 pairs. Configurable with add (word+suggestion pairs) / remove overrides.
 
 ### 6. Hedging Language
 Phrases that weaken assertions and reduce confidence in writing.
@@ -49,13 +49,13 @@ Total: 100 phrases. Configurable with add/remove overrides.
 ### 7. Filler Adverbs
 Adverbs that add emphasis without substance.
 Examples: totally, utterly, basically, literally, actually, really, simply, honestly, frankly, clearly
-Total: 140 adverbs. Configurable with add/remove overrides.
+Total: 139 adverbs. Configurable with add/remove overrides.
 
 ### 8. AI Tells
 Words and phrases that appear 10x-200x more often in AI-generated text than human writing.
 Vocabulary examples: delve, tapestry, multifaceted, comprehensive, pivotal, holistic, leveraging, landscape
 Phrase examples: "let's dive in", "it's important to note that", "in today's fast-paced world", "great question"
-Total: 37 vocabulary words + 31 phrases. Sources: GPTZero corpus analysis, CMU PNAS study.
+Total: 98 vocabulary words + 83 phrases + 12 structural patterns. Sources: Kobak et al. 2025 (Science Advances), Juzek & Ward 2025 (COLING), Liang et al. 2024 (Stanford), Reinhart et al. 2025 (PNAS).
 Configurable with add/remove (vocabulary) and addPhrases/removePhrases overrides.
 
 ---
@@ -193,7 +193,7 @@ npx wsc-lint init
 ## GitHub Action
 
 ```yaml
-- uses: theserverlessdev/wsc@master
+- uses: theserverlessdev/wsc/action@master
   with:
     files: "**/*.md"           # Glob pattern (default: **/*.md)
     config: ".wscrc.json"      # Path to config file (optional)

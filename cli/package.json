@@ -1,7 +1,10 @@
 {
   "name": "wsc-lint",
   "version": "1.2.0",
-  "description": "CLI for Writing Style Checker - detects weasel words, passive voice, duplicate words, and more",
+  "description": "CLI prose linter + AI-slop detector: weasel words, passive voice, hedging, filler adverbs, and research-cited AI tells in text and Markdown",
+  "repository": { "type": "git", "url": "git+https://github.com/theserverlessdev/wsc.git", "directory": "cli" },
+  "homepage": "https://wsc.theserverless.dev",
+  "bugs": { "url": "https://github.com/theserverlessdev/wsc/issues" },
   "main": "dist/cli/index.js",
   "bin": {
     "wsc": "dist/cli/index.js"
@@ -19,7 +22,12 @@
     "cli",
     "linter",
     "weasel-words",
-    "passive-voice"
+    "passive-voice",
+    "ai-tells",
+    "ai-slop",
+    "ai-detection",
+    "prose-linter",
+    "markdown"
   ],
   "author": "Ankur Singh <hello@anks.in>",
   "license": "MIT",
