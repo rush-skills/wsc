@@ -30,12 +30,12 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 | **Passive Voice** | 262 irregular verbs | Auxiliary verbs + past participles (regular `-ed` + irregular) |
 | **Duplicate Words** | — | Adjacent repeated words across whitespace, case-insensitive |
 | **Long Sentences** | threshold: 30 words | Sentences exceeding a configurable word count |
-| **Nominalizations** | 230 word pairs | Nouns replaceable with verbs ("utilization" → "use") |
+| **Nominalizations** | 245 word pairs | Nouns replaceable with verbs ("utilization" → "use") |
 | **Hedging** | 100 phrases | Phrases that weaken assertions ("I think", "it seems") |
-| **Filler Adverbs** | 140 words | Adverbs adding emphasis without substance ("totally", "utterly") |
-| **AI Tells** | 37 words + 31 phrases | Words/phrases overrepresented in AI-generated text ("delve", "tapestry", "let's dive in") |
+| **Filler Adverbs** | 139 words | Adverbs adding emphasis without substance ("totally", "utterly") |
+| **AI Tells** | 98 words (+111 inflected forms) + 83 phrases + 12 structural patterns | Words, phrases, and sentence constructions overrepresented in AI-generated text (`delve`, `rich tapestry`, `It's not just X — it's Y`) |
 
-Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/) and expanded with additional entries. AI tells based on GPTZero corpus analysis and CMU PNAS study.
+Word lists sourced from [Matt Might's shell scripts](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/) and expanded with additional entries. AI tells draw on published corpus studies: Kobak et al. 2025 (Science Advances), Juzek & Ward 2025 (COLING), Liang et al. 2024 (Stanford), and Reinhart et al. 2025 (PNAS). Wikipedia's editor-maintained [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) catalogue and AI-detection vendor reports round out the sources.
 
 ---
 

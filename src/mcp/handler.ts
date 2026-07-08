@@ -8,6 +8,7 @@ import {
   irregularVerbs,
   aiTellsVocabulary,
   aiTellsPhrases,
+  aiTellsPatterns,
   analyzeText,
   validateConfig,
 } from '../core';
@@ -175,6 +176,7 @@ function handleListWordLists(): { content: Array<{ type: string; text: string }>
     { name: 'Filler Adverbs', count: fillerAdverbs.length, configKey: 'adverbs', sample: fillerAdverbs.slice(0, 10) },
     { name: 'AI Tells (Vocabulary)', count: aiTellsVocabulary.length, configKey: 'aiTells', sample: aiTellsVocabulary.slice(0, 10).map(v => v.word) },
     { name: 'AI Tells (Phrases)', count: aiTellsPhrases.length, configKey: 'aiTells', sample: aiTellsPhrases.slice(0, 10).map(p => p.phrase) },
+    { name: 'AI Tells (Structural Patterns)', count: aiTellsPatterns.length, configKey: 'aiTells', sample: aiTellsPatterns.slice(0, 10).map(p => p.name) },
   ];
 
   const lines = [

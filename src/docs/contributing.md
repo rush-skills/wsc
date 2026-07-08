@@ -40,12 +40,12 @@ Each detector works differently:
 | Passive Voice | Grammar patterns (auxiliary + past participle) | Add irregular verbs to `irregularVerbs` |
 | Duplicate Words | Adjacent word repetition pattern | Pattern-based, rarely needs changes |
 | Long Sentences | Word count threshold (default: 30) | Configurable via `maxWords` |
-| Nominalizations | Word pairs with suggestions (230 pairs) | Add `{word, suggestion}` to `nominalizations` |
+| Nominalizations | Word pairs with suggestions (245 pairs) | Add `{word, suggestion}` to `nominalizations` |
 | Hedging | Phrase list matching (100 phrases) | Add phrases to `hedgingPhrases` |
-| Filler Adverbs | Word list matching (140 words) | Add words to `fillerAdverbs` |
-| AI Tells | Vocabulary (37 words) + phrase (31 phrases) matching | Add to `aiTellsVocabulary` or `aiTellsPhrases` |
+| Filler Adverbs | Word list matching (139 words) | Add words to `fillerAdverbs` |
+| AI Tells | Vocabulary (98 entries + inflected variants) + phrases (83) + structural regex patterns (12) | Add to `aiTellsVocabulary`, `aiTellsPhrases`, or `aiTellsPatterns` |
 
-**AI Tells** flags words and phrases that are statistically overrepresented in AI-generated text (10x-200x vs human writing). Sources: GPTZero corpus analysis, CMU PNAS study. Each entry includes a reason explaining why it's flagged. To add new AI tells, include the word/phrase and a reason string in `src/core/words.ts`.
+**AI Tells** flags words, phrases, and sentence constructions that are statistically overrepresented in AI-generated text. Sources: Kobak et al. 2025 (Science Advances), Juzek & Ward 2025 (COLING), Liang et al. 2024 (Stanford), and Reinhart et al. 2025 (PNAS). Wikipedia's "Signs of AI writing" catalogue and AI-detection vendor reports fill the gaps. Each entry includes a reason explaining why the linter flags it. Vocabulary entries may list inflected `variants` that match along with the base word. Structural patterns carry names (e.g. `negative-parallelism` for `It's not just X — it's Y`), and users can disable each one with `removePatterns`. To add new AI tells, include the word/phrase and a reason string in `src/core/words.ts`.
 
 ### Suggest a Word
 

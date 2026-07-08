@@ -156,4 +156,32 @@ describe('detectLongSentences', () => {
     expect(results).toHaveLength(1);
     expect(results[0].wordCount).toBe(40);
   });
+
+  it('treats CRLF blank lines as paragraph boundaries', () => {
+    const p1 = Array(35).fill('word').join(' ');
+    const p2 = Array(35).fill('word').join(' ');
+    const results = detectLongSentences(`${p1}\r\n\r\n${p2}`);
+    expect(results).toHaveLength(2);
+  });
+
+  it('treats CRLF list items as separate sentences', () => {
+    const item = Array(20).fill('word').join(' ');
+    const results = detectLongSentences(`- ${item}\r\n- ${item}\r\n- ${item}`);
+    expect(results).toHaveLength(0);
+  });
+
+  it('ends a sentence at a terminator followed by a closing quote', () => {
+    const long = Array(35).fill('word').join(' ');
+    // The quoted sentence ends at ." — the long tail must be its own sentence
+    const results = detectLongSentences(`He said "Stop." ${long}.`);
+    expect(results).toHaveLength(1);
+    expect(results[0].wordCount).toBe(35);
+  });
+
+  it('treats a Unicode ellipsis as a sentence terminator', () => {
+    const long = Array(35).fill('word').join(' ');
+    const results = detectLongSentences(`Well then… ${long}.`);
+    expect(results).toHaveLength(1);
+    expect(results[0].wordCount).toBe(35);
+  });
 });

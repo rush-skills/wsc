@@ -99,13 +99,13 @@ Once connected, ask your AI assistant:
 | Detector | Count | Description |
 |----------|-------|-------------|
 | Weasel Words | 95 | Vague terms like "very", "basically", "arguably" |
-| Passive Voice | — | Auxiliary verbs + past participles (262 irregular + regular `-ed`) |
+| Passive Voice | — | Auxiliary verbs + past participles (260 irregular + regular `-ed`) |
 | Duplicate Words | — | Adjacent repeated words, case-insensitive |
 | Long Sentences | — | Sentences exceeding a word threshold (default: 30) |
-| Nominalizations | 230 | Nouns replaceable with verbs ("utilization" → "use") |
+| Nominalizations | 245 | Nouns replaceable with verbs ("utilization" → "use") |
 | Hedging | 100 | Phrases that weaken assertions ("I think", "it seems") |
-| Filler Adverbs | 140 | Adverbs adding emphasis without substance ("totally", "utterly") |
-| AI Tells | 37+31 | Words/phrases overrepresented in AI text ("delve", "let's dive in") |
+| Filler Adverbs | 139 | Adverbs adding emphasis without substance ("totally", "utterly") |
+| AI Tells | 98+83+12 | Words, phrases, and structural patterns overrepresented in AI text ("delve", "It's not just X — it's Y") |
 
 ## Privacy
 

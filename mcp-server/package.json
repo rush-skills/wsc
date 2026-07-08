@@ -1,6 +1,6 @@
 {
   "name": "wsc-mcp",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "MCP server for Writing Style Checker - detects weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs",
   "main": "dist/mcp-server/index.js",
   "bin": {

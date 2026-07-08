@@ -6,6 +6,7 @@ import {
   mergeConfig,
   applyWordListOverrides,
   applyNominalizationOverrides,
+  applyAiTellsPatternOverrides,
   validateConfig,
   DEFAULT_CONFIG,
 } from '../../src/core/config';
@@ -138,6 +139,32 @@ describe('applyNominalizationOverrides', () => {
   });
 });
 
+// ── applyAiTellsPatternOverrides ──
+
+describe('applyAiTellsPatternOverrides', () => {
+  const base = [
+    { name: 'negative-parallelism', pattern: 'x', reason: 'r1' },
+    { name: 'vague-attribution', pattern: 'y', reason: 'r2' },
+  ];
+
+  it('returns a copy when remove is empty or undefined', () => {
+    const result = applyAiTellsPatternOverrides(base);
+    expect(result).toEqual(base);
+    expect(result).not.toBe(base);
+    expect(result[0]).not.toBe(base[0]);
+  });
+
+  it('removes patterns by name, case-insensitively', () => {
+    const result = applyAiTellsPatternOverrides(base, ['Negative-Parallelism']);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('vague-attribution');
+  });
+
+  it('ignores unknown names', () => {
+    expect(applyAiTellsPatternOverrides(base, ['no-such-pattern'])).toHaveLength(2);
+  });
+});
+
 // ── validateConfig ──
 
 describe('validateConfig', () => {
@@ -186,6 +213,19 @@ describe('validateConfig', () => {
     const errors = validateConfig({ detectors: { unknown: {} } });
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain('Unknown detector');
+  });
+
+  it('accepts aiTells removePatterns as a string array', () => {
+    expect(validateConfig({
+      detectors: { aiTells: { removePatterns: ['not-only-but-also'] } },
+    })).toEqual([]);
+  });
+
+  it('rejects aiTells removePatterns that is not a string array', () => {
+    const errors = validateConfig({
+      detectors: { aiTells: { removePatterns: 'not-only-but-also' } },
+    });
+    expect(errors.some(e => e.includes('removePatterns'))).toBe(true);
   });
 
   it('enabled as string instead of boolean', () => {

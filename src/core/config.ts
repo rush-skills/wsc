@@ -23,6 +23,8 @@ export interface AiTellsDetectorConfig extends DetectorConfig {
   remove?: string[];
   addPhrases?: string[];
   removePhrases?: string[];
+  /** Names of built-in structural patterns to disable (see aiTellsPatterns in words.ts). */
+  removePatterns?: string[];
 }
 
 export interface WscConfig {
@@ -66,7 +68,7 @@ const BASE_DETECTOR_KEYS = new Set(['enabled']);
 const WORD_LIST_DETECTOR_KEYS = new Set(['enabled', 'add', 'remove']);
 const LONG_SENTENCE_KEYS = new Set(['enabled', 'maxWords']);
 const NOMINALIZATION_KEYS = new Set(['enabled', 'add', 'remove']);
-const AI_TELLS_KEYS = new Set(['enabled', 'add', 'remove', 'addPhrases', 'removePhrases']);
+const AI_TELLS_KEYS = new Set(['enabled', 'add', 'remove', 'addPhrases', 'removePhrases', 'removePatterns']);
 
 // === Functions ===
 
@@ -142,10 +144,10 @@ export function applyNominalizationOverrides(
 }
 
 export function applyAiTellsVocabOverrides(
-  baseList: Array<{ word: string; reason: string }>,
+  baseList: Array<{ word: string; variants?: string[]; reason: string }>,
   add?: string[],
   remove?: string[],
-): Array<{ word: string; reason: string }> {
+): Array<{ word: string; variants?: string[]; reason: string }> {
   let result = baseList.map(item => ({ ...item }));
 
   if (remove && remove.length > 0) {
@@ -189,6 +191,17 @@ export function applyAiTellsPhraseOverrides(
   }
 
   return result;
+}
+
+export function applyAiTellsPatternOverrides(
+  baseList: Array<{ name: string; pattern: string; reason: string }>,
+  remove?: string[],
+): Array<{ name: string; pattern: string; reason: string }> {
+  if (!remove || remove.length === 0) return baseList.map(item => ({ ...item }));
+  const removeLower = new Set(remove.map(n => n.toLowerCase()));
+  return baseList
+    .filter(item => !removeLower.has(item.name.toLowerCase()))
+    .map(item => ({ ...item }));
 }
 
 export function validateConfig(config: unknown): string[] {
@@ -283,7 +296,7 @@ export function validateConfig(config: unknown): string[] {
     }
 
     if (name === 'aiTells') {
-      for (const field of ['add', 'remove', 'addPhrases', 'removePhrases']) {
+      for (const field of ['add', 'remove', 'addPhrases', 'removePhrases', 'removePatterns']) {
         if (detObj[field] !== undefined) {
           if (!Array.isArray(detObj[field]) || !(detObj[field] as unknown[]).every((v: unknown) => typeof v === 'string')) {
             errors.push(`detectors.${name}.${field} must be an array of strings`);

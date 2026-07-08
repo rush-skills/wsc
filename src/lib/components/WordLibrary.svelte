@@ -2,15 +2,16 @@
   import {
     allWeaselWords, nominalizations, hedgingPhrases,
     fillerAdverbs, irregularVerbs, abbreviations,
-    aiTellsVocabulary, aiTellsPhrases,
+    aiTellsVocabulary, aiTellsPhrases, aiTellsPatterns,
   } from '../../core';
 
   let searchQuery = '';
   let activeGroup = 'weaselWords';
 
   const abbreviationsList = [...abbreviations];
-  const aiVocabWords = aiTellsVocabulary.map(v => v.word);
+  const aiVocabWords = aiTellsVocabulary.map(v => v.variants?.length ? `${v.word} (${v.variants.join(', ')})` : v.word);
   const aiPhraseStrings = aiTellsPhrases.map(p => p.phrase);
+  const aiPatternStrings = aiTellsPatterns.map(p => `${p.name} — ${p.reason}`);
 
   const groups = [
     { key: 'weaselWords', label: 'Weasel Words', count: allWeaselWords.length, color: 'var(--weasel-word-bg)', textColor: 'var(--weasel-word-text)' },
@@ -19,6 +20,7 @@
     { key: 'adverbs', label: 'Filler Adverbs', count: fillerAdverbs.length, color: 'var(--adverb-bg)', textColor: 'var(--adverb-text)' },
     { key: 'aiTellsVocab', label: 'AI Tells (Words)', count: aiVocabWords.length, color: 'var(--ai-tells-bg)', textColor: 'var(--ai-tells-text)' },
     { key: 'aiTellsPhrases', label: 'AI Tells (Phrases)', count: aiPhraseStrings.length, color: 'var(--ai-tells-bg)', textColor: 'var(--ai-tells-text)' },
+    { key: 'aiTellsPatterns', label: 'AI Tells (Patterns)', count: aiPatternStrings.length, color: 'var(--ai-tells-bg)', textColor: 'var(--ai-tells-text)' },
     { key: 'irregularVerbs', label: 'Irregular Verbs', count: irregularVerbs.length, color: 'var(--passive-voice-bg)', textColor: 'var(--passive-voice-text)' },
     { key: 'abbreviations', label: 'Abbreviations', count: abbreviationsList.length, color: 'var(--long-sentence-bg)', textColor: 'var(--long-sentence-text)' },
   ] as const;
@@ -43,6 +45,7 @@
   $: filteredAdverbs = filterStrings(fillerAdverbs);
   $: filteredAiVocab = filterStrings(aiVocabWords);
   $: filteredAiPhrases = filterStrings(aiPhraseStrings);
+  $: filteredAiPatterns = filterStrings(aiPatternStrings);
   $: filteredVerbs = filterStrings(irregularVerbs);
   $: filteredAbbrevs = filterStrings(abbreviationsList);
 
@@ -54,6 +57,7 @@
       case 'adverbs': return { items: filteredAdverbs, total: fillerAdverbs.length };
       case 'aiTellsVocab': return { items: filteredAiVocab, total: aiVocabWords.length };
       case 'aiTellsPhrases': return { items: filteredAiPhrases, total: aiPhraseStrings.length };
+      case 'aiTellsPatterns': return { items: filteredAiPatterns, total: aiPatternStrings.length };
       case 'irregularVerbs': return { items: filteredVerbs, total: irregularVerbs.length };
       case 'abbreviations': return { items: filteredAbbrevs, total: abbreviationsList.length };
       default: return { items: [], total: 0 };

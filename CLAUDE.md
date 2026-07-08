@@ -34,7 +34,7 @@ node cli/dist/cli/index.js check "**/*.md"  # Run check
 
 ### Core Detection Engine (`src/core/`)
 - `detector.ts` — 8 detector functions: `detectWeaselWords`, `detectPassiveVoice`, `detectDuplicateWords`, `detectLongSentences`, `detectNominalizations`, `detectHedging`, `detectAdverbs`, `detectAiTells`, plus `removeDuplicateWord`. All return match positions (index + length). Weasel words, nominalizations, hedging, adverbs, and AI tells accept optional custom word lists for config support.
-- `words.ts` — Word lists: 95 weasel words (`allWeaselWords`), 262 irregular verbs, 8 auxiliary verbs, 230 nominalizations (with suggestions), 100 hedging phrases, 140 filler adverbs, 96 abbreviations, 37 AI tells vocabulary (with reasons), 31 AI tells phrases (with reasons).
+- `words.ts` — Word lists: 95 weasel words (`allWeaselWords`), 260 irregular verbs, 8 auxiliary verbs, 245 nominalizations (with suggestions), 100 hedging phrases, 139 filler adverbs, 99 abbreviations, 98 AI tells vocabulary entries (with optional inflected `variants` and reasons), 83 AI tells phrases (with reasons), 12 AI tells structural regex patterns (`aiTellsPatterns`, named + removable via config `removePatterns`).
 - `config.ts` — Browser-safe config types (`WscConfig`), `DEFAULT_CONFIG`, `mergeConfig()`, `applyWordListOverrides()`, `applyNominalizationOverrides()`, `validateConfig()`. No Node.js imports.
 - `config-node.ts` — Node-only: `loadConfigFromFile()`, `findConfigFile()`. Uses `node:fs/promises` and `node:path`. Only imported by mcp-server and CLI.
 - `analyzer.ts` — `analyzeText(text, config?)` — the single entry point all consumers call. Runs enabled detectors with config overrides, returns `AnalysisResult`.

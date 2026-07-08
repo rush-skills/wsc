@@ -34,7 +34,7 @@ All 8 detectors run by default. Set `enabled: false` to disable any detector.
 | `nominalizations` | `enabled`, `add` (array of `{word, suggestion}`), `remove` |
 | `hedging` | `enabled`, `add`, `remove` |
 | `adverbs` | `enabled`, `add`, `remove` |
-| `aiTells` | `enabled`, `add`, `remove` (vocabulary), `addPhrases`, `removePhrases` |
+| `aiTells` | `enabled`, `add`, `remove` (vocabulary), `addPhrases`, `removePhrases`, `removePatterns` |
 
 ### Word List Overrides
 
@@ -43,6 +43,24 @@ All 8 detectors run by default. Set `enabled: false` to disable any detector.
 **remove** removes words from the built-in list (case-insensitive match).
 
 Browse the full built-in word lists on the [Word Library](/words) page.
+
+### AI Tells Structural Patterns
+
+Beyond words and phrases, the AI tells detector ships named structural patterns: regexes for sentence constructions that corpus studies attribute to LLMs. Examples include `negative-parallelism` (`It's not just X — it's Y`), `trailing-participial-analysis` (`, highlighting the importance of...`), and `vague-attribution` (`experts agree`, `studies show`). Removing a vocabulary word also removes its inflected forms (`delve` covers `delves`, `delved`, `delving`).
+
+Disable individual patterns by name with `removePatterns`:
+
+```json
+{
+  "detectors": {
+    "aiTells": {
+      "removePatterns": ["not-only-but-also", "vague-attribution"]
+    }
+  }
+}
+```
+
+The full pattern list with names appears on the [Word Library](/words) page under "AI Tells (Patterns)", or via `wsc list aiTells`.
 
 ### Full Example
 

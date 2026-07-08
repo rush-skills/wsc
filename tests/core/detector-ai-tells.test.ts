@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { detectAiTells } from '../../src/core/detector';
-import { aiTellsVocabulary, aiTellsPhrases } from '../../src/core/words';
+import { aiTellsVocabulary, aiTellsPhrases, aiTellsPatterns } from '../../src/core/words';
 
 describe('detectAiTells', () => {
   it('returns empty for empty string', () => {
@@ -109,5 +109,136 @@ describe('detectAiTells', () => {
       expect(typeof entry.reason).toBe('string');
       expect(entry.reason.length).toBeGreaterThan(0);
     }
+  });
+
+  // ── Inflected variants ──
+
+  it('matches inflected variants of vocabulary words', () => {
+    expect(detectAiTells('The paper delves into the topic.').length).toBe(1);
+    expect(detectAiTells('We spent a week delving into logs.').length).toBe(1);
+    expect(detectAiTells('She showcased the results.').length).toBe(1);
+  });
+
+  it('removes variants along with their base word via custom list', () => {
+    const withoutDelve = aiTellsVocabulary.filter(v => v.word !== 'delve');
+    expect(detectAiTells('We are delving into it.', withoutDelve, [], [])).toEqual([]);
+  });
+
+  // ── Phrase word boundaries ──
+
+  it('does not match phrases inside other words', () => {
+    // "at its core" must not fire inside "that its core"
+    expect(detectAiTells('We believe that its core values matter.')).toEqual([]);
+    // "embrace the" must not fire inside "embrace them"
+    expect(detectAiTells('We embrace them warmly.')).toEqual([]);
+  });
+
+  it('matches phrases with curly apostrophes', () => {
+    const results = detectAiTells('It’s worth noting that this matters.');
+    expect(results).toHaveLength(1);
+  });
+
+  it('matches phrases across a hard line wrap', () => {
+    const results = detectAiTells('This is important when it\ncomes to testing.');
+    expect(results).toHaveLength(1);
+  });
+
+  // ── Overlap dedupe ──
+
+  it('reports a vocab word inside a longer phrase only once (outermost span)', () => {
+    const results = detectAiTells("Let's delve into this.");
+    expect(results).toHaveLength(1);
+    expect(results[0].text).toBe("Let's delve");
+  });
+
+  it('dedupes identical spans reported by two rules', () => {
+    const t = 'It is a testament to the team.';
+    const results = detectAiTells(t);
+    expect(results).toHaveLength(1);
+    expect(results[0].text).toBe('a testament to');
+  });
+
+  // ── Structural patterns ──
+
+  it('default pattern list has named, compilable entries', () => {
+    expect(aiTellsPatterns.length).toBeGreaterThanOrEqual(10);
+    for (const p of aiTellsPatterns) {
+      expect(p.name).toMatch(/^[a-z0-9-]+$/);
+      expect(() => new RegExp(p.pattern, 'gi')).not.toThrow();
+      expect(p.reason.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('detects negative parallelism', () => {
+    const r = detectAiTells("It's not just about speed, it's about reliability.");
+    expect(r.some(m => m.reason.includes('parallelism'))).toBe(true);
+    const r2 = detectAiTells("This is not a bug fix. It's a rewrite.");
+    expect(r2.some(m => m.reason.includes('parallelism'))).toBe(true);
+  });
+
+  it('does not flag a plain "not just" sentence', () => {
+    expect(detectAiTells('It is not just a config file that you need.')).toEqual([]);
+  });
+
+  it('detects trailing participial analysis clauses', () => {
+    const r = detectAiTells('Attendance doubled, underscoring the growing significance.');
+    expect(r.length).toBeGreaterThan(0);
+  });
+
+  it('does not flag utility participials or mid-sentence gerunds', () => {
+    expect(detectAiTells('The cache is warmed at boot, ensuring a fast first paint.')).toEqual([]);
+    expect(detectAiTells('After highlighting the row, press Delete.')).toEqual([]);
+  });
+
+  it('detects vague authority attribution', () => {
+    expect(detectAiTells('Experts agree that hydration is important.').length).toBe(1);
+    expect(detectAiTells('Studies show the market will double.').length).toBe(1);
+    expect(detectAiTells('Two experts reviewed the patch.')).toEqual([]);
+  });
+
+  it('detects audience-hedging openers but not genuine conditionals', () => {
+    expect(detectAiTells("Whether you're a beginner or an expert, this helps.").length).toBe(1);
+    expect(detectAiTells("Ask whether you're allowed to deploy on Fridays.")).toEqual([]);
+  });
+
+  it('detects the despite-challenges formula but not plain despite', () => {
+    expect(detectAiTells('Despite its success, the canal faces challenges from climate change.').length).toBe(1);
+    expect(detectAiTells('Despite the rain, the event went ahead.')).toEqual([]);
+  });
+
+  it('detects pivotal-role claims for adjective variants', () => {
+    expect(detectAiTells('She played a key role in the merger.').length).toBe(1);
+    expect(detectAiTells('It plays a vital part in the pipeline.').length).toBe(1);
+  });
+
+  it('detects chained false ranges but not simple from-to', () => {
+    expect(detectAiTells('From legal frameworks to sustainability reports, from PR campaigns to guest experiences, we cover it all.').length).toBe(1);
+    expect(detectAiTells('Migrate from v1 to v2, and read the changelog first.')).toEqual([]);
+  });
+
+  it('detects unfilled placeholders but not Markdown links', () => {
+    expect(detectAiTells('Sincerely, [Your Name]').length).toBe(1);
+    expect(detectAiTells('See the [docs](https://example.com) for info.')).toEqual([]);
+  });
+
+  it('detects chatbot artifacts', () => {
+    expect(detectAiTells('As an AI language model, I cannot browse the internet.').length).toBeGreaterThan(0);
+    expect(detectAiTells('As of my last knowledge update in 2023, this was true.').length).toBeGreaterThan(0);
+  });
+
+  it('accepts a custom pattern list', () => {
+    const custom = [{ name: 'test-pattern', pattern: '\\bfoo bar\\b', reason: 'Custom structural rule' }];
+    const r = detectAiTells('This is foo bar here.', [], [], custom);
+    expect(r).toHaveLength(1);
+    expect(r[0].reason).toBe('Custom structural rule');
+  });
+
+  it('skips invalid patterns without crashing', () => {
+    const bad = [{ name: 'broken', pattern: '(unclosed', reason: 'bad' }];
+    expect(detectAiTells('any text at all', [], [], bad)).toEqual([]);
+  });
+
+  it('an empty pattern list disables structural detection', () => {
+    expect(detectAiTells('Experts agree this works.', [], [], [])).toEqual([]);
   });
 });

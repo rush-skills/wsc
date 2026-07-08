@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { glob } from 'tinyglobby';
 import { analyzeText } from '../src/core/analyzer.js';
-import { allWeaselWords, hedgingPhrases, fillerAdverbs, nominalizations } from '../src/core/words.js';
+import { allWeaselWords, hedgingPhrases, fillerAdverbs, nominalizations, aiTellsVocabulary, aiTellsPhrases, aiTellsPatterns } from '../src/core/words.js';
 import { findConfigFile, loadConfigFromFile } from '../src/core/config-node.js';
 import { mergeConfig } from '../src/core/config.js';
 import type { WscConfig } from '../src/core/config.js';
@@ -129,7 +129,7 @@ export async function run(argv: string[] = process.argv): Promise<number> {
   cli.command('list [detector]', 'List word lists for a detector')
     .action(async (detector?: string) => {
       if (!detector) {
-        process.stdout.write('Available detectors: weaselWords, passiveVoice, duplicateWords, longSentences, nominalizations, hedging, adverbs\n');
+        process.stdout.write('Available detectors: weaselWords, passiveVoice, duplicateWords, longSentences, nominalizations, hedging, adverbs, aiTells\n');
         return 0;
       }
 
@@ -145,6 +145,14 @@ export async function run(argv: string[] = process.argv): Promise<number> {
           break;
         case 'nominalizations':
           process.stdout.write(nominalizations.map(n => `${n.word} → ${n.suggestion}`).join('\n') + '\n');
+          break;
+        case 'aiTells':
+          process.stdout.write('# Vocabulary\n');
+          process.stdout.write(aiTellsVocabulary.map(v => v.variants?.length ? `${v.word} (also: ${v.variants.join(', ')})` : v.word).join('\n') + '\n');
+          process.stdout.write('# Phrases\n');
+          process.stdout.write(aiTellsPhrases.map(p => p.phrase).join('\n') + '\n');
+          process.stdout.write('# Structural patterns (disable via removePatterns)\n');
+          process.stdout.write(aiTellsPatterns.map(p => `${p.name} — ${p.reason}`).join('\n') + '\n');
           break;
         default:
           process.stdout.write(`Detector "${detector}" does not have a configurable word list.\n`);
@@ -165,6 +173,7 @@ export async function run(argv: string[] = process.argv): Promise<number> {
           nominalizations: { enabled: true },
           hedging: { enabled: true },
           adverbs: { enabled: true },
+          aiTells: { enabled: true },
         },
       };
       await writeFile(configPath, JSON.stringify(config, null, 2) + '\n');
@@ -173,7 +182,7 @@ export async function run(argv: string[] = process.argv): Promise<number> {
     });
 
   cli.help();
-  cli.version('1.0.0');
+  cli.version('1.2.0');
 
   try {
     cli.parse(argv, { run: false });

@@ -2,6 +2,11 @@ import type { AnalysisResult } from '../src/core/analyzer.js';
 
 export type Format = 'text' | 'json' | 'github';
 
+// Pattern matches can span most of a sentence; keep display lines readable.
+function truncate(s: string, max = 48): string {
+  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
+
 export function formatText(filePath: string, result: AnalysisResult, noColor: boolean): string {
   const lines: string[] = [];
   const { issues } = result;
@@ -35,6 +40,9 @@ export function formatText(filePath: string, result: AnalysisResult, noColor: bo
   }
   for (const a of issues.adverbs) {
     lines.push(`${filePath}:${a.index}  filler-adverb  "${a.word}"`);
+  }
+  for (const t of issues.aiTells) {
+    lines.push(`${filePath}:${t.index}  ai-tell  "${truncate(t.text)}" — ${t.reason}`);
   }
 
   return lines.join('\n');
@@ -80,6 +88,10 @@ export function formatTextWithLineCol(
   for (const a of issues.adverbs) {
     const { line, col } = getLineCol(a.index);
     lines.push(`${filePath}:${line}:${col}  filler-adverb  "${a.word}"`);
+  }
+  for (const t of issues.aiTells) {
+    const { line, col } = getLineCol(t.index);
+    lines.push(`${filePath}:${line}:${col}  ai-tell  "${truncate(t.text)}" — ${t.reason}`);
   }
 
   return lines.join('\n');
@@ -132,6 +144,10 @@ export function formatGitHub(
   for (const a of issues.adverbs) {
     const { line, col } = getLineCol(a.index);
     lines.push(`::warning file=${filePath},line=${line},col=${col}::Filler adverb: "${a.word}"`);
+  }
+  for (const t of issues.aiTells) {
+    const { line, col } = getLineCol(t.index);
+    lines.push(`::warning file=${filePath},line=${line},col=${col}::AI tell: "${truncate(t.text)}" — ${t.reason}`);
   }
 
   return lines.join('\n');

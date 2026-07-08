@@ -1,18 +1,18 @@
 export {
   detectWeaselWords, detectPassiveVoice, detectDuplicateWords, removeDuplicateWord,
   detectLongSentences, detectNominalizations, detectHedging, detectAdverbs,
-  detectAiTells,
+  detectAiTells, splitSentences,
 } from './detector.js';
 export {
   allWeaselWords, irregularVerbs, auxiliaryVerbs,
   nominalizations, hedgingPhrases, fillerAdverbs, abbreviations,
-  aiTellsVocabulary, aiTellsPhrases,
+  aiTellsVocabulary, aiTellsPhrases, aiTellsPatterns,
 } from './words.js';
 export { analyzeText } from './analyzer.js';
 export type { AnalysisResult } from './analyzer.js';
 export {
   mergeConfig, applyWordListOverrides, applyNominalizationOverrides,
-  applyAiTellsVocabOverrides, applyAiTellsPhraseOverrides,
+  applyAiTellsVocabOverrides, applyAiTellsPhraseOverrides, applyAiTellsPatternOverrides,
   validateConfig, DEFAULT_CONFIG,
 } from './config.js';
 export type {

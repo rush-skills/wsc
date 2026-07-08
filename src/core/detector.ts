@@ -10,7 +10,18 @@ import {
   abbreviations,
   aiTellsVocabulary as defaultAiVocabulary,
   aiTellsPhrases as defaultAiPhrases,
+  aiTellsPatterns as defaultAiPatterns,
 } from "./words.js";
+
+function escapeForRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Multi-word entries should survive hard-wrapped lines ("kind\nof") and curly
+// apostrophes ("it’s"), so spaces become \s+ and ' matches either apostrophe.
+function flexibleSource(str: string): string {
+  return escapeForRegex(str).replace(/ /g, '\\s+').replace(/'/g, "['’]");
+}
 
 export function detectWeaselWords(text: string, wordList?: string[]): Array<{
   word: string;
@@ -21,8 +32,10 @@ export function detectWeaselWords(text: string, wordList?: string[]): Array<{
   const words = wordList ?? allWeaselWords;
   if (words.length === 0) return results;
 
+  // Longest-first so "kind of" wins over a hypothetical "kind" entry
+  const sorted = [...words].sort((a, b) => b.length - a.length);
   const weaselWordsPattern = new RegExp(
-    `\\b(${words.join("|")})\\b`,
+    `\\b(${sorted.map(flexibleSource).join("|")})\\b`,
     "gi"
   );
 
@@ -48,8 +61,12 @@ export function detectPassiveVoice(text: string): Array<{
   const regularPattern = "\\w+ed";
   const allVerbs = `${regularPattern}|${irregularVerbs.join("|")}`;
 
+  // Common adjectives/adverbs ending in "ed" that are not past participles
+  const notParticiples = "indeed|red|bed|naked|sacred|wretched|hundred|wicked|hatred|kindred";
+
+  // \s+ (not literal spaces) so passives spanning a hard line wrap still match
   const passivePattern = new RegExp(
-    `\\b(${auxiliaryVerbs.join("|")})\\b[ ]*(${allVerbs})\\b`,
+    `\\b(${auxiliaryVerbs.join("|")})\\b\\s+(?!(?:${notParticiples})\\b)(${allVerbs})\\b`,
     "gi"
   );
 
@@ -76,22 +93,18 @@ export function detectDuplicateWords(text: string): Array<{
 
   let match;
   while ((match = regex.exec(text)) !== null) {
-    const firstWord = match[1];
-    const fullMatch = match[0];
-
-    const firstWordIndex = match.index;
-    const secondWordIndex = firstWordIndex + fullMatch.indexOf(match[2]);
-
-    const duplicateWord = text.substring(
-      secondWordIndex,
-      secondWordIndex + firstWord.length
-    );
+    // The backreference always ends the match, so its position is
+    // deterministic — indexOf would find the FIRST word when cases match.
+    const secondWordIndex = match.index + match[0].length - match[2].length;
 
     results.push({
-      word: duplicateWord,
+      word: match[2],
       index: secondWordIndex,
-      length: duplicateWord.length,
+      length: match[2].length,
     });
+
+    // Resume at the duplicate so chained runs ("the the the") report each pair
+    regex.lastIndex = secondWordIndex;
   }
 
   return results;
@@ -109,19 +122,16 @@ export function removeDuplicateWord(
   return text.substring(0, whitespaceStart) + text.substring(index + length);
 }
 
-export function detectLongSentences(text: string, maxWords?: number): Array<{
-  sentence: string;
-  wordCount: number;
-  index: number;
-  length: number;
-}> {
-  const threshold = maxWords ?? 30;
-  const results: Array<{ sentence: string; wordCount: number; index: number; length: number }> = [];
-
-  if (!text.trim()) return results;
-
-  // Split into sentences, preserving positions
+/**
+ * Split text into sentences, preserving positions. Handles abbreviations,
+ * decimals, ellipses, closing quotes/brackets after terminators, Markdown
+ * block boundaries, and CRLF line endings. Shared by detectLongSentences and
+ * the analyzer's sentence count so both report the same numbers.
+ */
+export function splitSentences(text: string): Array<{ text: string; index: number }> {
   const sentences: Array<{ text: string; index: number }> = [];
+  if (!text.trim()) return sentences;
+
   let currentStart = 0;
 
   // Skip leading whitespace for first sentence
@@ -135,10 +145,11 @@ export function detectLongSentences(text: string, maxWords?: number): Array<{
     // or blockquote as sentence boundaries. A Markdown block is not one long
     // running sentence just because it lacks terminal punctuation. (A single
     // '\n' inside a paragraph — soft-wrapped prose — is NOT a boundary.)
+    // '\r' is tolerated so CRLF files split the same way as LF files.
     if (text[i] === '\n') {
       const rest = text.slice(i + 1);
-      const isParagraphBreak = /^[ \t]*\n/.test(rest);
-      const startsNewBlock = /^[ \t]*(?:[-*+]\s|\d+[.)]\s|>)/.test(rest);
+      const isParagraphBreak = /^[ \t\r]*\n/.test(rest);
+      const startsNewBlock = /^[ \t\r]*(?:[-*+]\s|\d+[.)]\s|>)/.test(rest);
       if (isParagraphBreak || startsNewBlock) {
         const sentenceText = text.substring(currentStart, i + 1).trim();
         if (sentenceText) sentences.push({ text: sentenceText, index: currentStart });
@@ -148,7 +159,7 @@ export function detectLongSentences(text: string, maxWords?: number): Array<{
         continue;
       }
     }
-    if (text[i] === '.' || text[i] === '!' || text[i] === '?') {
+    if (text[i] === '.' || text[i] === '!' || text[i] === '?' || text[i] === '…') {
       // Check for ellipsis
       if (text[i] === '.' && text[i + 1] === '.' && text[i + 2] === '.') {
         i += 3;
@@ -175,8 +186,12 @@ export function detectLongSentences(text: string, maxWords?: number): Array<{
         }
       }
 
-      // Check if followed by whitespace or end-of-string
-      const afterPunct = i + 1;
+      // A terminator may be followed by closing quotes/brackets before the
+      // whitespace: 'He said "Stop." Then he left.'
+      let afterPunct = i + 1;
+      while (afterPunct < text.length && /["'”’)\]]/.test(text[afterPunct])) {
+        afterPunct++;
+      }
       if (afterPunct >= text.length || /\s/.test(text[afterPunct])) {
         const sentenceText = text.substring(currentStart, afterPunct).trim();
         if (sentenceText) {
@@ -201,7 +216,19 @@ export function detectLongSentences(text: string, maxWords?: number): Array<{
     }
   }
 
-  for (const s of sentences) {
+  return sentences;
+}
+
+export function detectLongSentences(text: string, maxWords?: number): Array<{
+  sentence: string;
+  wordCount: number;
+  index: number;
+  length: number;
+}> {
+  const threshold = maxWords ?? 30;
+  const results: Array<{ sentence: string; wordCount: number; index: number; length: number }> = [];
+
+  for (const s of splitSentences(text)) {
     const words = s.text.split(/\s+/).filter(Boolean);
     if (words.length > threshold) {
       const truncated = s.text.length > 50 ? s.text.substring(0, 50) + '...' : s.text;
@@ -231,7 +258,7 @@ export function detectNominalizations(
   if (words.length === 0) return results;
 
   const pattern = new RegExp(
-    `\\b(${words.map(w => w.word).join("|")})\\b`,
+    `\\b(${words.map(w => escapeForRegex(w.word)).join("|")})\\b`,
     "gi"
   );
 
@@ -262,9 +289,7 @@ export function detectHedging(text: string, phraseList?: string[]): Array<{
   // Sort by length descending so longer phrases match first
   const sorted = [...phrases].sort((a, b) => b.length - a.length);
 
-  // Escape regex special chars in phrases
-  const escaped = sorted.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const pattern = new RegExp(`\\b(${escaped.join("|")})\\b`, "gi");
+  const pattern = new RegExp(`\\b(${sorted.map(flexibleSource).join("|")})\\b`, "gi");
 
   let match;
   while ((match = pattern.exec(text)) !== null) {
@@ -288,7 +313,7 @@ export function detectAdverbs(text: string, wordList?: string[]): Array<{
   if (words.length === 0) return results;
 
   const pattern = new RegExp(
-    `\\b(${words.join("|")})\\b`,
+    `\\b(${words.map(escapeForRegex).join("|")})\\b`,
     "gi"
   );
 
@@ -306,22 +331,28 @@ export function detectAdverbs(text: string, wordList?: string[]): Array<{
 
 // ─── AI Tells Detector ─────────────────────────────────────────────────────
 
-function escapeForRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** Add \b only where the phrase edge is a word character — `\b` after "," never matches. */
+function phraseRegex(phrase: string): RegExp {
+  const lead = /^\w/.test(phrase) ? '\\b' : '';
+  const trail = /\w$/.test(phrase) ? '\\b' : '';
+  return new RegExp(`${lead}${flexibleSource(phrase)}${trail}`, 'gi');
 }
 
 export function detectAiTells(
   text: string,
-  vocabularyList?: Array<{ word: string; reason: string }>,
+  vocabularyList?: Array<{ word: string; variants?: string[]; reason: string }>,
   phraseList?: Array<{ phrase: string; reason: string }>,
+  patternList?: Array<{ name: string; pattern: string; reason: string }>,
 ): Array<{ text: string; index: number; length: number; reason: string }> {
   const results: Array<{ text: string; index: number; length: number; reason: string }> = [];
   const vocab = vocabularyList ?? defaultAiVocabulary;
   const phrases = phraseList ?? defaultAiPhrases;
+  const patterns = patternList ?? defaultAiPatterns;
 
-  // Vocabulary tells: whole-word matches
-  for (const { word, reason } of vocab) {
-    const regex = new RegExp(`\\b${escapeForRegex(word)}\\b`, 'gi');
+  // Vocabulary tells: whole-word matches, including inflected variants
+  for (const { word, variants, reason } of vocab) {
+    const forms = [word, ...(variants ?? [])].map(escapeForRegex).join('|');
+    const regex = new RegExp(`\\b(?:${forms})\\b`, 'gi');
     let match;
     while ((match = regex.exec(text)) !== null) {
       results.push({
@@ -333,25 +364,51 @@ export function detectAiTells(
     }
   }
 
-  // Phrase tells: case-insensitive substring matches
-  const lowerText = text.toLowerCase();
+  // Phrase tells: case-insensitive whole-phrase matches
   for (const { phrase, reason } of phrases) {
-    const lowerPhrase = phrase.toLowerCase();
-    let startIdx = 0;
-    while (true) {
-      const idx = lowerText.indexOf(lowerPhrase, startIdx);
-      if (idx === -1) break;
+    const regex = phraseRegex(phrase);
+    let match;
+    while ((match = regex.exec(text)) !== null) {
       results.push({
-        text: text.substring(idx, idx + phrase.length),
-        index: idx,
-        length: phrase.length,
+        text: match[0],
+        index: match.index,
+        length: match[0].length,
         reason,
       });
-      startIdx = idx + 1;
+      // Allow overlapping re-scan from the next character
+      regex.lastIndex = match.index + 1;
     }
   }
 
-  // Sort by position
-  results.sort((a, b) => a.index - b.index);
-  return results;
+  // Structural tells: regex patterns for constructions, not literal strings
+  for (const { pattern, reason } of patterns) {
+    let regex: RegExp;
+    try {
+      regex = new RegExp(pattern, 'gi');
+    } catch {
+      continue; // an unsupported/invalid pattern must not take down the analyzer
+    }
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      results.push({
+        text: match[0],
+        index: match.index,
+        length: match[0].length,
+        reason,
+      });
+      if (match[0].length === 0) regex.lastIndex++; // safety against zero-width matches
+    }
+  }
+
+  // A span contained inside a longer match is the same finding reported twice
+  // ("delve" inside "let's delve") — keep only the outermost match. Sorting by
+  // index then length-descending guarantees any covering match precedes the
+  // matches it covers, so one forward pass suffices.
+  results.sort((a, b) => a.index - b.index || b.length - a.length);
+  const kept: typeof results = [];
+  for (const r of results) {
+    const covered = kept.some(k => k.index <= r.index && k.index + k.length >= r.index + r.length);
+    if (!covered) kept.push(r);
+  }
+  return kept;
 }

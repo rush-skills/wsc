@@ -1,6 +1,6 @@
 import type { WscConfig, WordListDetectorConfig, NominalizationDetectorConfig, LongSentenceDetectorConfig, AiTellsDetectorConfig } from './config.js';
-import { mergeConfig, applyWordListOverrides, applyNominalizationOverrides, applyAiTellsVocabOverrides, applyAiTellsPhraseOverrides } from './config.js';
-import { allWeaselWords, nominalizations, hedgingPhrases, fillerAdverbs, aiTellsVocabulary, aiTellsPhrases } from './words.js';
+import { mergeConfig, applyWordListOverrides, applyNominalizationOverrides, applyAiTellsVocabOverrides, applyAiTellsPhraseOverrides, applyAiTellsPatternOverrides } from './config.js';
+import { allWeaselWords, nominalizations, hedgingPhrases, fillerAdverbs, aiTellsVocabulary, aiTellsPhrases, aiTellsPatterns } from './words.js';
 import {
   detectWeaselWords,
   detectPassiveVoice,
@@ -10,6 +10,7 @@ import {
   detectHedging,
   detectAdverbs,
   detectAiTells,
+  splitSentences,
 } from './detector.js';
 
 export interface AnalysisResult {
@@ -80,6 +81,10 @@ export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
     ? applyAiTellsPhraseOverrides(aiTellsPhrases, at.addPhrases, at.removePhrases)
     : [];
 
+  const aiPatternList = at.enabled
+    ? applyAiTellsPatternOverrides(aiTellsPatterns, at.removePatterns)
+    : [];
+
   const issues = {
     weaselWords: ww.enabled ? detectWeaselWords(text, weaselWordList) : [],
     passiveVoice: pv.enabled ? detectPassiveVoice(text) : [],
@@ -88,7 +93,7 @@ export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
     nominalizations: nm.enabled ? detectNominalizations(text, nominalizationList) : [],
     hedging: hd.enabled ? detectHedging(text, hedgingList) : [],
     adverbs: ad.enabled ? detectAdverbs(text, adverbList) : [],
-    aiTells: at.enabled ? detectAiTells(text, aiVocabList, aiPhraseList) : [],
+    aiTells: at.enabled ? detectAiTells(text, aiVocabList, aiPhraseList, aiPatternList) : [],
   };
 
   const summary = {
@@ -106,8 +111,9 @@ export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
     summary.longSentences + summary.nominalizations + summary.hedging + summary.adverbs +
     summary.aiTells;
 
-  const sentenceMatches = text.match(/[^.!?]*[.!?](?:\s|$)/g);
-  const sentenceCount = sentenceMatches ? sentenceMatches.length : (text.trim() ? 1 : 0);
+  // Same splitter the long-sentence detector uses, so the stats bar and the
+  // long-sentence results can never disagree about what a sentence is.
+  const sentenceCount = splitSentences(text).length;
 
   return {
     issues,

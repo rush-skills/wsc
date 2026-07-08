@@ -70,6 +70,7 @@ wsc list weaselWords      # List all weasel words
 wsc list hedging          # List all hedging phrases
 wsc list adverbs          # List all filler adverbs
 wsc list nominalizations  # List all nominalizations with suggestions
+wsc list aiTells          # List AI-tell words, phrases, and structural patterns
 ```
 
 ### `wsc init`

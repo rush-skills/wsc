@@ -104,6 +104,11 @@
               "type": "array",
               "items": { "type": "string" },
               "description": "Phrases to stop flagging"
+            },
+            "removePatterns": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Names of built-in structural patterns to disable (e.g. \"negative-parallelism\")"
             }
           }
         }

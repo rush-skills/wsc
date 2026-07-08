@@ -152,6 +152,17 @@ describe('detectPassiveVoice', () => {
     expect(results.length).toBe(2);
   });
 
+  it('detects a passive spanning a hard line wrap', () => {
+    expect(detectPassiveVoice('The decision was\ntaken quickly.').length).toBe(1);
+    expect(detectPassiveVoice('The value was\ttaken from cache.').length).toBe(1);
+  });
+
+  it('does not flag common non-participle "ed" words after an auxiliary', () => {
+    expect(detectPassiveVoice('The wall is red.')).toEqual([]);
+    expect(detectPassiveVoice('He was indeed happy.')).toEqual([]);
+    expect(detectPassiveVoice('The site was sacred to them.')).toEqual([]);
+  });
+
   it('handles text with no verbs', () => {
     expect(detectPassiveVoice('Hello world.')).toEqual([]);
   });
@@ -202,11 +213,18 @@ describe('detectDuplicateWords', () => {
     const text = 'the the code';
     const results = detectDuplicateWords(text);
     expect(results.length).toBe(1);
-    // Due to indexOf finding the first "the" in "the the", the reported index
-    // is 0 (the start of the first word). This is the existing behavior.
-    expect(results[0].index).toBe(0);
+    // The index must point at the SECOND occurrence (the duplicate), so that
+    // removeDuplicateWord deletes the right word.
+    expect(results[0].index).toBe(4);
     expect(results[0].length).toBe(3);
     expect(results[0].word).toBe('the');
+  });
+
+  it('reports each pair in a chained run ("the the the")', () => {
+    const results = detectDuplicateWords('word the the the end');
+    expect(results.length).toBe(2);
+    expect(results[0].index).toBe(9);
+    expect(results[1].index).toBe(13);
   });
 
   it('detects duplicates separated by newlines', () => {

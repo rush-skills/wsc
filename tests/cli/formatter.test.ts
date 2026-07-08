@@ -28,6 +28,15 @@ describe('formatTextWithLineCol', () => {
     expect(output).toContain('use');
   });
 
+  it('includes ai-tell lines with their reason', () => {
+    const text = 'We delve into the code.';
+    const result = analyzeText(text);
+    const output = formatTextWithLineCol('test.md', text, result);
+    expect(output).toContain('ai-tell');
+    expect(output).toContain('"delve"');
+    expect(output).toContain('Kobak');
+  });
+
   it('formats multiple files', () => {
     const result1 = analyzeText(SAMPLE);
     const result2 = analyzeText('I think it is totally fine.');
@@ -64,6 +73,13 @@ describe('formatGitHub', () => {
     const output = formatGitHub('test.md', SAMPLE, result);
     expect(output).toContain('::warning file=test.md');
     expect(output).toContain('Weasel word');
+  });
+
+  it('annotates ai-tells so gated counts match visible warnings', () => {
+    const text = 'We delve into the code.';
+    const output = formatGitHub('test.md', text, analyzeText(text));
+    expect(output).toContain('AI tell');
+    expect(output).toContain('"delve"');
   });
 
   it('returns empty string for 0 issues', () => {

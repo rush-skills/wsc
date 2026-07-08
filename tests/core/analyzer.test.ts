@@ -102,4 +102,21 @@ describe('analyzeText', () => {
     });
     expect(emptyOverrides.issues.weaselWords.length).toBe(defaultResult.issues.weaselWords.length);
   });
+
+  it('aiTells structural patterns run by default and honor removePatterns', () => {
+    const text = 'Experts agree that hydration is important.';
+    const withPatterns = analyzeText(text);
+    expect(withPatterns.summary.aiTells).toBe(1);
+
+    const without = analyzeText(text, {
+      detectors: { aiTells: { removePatterns: ['vague-attribution'] } },
+    });
+    expect(without.summary.aiTells).toBe(0);
+  });
+
+  it('sentenceCount uses the abbreviation-aware splitter', () => {
+    // Naive regex splitting would count 2 sentences because of "e.g."
+    const result = analyzeText('See e.g. the docs.');
+    expect(result.meta.sentenceCount).toBe(1);
+  });
 });
