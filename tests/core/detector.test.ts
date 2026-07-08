@@ -214,6 +214,20 @@ describe('detectPassiveVoice', () => {
     const results = detectPassiveVoice('The library was used by many teams.');
     expect(results.length).toBe(1);
   });
+
+  it('does not flag idiomatic get + adjective constructions', () => {
+    expect(detectPassiveVoice('Getting Started')).toEqual([]);
+    expect(detectPassiveVoice('They got married last year.')).toEqual([]);
+    expect(detectPassiveVoice('I got stuck on the bug.')).toEqual([]);
+    expect(detectPassiveVoice('We got lost on the way.')).toEqual([]);
+    expect(detectPassiveVoice('She got used to the noise.')).toEqual([]);
+  });
+
+  it('still flags genuine get-passives', () => {
+    expect(detectPassiveVoice('He got hit by a car.').length).toBe(1);
+    expect(detectPassiveVoice('The email got deleted.').length).toBe(1);
+    expect(detectPassiveVoice('The report was used by the team.').length).toBe(1);
+  });
 });
 
 // ============================================================================

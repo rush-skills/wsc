@@ -63,22 +63,51 @@ export function detectPassiveVoice(text: string): Array<{
 
   // Common adjectives/nouns ending in "ed"-like letters that are not past
   // participles ("was tired", "there is need"). 'used' is deliberately
-  // absent: "was used by" is genuine passive.
+  // absent: "was used by" is genuine passive. (It belongs only in
+  // getIdiomStoplist below — "got used to" is idiomatic, but "was used by"
+  // is not, so it must not leak into this shared list.)
   const notParticiples =
     "indeed|red|bed|naked|sacred|wretched|hundred|wicked|hatred|kindred|" +
     "need|speed|greed|seed|deed|creed|feed|breed|tweed|" +
     "tired|talented|gifted|excited|interested|supposed";
 
+  // get + adjective/inchoative idioms are not passive voice: "got married",
+  // "got stuck", "got used to". Stacked on top of notParticiples, not
+  // shared with the be-forms pattern, since "was used by" IS genuine passive.
+  const getIdiomStoplist =
+    "started|married|engaged|divorced|dressed|undressed|involved|worried|" +
+    "stuck|lost|hurt|scared|bored|confused|used|acquainted|accustomed";
+
+  // Single source of truth: partition the exported auxiliaryVerbs list by
+  // get-prefix rather than duplicating a separate word list here. Matches
+  // both the "get" stem (get/gets/getting) and the "got" stem (got/gotten)
+  // — a plain startsWith("get") misses "got"/"gotten" since their second
+  // letter is "o", not "e".
+  const isGetForm = (v: string) => v.startsWith("get") || v.startsWith("got");
+  const beForms = auxiliaryVerbs.filter(v => !isGetForm(v));
+  const getForms = auxiliaryVerbs.filter(isGetForm);
+
   // \s+ (not literal spaces) so passives spanning a hard line wrap still
   // match. Up to two gap words (negation or -ly adverb) may sit between the
   // auxiliary and the participle: "was not fully fixed".
-  const passivePattern = new RegExp(
-    `\\b(${auxiliaryVerbs.join("|")})\\b\\s+(?:(?:not|never|\\w+ly)\\s+){0,2}(?!(?:${notParticiples})\\b)(${allVerbs})\\b`,
+  const bePattern = new RegExp(
+    `\\b(${beForms.join("|")})\\b\\s+(?:(?:not|never|\\w+ly)\\s+){0,2}(?!(?:${notParticiples})\\b)(${allVerbs})\\b`,
+    "gi"
+  );
+  const getPattern = new RegExp(
+    `\\b(${getForms.join("|")})\\b\\s+(?:(?:not|never|\\w+ly)\\s+){0,2}(?!(?:${notParticiples}|${getIdiomStoplist})\\b)(${allVerbs})\\b`,
     "gi"
   );
 
   let match;
-  while ((match = passivePattern.exec(text)) !== null) {
+  while ((match = bePattern.exec(text)) !== null) {
+    results.push({
+      phrase: match[0],
+      index: match.index,
+      length: match[0].length,
+    });
+  }
+  while ((match = getPattern.exec(text)) !== null) {
     results.push({
       phrase: match[0],
       index: match.index,
@@ -86,6 +115,7 @@ export function detectPassiveVoice(text: string): Array<{
     });
   }
 
+  results.sort((a, b) => a.index - b.index);
   return results;
 }
 
