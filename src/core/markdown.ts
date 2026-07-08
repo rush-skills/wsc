@@ -6,12 +6,17 @@
 // that is really a table or a directory tree). Prose linters like Vale and
 // proselint ignore these regions; we do the same.
 //
-// Masking replaces each non-prose character with a space and preserves every
-// newline, so the masked text has the *same length and line layout* as the
-// original. Detectors run on the masked text; offsets still map 1:1 back to
-// the original file, so reported line/column numbers stay correct.
+// Masking replaces non-prose regions while preserving length and line layout,
+// so offsets map 1:1 back to the original. Two masking modes:
+//  - whole-line constructs (fences, headings, tables) blank to SPACES, so a
+//    blanked line still reads as a paragraph break to the sentence splitter;
+//  - inline constructs (code spans, single-line HTML comments) blank to a NUL
+//    sentinel, which is neither \s nor \w, so the words on either side do not
+//    become adjacent ("Run `npm` run" must not read as "Run run").
 
-const blank = (s: string): string => s.replace(/[^\n]/g, ' ');
+const SENTINEL = '\u0000';
+const blankLine = (s: string): string => s.replace(/[^\n]/g, ' ');
+const blankInline = (s: string): string => SENTINEL.repeat(s.length);
 
 /** Return true for files that should be treated as Markdown. */
 export function isMarkdownFile(path: string): boolean {
@@ -32,35 +37,35 @@ export function maskMarkdown(input: string): string {
     const openMatch = line.match(/^\s*(`{3,}|~{3,})/);
 
     if (inFence) {
-      // Inside a fenced block: blank the line, and close on a matching fence.
       const closeMatch = line.match(/^\s*(`{3,}|~{3,})\s*$/);
       if (closeMatch && closeMatch[1][0] === fenceChar) inFence = false;
-      return blank(line);
+      return blankLine(line);
     }
 
     if (openMatch) {
       inFence = true;
       fenceChar = openMatch[1][0];
-      return blank(line);
+      return blankLine(line);
     }
 
-    // ATX headings are titles, not prose sentences. Blanking them stops a
-    // heading from merging into the next paragraph's sentence (headings have
-    // no terminating period) and drops heading-only nominalizations.
-    if (/^\s{0,3}#{1,6}\s/.test(line)) return blank(line);
+    // ATX headings are titles, not prose sentences.
+    if (/^\s{0,3}#{1,6}\s/.test(line)) return blankLine(line);
 
     // Table rows / separators (GFM tables using a leading pipe).
-    if (/^\s*\|/.test(line)) return blank(line);
+    if (/^\s*\|/.test(line)) return blankLine(line);
 
     // Inline code spans within an otherwise-prose line.
-    return line.replace(/`[^`\n]*`/g, (m) => ' '.repeat(m.length));
+    return line.replace(/`[^`\n]*`/g, blankInline);
   });
 
   let out = masked.join('\n');
 
-  // HTML comments can span multiple lines; blank their contents (keeping
-  // newlines). This also lets docs carry `<!-- ... -->` notes without linting.
-  out = out.replace(/<!--[\s\S]*?-->/g, blank);
+  // Single-line HTML comments: sentinel, same adjacency reasoning as inline code.
+  out = out.replace(/<!--[^\n]*?-->/g, blankInline);
+
+  // Multi-line HTML comments: space-blank (preserving newlines) so a comment
+  // block keeps acting as a paragraph break for the sentence splitter.
+  out = out.replace(/<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '));
 
   return out;
 }

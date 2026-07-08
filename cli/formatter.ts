@@ -4,7 +4,8 @@ export type Format = 'text' | 'json' | 'github';
 
 // Pattern matches can span most of a sentence; keep display lines readable.
 function truncate(s: string, max = 48): string {
-  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+  const clean = s.replace(/\u0000+/g, ' ');
+  return clean.length > max ? clean.slice(0, max - 1) + '…' : clean;
 }
 
 export function formatText(filePath: string, result: AnalysisResult, noColor: boolean): string {

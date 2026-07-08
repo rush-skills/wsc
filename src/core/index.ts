@@ -9,7 +9,8 @@ export {
   aiTellsVocabulary, aiTellsPhrases, aiTellsPatterns,
 } from './words.js';
 export { analyzeText } from './analyzer.js';
-export type { AnalysisResult } from './analyzer.js';
+export type { AnalysisResult, AnalyzeOptions } from './analyzer.js';
+export { maskMarkdown, isMarkdownFile } from './markdown.js';
 export {
   mergeConfig, applyWordListOverrides, applyNominalizationOverrides,
   applyAiTellsVocabOverrides, applyAiTellsPhraseOverrides, applyAiTellsPatternOverrides,

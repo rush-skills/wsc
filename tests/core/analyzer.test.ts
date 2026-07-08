@@ -120,3 +120,44 @@ describe('analyzeText', () => {
     expect(result.meta.sentenceCount).toBe(1);
   });
 });
+
+describe('analyzeText options', () => {
+  it('existing two-arg callers keep compiling and behaving identically', () => {
+    const twoArg = analyzeText(SAMPLE, { detectors: { weaselWords: { enabled: false } } });
+    const withUndefinedOptions = analyzeText(
+      SAMPLE,
+      { detectors: { weaselWords: { enabled: false } } },
+      undefined,
+    );
+    expect(withUndefinedOptions).toEqual(twoArg);
+  });
+
+  it('defaults to no masking when options is omitted', () => {
+    const text = '```\nvery basically utilize\n```\n';
+    expect(analyzeText(text).issues.weaselWords.length).toBeGreaterThan(0);
+  });
+
+  it('markdown: false behaves the same as omitting options', () => {
+    const text = '```\nvery basically utilize\n```\n';
+    const withFalse = analyzeText(text, undefined, { markdown: false });
+    const omitted = analyzeText(text);
+    expect(withFalse).toEqual(omitted);
+  });
+
+  it('masking preserves characterCount (masking keeps length identical)', () => {
+    const text = 'Prose.\n\n```\ncode block here\n```\n\nMore prose.';
+    const masked = analyzeText(text, undefined, { markdown: true });
+    const unmasked = analyzeText(text);
+    expect(masked.meta.characterCount).toBe(unmasked.meta.characterCount);
+    expect(masked.meta.characterCount).toBe(text.length);
+  });
+
+  it('wordCount does not count a masked inline span as more than one token', () => {
+    const text = 'Use `a whole bunch of code words here` in prose.';
+    const result = analyzeText(text, undefined, { markdown: true });
+    // The inline span collapses to a single run of NUL sentinels, which
+    // must count as at most one token, not one per original word.
+    const withoutSpan = analyzeText('Use in prose.', undefined, { markdown: true });
+    expect(result.meta.wordCount).toBeLessThanOrEqual(withoutSpan.meta.wordCount + 1);
+  });
+});

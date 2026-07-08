@@ -8,7 +8,7 @@ import { findConfigFile, loadConfigFromFile } from '../src/core/config-node.js';
 import { mergeConfig } from '../src/core/config.js';
 import type { WscConfig } from '../src/core/config.js';
 import { formatTextWithLineCol, formatJson, formatGitHub, formatSummary } from './formatter.js';
-import { maskMarkdown, isMarkdownFile } from './markdown.js';
+import { isMarkdownFile } from '../src/core/markdown.js';
 import type { AnalysisResult } from '../src/core/analyzer.js';
 
 export async function run(argv: string[] = process.argv): Promise<number> {
@@ -39,8 +39,7 @@ export async function run(argv: string[] = process.argv): Promise<number> {
           const configPath = await findConfigFile(process.cwd());
           if (configPath) config = await loadConfigFromFile(configPath);
         }
-        const analyzed = options.markdown === false ? text : maskMarkdown(text);
-        const result = analyzeText(analyzed, config);
+        const result = analyzeText(text, config, { markdown: options.markdown !== false });
         if (!options.quiet) {
           if (options.format === 'json') {
             process.stdout.write(formatJson([{ path: '<stdin>', result }]) + '\n');
@@ -99,9 +98,9 @@ export async function run(argv: string[] = process.argv): Promise<number> {
 
         // Mask Markdown structure (code/tables) before analysis; the original
         // text is still used for formatting so line/col stay correct.
-        const analyzed =
-          isMarkdownFile(filePath) && options.markdown !== false ? maskMarkdown(text) : text;
-        const result = analyzeText(analyzed, fileConfig);
+        const result = analyzeText(text, fileConfig, {
+          markdown: isMarkdownFile(filePath) && options.markdown !== false,
+        });
         totalIssues += result.summary.total;
 
         if (options.format === 'json') {

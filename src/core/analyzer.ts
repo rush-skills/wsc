@@ -12,6 +12,12 @@ import {
   detectAiTells,
   splitSentences,
 } from './detector.js';
+import { maskMarkdown } from './markdown.js';
+
+export interface AnalyzeOptions {
+  /** Mask Markdown structure (code, tables, headings, comments) before analysis. */
+  markdown?: boolean;
+}
 
 export interface AnalysisResult {
   issues: {
@@ -43,7 +49,8 @@ export interface AnalysisResult {
   config: ReturnType<typeof mergeConfig>;
 }
 
-export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
+export function analyzeText(text: string, config?: WscConfig, options?: AnalyzeOptions): AnalysisResult {
+  const analyzed = options?.markdown ? maskMarkdown(text) : text;
   const merged = mergeConfig(config);
   const d = merged.detectors;
 
@@ -86,14 +93,14 @@ export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
     : [];
 
   const issues = {
-    weaselWords: ww.enabled ? detectWeaselWords(text, weaselWordList) : [],
-    passiveVoice: pv.enabled ? detectPassiveVoice(text) : [],
-    duplicateWords: dw.enabled ? detectDuplicateWords(text) : [],
-    longSentences: ls.enabled ? detectLongSentences(text, ls.maxWords) : [],
-    nominalizations: nm.enabled ? detectNominalizations(text, nominalizationList) : [],
-    hedging: hd.enabled ? detectHedging(text, hedgingList) : [],
-    adverbs: ad.enabled ? detectAdverbs(text, adverbList) : [],
-    aiTells: at.enabled ? detectAiTells(text, aiVocabList, aiPhraseList, aiPatternList) : [],
+    weaselWords: ww.enabled ? detectWeaselWords(analyzed, weaselWordList) : [],
+    passiveVoice: pv.enabled ? detectPassiveVoice(analyzed) : [],
+    duplicateWords: dw.enabled ? detectDuplicateWords(analyzed) : [],
+    longSentences: ls.enabled ? detectLongSentences(analyzed, ls.maxWords) : [],
+    nominalizations: nm.enabled ? detectNominalizations(analyzed, nominalizationList) : [],
+    hedging: hd.enabled ? detectHedging(analyzed, hedgingList) : [],
+    adverbs: ad.enabled ? detectAdverbs(analyzed, adverbList) : [],
+    aiTells: at.enabled ? detectAiTells(analyzed, aiVocabList, aiPhraseList, aiPatternList) : [],
   };
 
   const summary = {
@@ -113,14 +120,14 @@ export function analyzeText(text: string, config?: WscConfig): AnalysisResult {
 
   // Same splitter the long-sentence detector uses, so the stats bar and the
   // long-sentence results can never disagree about what a sentence is.
-  const sentenceCount = splitSentences(text).length;
+  const sentenceCount = splitSentences(analyzed).length;
 
   return {
     issues,
     summary,
     meta: {
-      characterCount: text.length,
-      wordCount: text.split(/\s+/).filter(Boolean).length,
+      characterCount: analyzed.length,
+      wordCount: analyzed.split(/\s+/).filter(w => w && !/^\u0000+$/.test(w)).length,
       sentenceCount,
     },
     config: merged,

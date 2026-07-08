@@ -272,7 +272,8 @@ export function detectLongSentences(text: string, maxWords?: number): Array<{
   for (const s of splitSentences(text)) {
     const words = s.text.split(/\s+/).filter(Boolean);
     if (words.length > threshold) {
-      const truncated = s.text.length > 50 ? s.text.substring(0, 50) + '...' : s.text;
+      const display = s.text.replace(/\u0000+/g, ' ');
+      const truncated = display.length > 50 ? display.substring(0, 50) + '...' : display;
       results.push({
         sentence: truncated,
         wordCount: words.length,
