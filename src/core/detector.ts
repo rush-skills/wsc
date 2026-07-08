@@ -24,7 +24,7 @@ function escapeForRegex(str: string): string {
 function flexibleSource(str: string): string {
   return escapeForRegex(str)
     .replace(/ /g, `(?:(?!\\n[ \\t\\r]*\\n)\\s)+`)
-    .replace(/'/g, `['’']`);
+    .replace(/'/g, `['’]`);
 }
 
 export function detectWeaselWords(text: string, wordList?: string[]): Array<{
@@ -391,6 +391,12 @@ export function detectAiTells(
   const phrases = phraseList ?? defaultAiPhrases;
   const patterns = patternList ?? defaultAiPatterns;
 
+  // Markdown masking replaces masked regions with U+0000 sentinels so
+  // index/length still map to the original text. A phrase or structural
+  // match can span a masked region and capture sentinels into match[0]; strip
+  // them from the *display* text only — index/length must stay untouched.
+  const cleanSentinels = (s: string): string => s.replace(/\u0000+/g, ' ');
+
   // Vocabulary tells: whole-word matches, including inflected variants
   for (const { word, variants, reason } of vocab) {
     const forms = [word, ...(variants ?? [])].map(escapeForRegex).join('|');
@@ -398,7 +404,7 @@ export function detectAiTells(
     let match;
     while ((match = regex.exec(text)) !== null) {
       results.push({
-        text: match[0],
+        text: cleanSentinels(match[0]),
         index: match.index,
         length: match[0].length,
         reason,
@@ -412,7 +418,7 @@ export function detectAiTells(
     let match;
     while ((match = regex.exec(text)) !== null) {
       results.push({
-        text: match[0],
+        text: cleanSentinels(match[0]),
         index: match.index,
         length: match[0].length,
         reason,
@@ -433,7 +439,7 @@ export function detectAiTells(
     let match;
     while ((match = regex.exec(text)) !== null) {
       results.push({
-        text: match[0],
+        text: cleanSentinels(match[0]),
         index: match.index,
         length: match[0].length,
         reason,

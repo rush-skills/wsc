@@ -43,7 +43,7 @@ export const OPTIONS: RequestHandler = async () => {
 export const GET: RequestHandler = async () => {
   return new Response(JSON.stringify({
     name: 'Writing Style Checker MCP Server',
-    description: 'MCP server for detecting writing style issues: weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs.',
+    description: 'MCP server for detecting writing style issues: weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and AI tells.',
     version: '2.2.0',
     tools: ['check_text', 'fix_duplicates', 'list_word_lists'],
     docs: 'https://wsc.theserverless.dev',

@@ -160,4 +160,15 @@ describe('analyzeText options', () => {
     const withoutSpan = analyzeText('Use in prose.', undefined, { markdown: true });
     expect(result.meta.wordCount).toBeLessThanOrEqual(withoutSpan.meta.wordCount + 1);
   });
+
+  it('does not leak the mask sentinel into aiTells text under markdown mode', () => {
+    // 'not only X but also Y' is a structural AI-tell; the inline code span
+    // between them masks to sentinels, which must not appear in the reported text.
+    const text = 'This tool is not only `fast` but also cheap.';
+    const result = analyzeText(text, undefined, { markdown: true });
+    expect(result.issues.aiTells.length).toBeGreaterThan(0);
+    for (const t of result.issues.aiTells) {
+      expect(t.text).not.toContain('\u0000');
+    }
+  });
 });

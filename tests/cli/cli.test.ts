@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { exitCode, run } from '../../cli/cli';
+import pico from 'picocolors';
 
 // Text guaranteed to trip several detectors (passive voice, filler adverb).
 const NOISY = 'The code was written very quickly.\n';
@@ -155,11 +156,23 @@ describe('run() — json/github output stays uncolored even when color is availa
   });
 
   it('--format text: does emit ANSI codes when color is available', async () => {
-    const f = join(dir, 'doc.md');
-    writeFileSync(f, NOISY);
-    await run(['node', 'wsc', 'check', f]);
-    // eslint-disable-next-line no-control-regex
-    expect(captured).toMatch(/\u001b\[/);
+    // Force picocolors to treat color as available regardless of the
+    // ambient TTY/CI environment, so this assertion is deterministic under
+    // a plain `npx vitest run` as well as under CI. cli.ts reads
+    // `pico.isColorSupported` live (at call time) off this same shared
+    // module singleton, so mutating it here reliably overrides whatever
+    // TTY/env-based detection picocolors ran once at import time.
+    const priorIsColorSupported = pico.isColorSupported;
+    (pico as { isColorSupported: boolean }).isColorSupported = true;
+    try {
+      const f = join(dir, 'doc.md');
+      writeFileSync(f, NOISY);
+      await run(['node', 'wsc', 'check', f]);
+      // eslint-disable-next-line no-control-regex
+      expect(captured).toMatch(/\u001b\[/);
+    } finally {
+      (pico as { isColorSupported: boolean }).isColorSupported = priorIsColorSupported;
+    }
   });
 });
 
