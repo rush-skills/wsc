@@ -18,9 +18,13 @@ function escapeForRegex(str: string): string {
 }
 
 // Multi-word entries should survive hard-wrapped lines ("kind\nof") and curly
-// apostrophes ("it’s"), so spaces become \s+ and ' matches either apostrophe.
+// apostrophes ("it’s"), so spaces become flexible whitespace and ‘ matches
+// either apostrophe. The whitespace run may contain at most one newline —
+// a blank line is a paragraph break, and phrases don’t span paragraphs.
 function flexibleSource(str: string): string {
-  return escapeForRegex(str).replace(/ /g, '\\s+').replace(/'/g, "['’]");
+  return escapeForRegex(str)
+    .replace(/ /g, `(?:(?!\\n[ \\t\\r]*\\n)\\s)+`)
+    .replace(/'/g, `['’']`);
 }
 
 export function detectWeaselWords(text: string, wordList?: string[]): Array<{
@@ -126,7 +130,7 @@ export function detectDuplicateWords(text: string): Array<{
 }> {
   const results: Array<{ word: string; index: number; length: number }> = [];
 
-  const regex = /\b(\w+)\b[\s\r\n]+\b(\1)\b/gi;
+  const regex = /(?<![\p{L}\p{N}_])([\p{L}\p{N}_]+)\s+(\1)(?![\p{L}\p{N}_])/giu;
 
   let match;
   while ((match = regex.exec(text)) !== null) {

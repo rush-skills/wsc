@@ -88,6 +88,22 @@ describe('detectWeaselWords', () => {
 });
 
 // ============================================================================
+// multi-word phrase boundaries
+// ============================================================================
+
+describe('multi-word phrase boundaries', () => {
+  it('does not match a phrase across a paragraph break', () => {
+    const results = detectWeaselWords('It was kind\n\nOf course it worked.');
+    expect(results.filter(r => /kind\s+of/i.test(r.word))).toEqual([]);
+  });
+
+  it('still matches a phrase across a single hard-wrapped line', () => {
+    const results = detectWeaselWords('It was kind\nof working.');
+    expect(results.some(r => /kind\s*\nof/i.test(r.word) || /kind of/i.test(r.word.replace(/\s+/g, ' ')))).toBe(true);
+  });
+});
+
+// ============================================================================
 // detectPassiveVoice
 // ============================================================================
 
@@ -310,6 +326,18 @@ describe('detectDuplicateWords', () => {
     expect(results.length).toBe(1);
     // The second word is "HELLO" — should be captured as-is from the text
     expect(results[0].word).toBe('HELLO');
+  });
+});
+
+// ============================================================================
+// detectDuplicateWords unicode
+// ============================================================================
+
+describe('detectDuplicateWords unicode', () => {
+  it('detects duplicated words containing non-ASCII letters', () => {
+    const results = detectDuplicateWords('The café café was nice.');
+    expect(results.length).toBe(1);
+    expect(results[0].word).toBe('café');
   });
 });
 
