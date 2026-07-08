@@ -11,7 +11,8 @@ import {
   DEFAULT_CONFIG,
 } from '../../src/core/config';
 import type { WscConfig } from '../../src/core/config';
-import { loadConfigFromFile, findConfigFile } from '../../src/core/config-node';
+import { loadConfigFromFile, findConfigFile, readPackageVersion } from '../../src/core/config-node';
+import { pathToFileURL } from 'node:url';
 
 // ── mergeConfig ──
 
@@ -373,5 +374,74 @@ describe('findConfigFile', () => {
     // If there happens to be a .wscrc.json somewhere above tmpDir, this could be non-null
     // but that's extremely unlikely in a temp directory
     expect(result === null || typeof result === 'string').toBe(true);
+  });
+});
+
+// ── readPackageVersion ──
+
+describe('readPackageVersion', () => {
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    tmpDir = join(tmpdir(), `wsc-pkgver-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(tmpDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  // readPackageVersion resolves a directory from a "file" URL via
+  // fileURLToPath + dirname, so a fake filename appended to a real dir
+  // works fine — the file itself never needs to exist.
+  const fakeModuleUrl = (dir: string) => pathToFileURL(join(dir, 'fake.js')).href;
+
+  it('returns the version from an immediate-match package.json', async () => {
+    await writeFile(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({ name: 'my-pkg', version: '1.2.3' }),
+    );
+
+    const result = readPackageVersion(fakeModuleUrl(tmpDir), 'my-pkg');
+    expect(result).toBe('1.2.3');
+  });
+
+  it('walks up to find a named package.json when the immediate dir does not match', async () => {
+    await writeFile(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({ name: 'target-pkg', version: '3.3.3' }),
+    );
+    const subDir = join(tmpDir, 'sub');
+    await mkdir(subDir, { recursive: true });
+    await writeFile(
+      join(subDir, 'package.json'),
+      JSON.stringify({ name: 'other-pkg', version: '0.0.1' }),
+    );
+
+    const result = readPackageVersion(fakeModuleUrl(subDir), 'target-pkg');
+    expect(result).toBe('3.3.3');
+  });
+
+  it("returns '0.0.0' when no matching package.json exists within the walk limit", async () => {
+    // A matching package.json sits at tmpDir itself, but the walk only
+    // checks 6 levels up from the start dir — put the start dir 7 levels
+    // below tmpDir so the match is just out of reach, proving the limit
+    // is actually enforced rather than just "didn't happen to find one".
+    await writeFile(
+      join(tmpDir, 'package.json'),
+      JSON.stringify({ name: 'target-pkg', version: '9.9.9' }),
+    );
+    let dir = tmpDir;
+    for (let i = 0; i < 7; i++) {
+      dir = join(dir, `level${i}`);
+      await mkdir(dir, { recursive: true });
+      await writeFile(
+        join(dir, 'package.json'),
+        JSON.stringify({ name: `not-it-${i}`, version: `${i}.0.0` }),
+      );
+    }
+
+    const result = readPackageVersion(fakeModuleUrl(dir), 'target-pkg');
+    expect(result).toBe('0.0.0');
   });
 });

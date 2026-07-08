@@ -1,6 +1,5 @@
+import pico from 'picocolors';
 import type { AnalysisResult } from '../src/core/analyzer.js';
-
-export type Format = 'text' | 'json' | 'github';
 
 // Pattern matches can span most of a sentence; keep display lines readable.
 function truncate(s: string, max = 48): string {
@@ -8,54 +7,31 @@ function truncate(s: string, max = 48): string {
   return clean.length > max ? clean.slice(0, max - 1) + '…' : clean;
 }
 
-export function formatText(filePath: string, result: AnalysisResult, noColor: boolean): string {
-  const lines: string[] = [];
-  const { issues } = result;
-
-  const entries: Array<{ file: string; line: number; col: number; type: string; display: string }> = [];
-
-  const getLineCol = (text: string, index: number) => {
-    // We don't have the original text in AnalysisResult, so we use a simple approach
-    return { line: 0, col: 0 };
-  };
-
-  // We need the original text to compute line/col. Since AnalysisResult doesn't carry it,
-  // the caller must provide enriched data. For now, we format with index.
-  for (const w of issues.weaselWords) {
-    lines.push(`${filePath}:${w.index}  weasel-word  "${w.word}"`);
-  }
-  for (const p of issues.passiveVoice) {
-    lines.push(`${filePath}:${p.index}  passive-voice  "${p.phrase}"`);
-  }
-  for (const d of issues.duplicateWords) {
-    lines.push(`${filePath}:${d.index}  duplicate-word  "${d.word}"`);
-  }
-  for (const s of issues.longSentences) {
-    lines.push(`${filePath}:${s.index}  long-sentence  ${s.wordCount} words`);
-  }
-  for (const n of issues.nominalizations) {
-    lines.push(`${filePath}:${n.index}  nominalization  "${n.word}" → ${n.suggestion}`);
-  }
-  for (const h of issues.hedging) {
-    lines.push(`${filePath}:${h.index}  hedging  "${h.phrase}"`);
-  }
-  for (const a of issues.adverbs) {
-    lines.push(`${filePath}:${a.index}  filler-adverb  "${a.word}"`);
-  }
-  for (const t of issues.aiTells) {
-    lines.push(`${filePath}:${t.index}  ai-tell  "${truncate(t.text)}" — ${t.reason}`);
-  }
-
-  return lines.join('\n');
+function labelize(c: ReturnType<typeof pico.createColors>) {
+  return {
+    'weasel-word': c.yellow,
+    'passive-voice': c.magenta,
+    'duplicate-word': c.red,
+    'long-sentence': c.blue,
+    'nominalization': c.cyan,
+    'hedging': c.green,
+    'filler-adverb': c.blue,
+    'ai-tell': c.red,
+  } as Record<string, (s: string) => string>;
 }
 
 export function formatTextWithLineCol(
   filePath: string,
   text: string,
   result: AnalysisResult,
+  useColor = false,
 ): string {
   const lines: string[] = [];
   const { issues } = result;
+  const c = pico.createColors(useColor);
+  const paint = labelize(c);
+  const loc = (line: number, col: number) => c.dim(`${filePath}:${line}:${col}`);
+  const tag = (label: string) => paint[label](label);
 
   const getLineCol = (index: number) => {
     const before = text.substring(0, index).split('\n');
@@ -64,35 +40,35 @@ export function formatTextWithLineCol(
 
   for (const w of issues.weaselWords) {
     const { line, col } = getLineCol(w.index);
-    lines.push(`${filePath}:${line}:${col}  weasel-word  "${w.word}"`);
+    lines.push(`${loc(line, col)}  ${tag('weasel-word')}  "${w.word}"`);
   }
   for (const p of issues.passiveVoice) {
     const { line, col } = getLineCol(p.index);
-    lines.push(`${filePath}:${line}:${col}  passive-voice  "${p.phrase}"`);
+    lines.push(`${loc(line, col)}  ${tag('passive-voice')}  "${p.phrase}"`);
   }
   for (const d of issues.duplicateWords) {
     const { line, col } = getLineCol(d.index);
-    lines.push(`${filePath}:${line}:${col}  duplicate-word  "${d.word}"`);
+    lines.push(`${loc(line, col)}  ${tag('duplicate-word')}  "${d.word}"`);
   }
   for (const s of issues.longSentences) {
     const { line, col } = getLineCol(s.index);
-    lines.push(`${filePath}:${line}:${col}  long-sentence  ${s.wordCount} words`);
+    lines.push(`${loc(line, col)}  ${tag('long-sentence')}  ${s.wordCount} words`);
   }
   for (const n of issues.nominalizations) {
     const { line, col } = getLineCol(n.index);
-    lines.push(`${filePath}:${line}:${col}  nominalization  "${n.word}" → ${n.suggestion}`);
+    lines.push(`${loc(line, col)}  ${tag('nominalization')}  "${n.word}" → ${n.suggestion}`);
   }
   for (const h of issues.hedging) {
     const { line, col } = getLineCol(h.index);
-    lines.push(`${filePath}:${line}:${col}  hedging  "${h.phrase}"`);
+    lines.push(`${loc(line, col)}  ${tag('hedging')}  "${h.phrase}"`);
   }
   for (const a of issues.adverbs) {
     const { line, col } = getLineCol(a.index);
-    lines.push(`${filePath}:${line}:${col}  filler-adverb  "${a.word}"`);
+    lines.push(`${loc(line, col)}  ${tag('filler-adverb')}  "${a.word}"`);
   }
   for (const t of issues.aiTells) {
     const { line, col } = getLineCol(t.index);
-    lines.push(`${filePath}:${line}:${col}  ai-tell  "${truncate(t.text)}" — ${t.reason}`);
+    lines.push(`${loc(line, col)}  ${tag('ai-tell')}  "${truncate(t.text)}" — ${t.reason}`);
   }
 
   return lines.join('\n');
@@ -154,9 +130,10 @@ export function formatGitHub(
   return lines.join('\n');
 }
 
-export function formatSummary(totalIssues: number, fileCount: number): string {
+export function formatSummary(totalIssues: number, fileCount: number, useColor = false): string {
+  const c = pico.createColors(useColor);
   if (totalIssues === 0) {
-    return `No issues found in ${fileCount} file${fileCount !== 1 ? 's' : ''}.`;
+    return c.green(`No issues found in ${fileCount} file${fileCount !== 1 ? 's' : ''}.`);
   }
-  return `Found ${totalIssues} issue${totalIssues !== 1 ? 's' : ''} in ${fileCount} file${fileCount !== 1 ? 's' : ''}.`;
+  return c.yellow(`Found ${totalIssues} issue${totalIssues !== 1 ? 's' : ''} in ${fileCount} file${fileCount !== 1 ? 's' : ''}.`);
 }

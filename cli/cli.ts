@@ -1,10 +1,11 @@
 import { cac } from 'cac';
+import pico from 'picocolors';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { glob } from 'tinyglobby';
 import { analyzeText } from '../src/core/analyzer.js';
 import { allWeaselWords, hedgingPhrases, fillerAdverbs, nominalizations, aiTellsVocabulary, aiTellsPhrases, aiTellsPatterns } from '../src/core/words.js';
-import { findConfigFile, loadConfigFromFile } from '../src/core/config-node.js';
+import { findConfigFile, loadConfigFromFile, readPackageVersion } from '../src/core/config-node.js';
 import { mergeConfig } from '../src/core/config.js';
 import type { WscConfig } from '../src/core/config.js';
 import { formatTextWithLineCol, formatJson, formatGitHub, formatSummary } from './formatter.js';
@@ -27,6 +28,16 @@ export async function run(argv: string[] = process.argv): Promise<number> {
     .option('--no-markdown', 'Lint raw text; do not mask Markdown code blocks, inline code, and tables')
     .option('--stdin', 'Read from stdin instead of files')
     .action(async (files: string[], options: any) => {
+      if (!['text', 'json', 'github'].includes(options.format)) {
+        process.stderr.write(`Error: Unknown format "${options.format}". Valid formats: text, json, github.\n`);
+        resultCode = 2;
+        return;
+      }
+      const useColor = options.color !== false && pico.isColorSupported;
+      // json/github output must stay uncolored regardless of TTY/--no-color;
+      // only the plain-text summary line gets painted.
+      const summaryColor = options.format === 'text' && useColor;
+
       let config: WscConfig | undefined;
 
       if (options.config) {
@@ -47,11 +58,11 @@ export async function run(argv: string[] = process.argv): Promise<number> {
             const output = formatGitHub('<stdin>', text, result);
             if (output) process.stdout.write(output + '\n');
           } else {
-            const output = formatTextWithLineCol('<stdin>', text, result);
+            const output = formatTextWithLineCol('<stdin>', text, result, useColor);
             if (output) process.stdout.write(output + '\n');
           }
         }
-        process.stdout.write(formatSummary(result.summary.total, 1) + '\n');
+        process.stdout.write(formatSummary(result.summary.total, 1, summaryColor) + '\n');
         resultCode = exitCode(result.summary.total, options.maxWarnings);
         return;
       }
@@ -109,7 +120,7 @@ export async function run(argv: string[] = process.argv): Promise<number> {
           if (options.format === 'github') {
             process.stdout.write(formatGitHub(filePath, text, result) + '\n');
           } else {
-            process.stdout.write(formatTextWithLineCol(filePath, text, result) + '\n');
+            process.stdout.write(formatTextWithLineCol(filePath, text, result, useColor) + '\n');
           }
         }
       }
@@ -119,7 +130,7 @@ export async function run(argv: string[] = process.argv): Promise<number> {
       }
 
       if (options.format !== 'json') {
-        process.stdout.write(formatSummary(totalIssues, resolvedFiles.length) + '\n');
+        process.stdout.write(formatSummary(totalIssues, resolvedFiles.length, summaryColor) + '\n');
       }
 
       resultCode = exitCode(totalIssues, options.maxWarnings);
@@ -181,7 +192,7 @@ export async function run(argv: string[] = process.argv): Promise<number> {
     });
 
   cli.help();
-  cli.version('1.2.0');
+  cli.version(readPackageVersion(import.meta.url, 'wsc-lint'));
 
   try {
     cli.parse(argv, { run: false });

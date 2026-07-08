@@ -95,6 +95,25 @@ describe('formatGitHub', () => {
   });
 });
 
+describe('formatTextWithLineCol — color', () => {
+  it('emits ANSI colors when useColor is true and none when false', () => {
+    const text = 'This is very good.';
+    const result = analyzeText(text);
+    const colored = formatTextWithLineCol('f.md', text, result, true);
+    const plain = formatTextWithLineCol('f.md', text, result, false);
+    expect(colored).toMatch(/\u001b\[/);
+    expect(plain).not.toMatch(/\u001b\[/);
+    expect(plain).toContain('weasel-word');
+  });
+});
+
+describe('formatText (dead code removal)', () => {
+  it('does not export the dead formatText function', async () => {
+    const mod = await import('../../cli/formatter');
+    expect((mod as Record<string, unknown>).formatText).toBeUndefined();
+  });
+});
+
 describe('formatSummary', () => {
   it('reports zero issues', () => {
     expect(formatSummary(0, 1)).toContain('No issues');

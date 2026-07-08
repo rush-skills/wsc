@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { exitCode, run } from '../../cli/cli';
@@ -74,6 +75,91 @@ describe('run() — exit codes propagate (regression: cac swallows action return
 
   it('returns 2 when no files match the glob', async () => {
     expect(await run(['node', 'wsc', 'check', join(dir, 'nothing-*.md'), '--quiet'])).toBe(2);
+  });
+});
+
+describe('run() — format validation and version', () => {
+  let out: ReturnType<typeof vi.spyOn>;
+  let err: ReturnType<typeof vi.spyOn>;
+  let log: ReturnType<typeof vi.spyOn>;
+  let captured: string;
+
+  beforeEach(() => {
+    captured = '';
+    out = vi.spyOn(process.stdout, 'write').mockImplementation((s: any) => {
+      captured += String(s);
+      return true;
+    });
+    err = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    // cac's built-in --version/--help handling prints via console.log rather
+    // than process.stdout.write, so capture that too.
+    log = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+      captured += args.join(' ') + '\n';
+    });
+  });
+
+  afterEach(() => {
+    out.mockRestore();
+    err.mockRestore();
+    log.mockRestore();
+  });
+
+  it('exits 2 on an unknown --format value', async () => {
+    const code = await run(['node', 'wsc', 'check', 'README.md', '--format', 'sarif']);
+    expect(code).toBe(2);
+  });
+
+  it('reports the package.json version', async () => {
+    const pkg = JSON.parse(await readFile(new URL('../../cli/package.json', import.meta.url), 'utf-8'));
+    await run(['node', 'wsc', '--version']);
+    expect(captured).toContain(pkg.version);
+  });
+});
+
+describe('run() — json/github output stays uncolored even when color is available', () => {
+  let dir: string;
+  let out: ReturnType<typeof vi.spyOn>;
+  let err: ReturnType<typeof vi.spyOn>;
+  let captured: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'wsc-color-'));
+    captured = '';
+    out = vi.spyOn(process.stdout, 'write').mockImplementation((s: any) => {
+      captured += String(s);
+      return true;
+    });
+    err = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    out.mockRestore();
+    err.mockRestore();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('--format github: no ANSI codes anywhere, including the summary line', async () => {
+    const f = join(dir, 'doc.md');
+    writeFileSync(f, NOISY);
+    await run(['node', 'wsc', 'check', f, '--format', 'github']);
+    // eslint-disable-next-line no-control-regex
+    expect(captured).not.toMatch(/\u001b\[/);
+  });
+
+  it('--format json: no ANSI codes anywhere, including the summary line', async () => {
+    const f = join(dir, 'doc.md');
+    writeFileSync(f, NOISY);
+    await run(['node', 'wsc', 'check', f, '--format', 'json']);
+    // eslint-disable-next-line no-control-regex
+    expect(captured).not.toMatch(/\u001b\[/);
+  });
+
+  it('--format text: does emit ANSI codes when color is available', async () => {
+    const f = join(dir, 'doc.md');
+    writeFileSync(f, NOISY);
+    await run(['node', 'wsc', 'check', f]);
+    // eslint-disable-next-line no-control-regex
+    expect(captured).toMatch(/\u001b\[/);
   });
 });
 
