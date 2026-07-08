@@ -1,6 +1,6 @@
 {
   "name": "wsc-lint",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "CLI prose linter + AI-slop detector: weasel words, passive voice, hedging, filler adverbs, and research-cited AI tells in text and Markdown",
   "repository": { "type": "git", "url": "git+https://github.com/theserverlessdev/wsc.git", "directory": "cli" },
   "homepage": "https://wsc.theserverless.dev",
