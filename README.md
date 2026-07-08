@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/wsc-mcp)](https://www.npmjs.com/package/wsc-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A tool that detects common writing issues: **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging language**, **filler adverbs**, and **AI tells**. Available as a web editor, HTTP API, MCP server, CLI tool, and GitHub Action.
+A prose linter and AI-slop detector. WSC finds **AI tells** — words, phrases, and sentence structures overrepresented in AI-generated text, each flag backed by a published corpus study. It also catches classic writing issues: **weasel words**, **passive voice**, **duplicate words**, **long sentences**, **nominalizations**, **hedging**, and **filler adverbs**. Available as a web editor, HTTP API, MCP server, CLI, and GitHub Action.
 
 **[Live: wsc.theserverless.dev](https://wsc.theserverless.dev)**
 
@@ -19,6 +19,12 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 - **CLI** - Check files from the command line via `wsc-lint`
 - **GitHub Action** - Run checks in CI with `::warning` annotations
 - **Configurable** - Customize detectors with `.wscrc.json` files
+
+---
+
+## What WSC is (and isn't)
+
+WSC flags patterns that research on AI-generated text finds overrepresented, and cites a source for every flag. It does not, and cannot, prove authorship. Classifier-based detectors carry a documented false-accusation risk: a Stanford study found that seven of them misflagged 61% of essays written by non-native English speakers. WSC avoids that trap by design — every flag is a specific, explainable edit that improves the text no matter who, or what, wrote it.
 
 ---
 

@@ -34,7 +34,7 @@
     </div>
     <div class="legend-item">
       <span class="ai-tells-example">AI Tells</span>
-      <p>Words and phrases that are heavily overrepresented in AI-generated text (delve, tapestry, etc.)</p>
+      <p>Words, phrases, and structures overrepresented in AI-generated text (delve, tapestry, "not just X — it's Y"), each flag citing its research source. Flags patterns — it does not prove authorship.</p>
     </div>
   </div>
   <p class="legend-note">

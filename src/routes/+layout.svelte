@@ -99,8 +99,10 @@
           improvements.
         </p>
         <p>
-          <strong>Private by design</strong>: all analysis runs
-          in your browser. Your text never leaves your device.
+          <strong>Private by design</strong>: this editor analyzes text in
+          your browser — it never leaves your device. The API tester and the
+          hosted API/MCP endpoints send submitted text to the server for
+          analysis. Page-view analytics only; your text is never shared with it.
         </p>
       </div>
     {/if}
@@ -125,7 +127,7 @@
         href="https://anks.in"
         target="_blank"
         rel="noopener noreferrer">Ankur Singh</a
-      >
+      > — freelance AI agents, automation &amp; web engineer
       <a
         href="https://github.com/theserverlessdev/wsc"
         target="_blank"
