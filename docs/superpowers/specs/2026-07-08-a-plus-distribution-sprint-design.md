@@ -40,7 +40,7 @@ Cloudflare Web Analytics (added in Week 1) is the measurement instrument; withou
 - Add `repository`, `homepage`, and `bugs` fields to `cli/package.json` and `mcp-server/package.json` (unblocks npm→repo linking and auto-indexing registries).
 - Read the CLI version from its `package.json` instead of the hardcoded `'1.2.0'` in `cli/cli.ts:185`; fix the remote MCP `serverInfo` version (`src/mcp/handler.ts:220` says 1.0.0).
 - Verify published npm versions match `package.json` on master for both packages; publish if drifted.
-- Delete dead `formatText` and its misleading `getLineCol` stub from `cli/formatter.ts`; drop the never-imported `picocolors` dependency (or wire it — decision: drop; color is not worth a dependency here).
+- Delete dead `formatText` and its misleading `getLineCol` stub from `cli/formatter.ts`; wire the declared-but-never-imported `picocolors` dependency into the text formatter (colored detector labels now, severity-colored `[error]`/`[warn]`/`[info]` badges once Week 3 lands). Make `--no-color` functional (a no-op today) and honor `NO_COLOR`/non-TTY, which picocolors detects automatically.
 
 ### 1.2 Detector quality fixes (all verified defects, all with tests)
 
@@ -77,7 +77,7 @@ Today `maskMarkdown` lives in `cli/markdown.ts` and only the CLI uses it; the we
 
 ### 1.6 Hire-me funnel
 
-- Footer + README: "Built by Ankur Singh — freelance AI agents / automation / web engineer · hello@anks.in" (link target and wording for Ankur to confirm at spec review; a portfolio URL can replace the mailto).
+- Footer + README: "Built by Ankur Singh — freelance AI agents / automation / web engineer" linking to https://anks.in (confirmed at spec review).
 
 ## Week 2 — Registry and directory blast
 
