@@ -4,7 +4,8 @@
     "CLAUDE.md",
     "CONTRIBUTING.md",
     "TESTING.md",
-    "RELEASE-AND-DEPLOYMENT.md"
+    "RELEASE-AND-DEPLOYMENT.md",
+    "docs/superpowers/**"
   ],
   "detectors": {
     "nominalizations": {
