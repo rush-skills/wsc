@@ -1001,6 +1001,38 @@ footer a {
 }
 
 // ============================================================
+// Markdown Toggle
+// ============================================================
+
+.markdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  margin: 1.25rem 0;
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--primary-text);
+  user-select: none;
+
+  input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: var(--accent-color);
+  }
+
+  &:hover {
+    border-color: var(--accent-color);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+// ============================================================
 // Integration Section
 // ============================================================
 

@@ -18,6 +18,7 @@
   let highlightOverlay: HTMLDivElement;
   let mounted = false;
   let showConfig = false;
+  let markdownMode = false;
   let toastMessage = '';
   let toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -97,7 +98,7 @@ For example:
     const text = editorContent;
     calculateLinePositions(text);
 
-    const result = analyzeText(text, userConfig);
+    const result = analyzeText(text, userConfig, { markdown: markdownMode });
     weaselWords = result.issues.weaselWords;
     passiveVoices = result.issues.passiveVoice;
     duplicateWords = result.issues.duplicateWords;
@@ -362,7 +363,18 @@ For example:
     handleTextChange();
   }
 
+  function toggleMarkdownMode() {
+    markdownMode = !markdownMode;
+    try {
+      localStorage.setItem('wsc-markdown-mode', markdownMode ? '1' : '0');
+    } catch {}
+  }
+
   onMount(() => {
+    try {
+      markdownMode = localStorage.getItem('wsc-markdown-mode') === '1';
+    } catch {}
+
     mounted = true;
 
     measureCharacterDimensions();
@@ -407,6 +419,7 @@ For example:
   });
 
   $: if (mounted && editorContent !== undefined) {
+    markdownMode;
     handleTextChange();
   }
 </script>
@@ -475,6 +488,11 @@ For example:
     </svg>
   </span>
 </button>
+
+<label class="markdown-toggle" title="Skip code blocks, tables, and headings when analyzing">
+  <input type="checkbox" checked={markdownMode} on:change={toggleMarkdownMode} />
+  Markdown mode
+</label>
 
 {#if showConfig}
   <div transition:slide={{ duration: 300 }}>
