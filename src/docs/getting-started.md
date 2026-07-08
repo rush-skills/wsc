@@ -5,7 +5,7 @@ duplicate words, long sentences, nominalizations, hedging language, filler adver
 
 ### Use it online
 
-The fastest way to use WSC is the [web editor](/). Paste your text and see issues highlighted in real time. All analysis runs in your browser — your text is never sent to a server.
+The fastest way to use WSC is the [web editor](/). Paste your text and see issues highlighted in real time. All analysis runs in your browser — we never send your text to a server.
 
 ### Use from the command line
 

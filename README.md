@@ -13,7 +13,7 @@ A tool that detects common writing issues: **weasel words**, **passive voice**, 
 ## Features
 
 - **Web Editor** - Real-time highlighting with inline fix buttons for all 8 detectors
-- **HTTP API** - POST text with optional config, get structured JSON results
+- **HTTP API** - POST text with optional config, retrieve structured JSON responses
 - **MCP Server (Remote)** - Connect AI assistants via Streamable HTTP transport
 - **MCP Server (Local)** - Stdio-based server via [`wsc-mcp`](https://www.npmjs.com/package/wsc-mcp) on npm
 - **CLI** - Check files from the command line via `wsc-lint`
@@ -224,7 +224,7 @@ See the [`wsc-lint` README](cli/README.md) for full documentation.
 
 ## Privacy
 
-The web editor runs **in your browser** - text is never sent to any server. The API and MCP endpoints only process text you explicitly send to them.
+The web editor runs **in your browser** - we never send text to any server. The API and MCP endpoints only process text you explicitly send to them.
 
 ---
 

@@ -176,6 +176,44 @@ describe('detectPassiveVoice', () => {
     expect(results.length).toBe(1);
     expect(results[0].phrase.toLowerCase()).toBe('is considered');
   });
+
+  it('detects passive voice with an adverb between auxiliary and participle', () => {
+    const results = detectPassiveVoice('The cake was quickly eaten.');
+    expect(results.length).toBe(1);
+    expect(results[0].phrase.toLowerCase()).toBe('was quickly eaten');
+  });
+
+  it('detects negated passive voice', () => {
+    const results = detectPassiveVoice('The bug was not fixed.');
+    expect(results.length).toBe(1);
+    expect(results[0].phrase.toLowerCase()).toBe('was not fixed');
+  });
+
+  it('detects passive with two gap words', () => {
+    const results = detectPassiveVoice('The bug was not fully fixed.');
+    expect(results.length).toBe(1);
+    expect(results[0].phrase.toLowerCase()).toBe('was not fully fixed');
+  });
+
+  it('detects get-passives', () => {
+    const results = detectPassiveVoice('He got hit by a car.');
+    expect(results.length).toBe(1);
+    expect(results[0].phrase.toLowerCase()).toBe('got hit');
+  });
+
+  it('does not flag copula + adjective/noun ending in -ed', () => {
+    expect(detectPassiveVoice('There is need for caution.')).toEqual([]);
+    expect(detectPassiveVoice('He was tired.')).toEqual([]);
+    expect(detectPassiveVoice('She is talented.')).toEqual([]);
+    expect(detectPassiveVoice('That was speed.')).toEqual([]);
+    expect(detectPassiveVoice('That was greed.')).toEqual([]);
+  });
+
+  it('still flags genuine passives whose participle is also common as an adjective', () => {
+    // 'used' must NOT be in the stoplist (deviation #1 in the plan header)
+    const results = detectPassiveVoice('The library was used by many teams.');
+    expect(results.length).toBe(1);
+  });
 });
 
 // ============================================================================

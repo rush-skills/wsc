@@ -109,7 +109,7 @@ Once connected, ask your AI assistant:
 
 ## Privacy
 
-The local MCP server runs on your machine. Text is never sent to any external service. The remote server at `wsc.theserverless.dev` only processes text you explicitly send to it.
+The local MCP server runs on your machine. We never send text to any external service. The remote server at `wsc.theserverless.dev` only processes text you explicitly send to it.
 
 ## Links
 

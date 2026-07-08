@@ -117,10 +117,15 @@ describe('words.ts', () => {
       expect(auxiliaryVerbs).toContain('been');
       expect(auxiliaryVerbs).toContain('was');
       expect(auxiliaryVerbs).toContain('be');
+      expect(auxiliaryVerbs).toContain('get');
+      expect(auxiliaryVerbs).toContain('gets');
+      expect(auxiliaryVerbs).toContain('got');
+      expect(auxiliaryVerbs).toContain('gotten');
+      expect(auxiliaryVerbs).toContain('getting');
     });
 
-    it('has exactly 8 auxiliary verbs', () => {
-      expect(auxiliaryVerbs.length).toBe(8);
+    it('has exactly 13 auxiliary verbs', () => {
+      expect(auxiliaryVerbs.length).toBe(13);
     });
 
     it('has no duplicates', () => {

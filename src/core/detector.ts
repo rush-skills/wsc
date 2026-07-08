@@ -61,12 +61,19 @@ export function detectPassiveVoice(text: string): Array<{
   const regularPattern = "\\w+ed";
   const allVerbs = `${regularPattern}|${irregularVerbs.join("|")}`;
 
-  // Common adjectives/adverbs ending in "ed" that are not past participles
-  const notParticiples = "indeed|red|bed|naked|sacred|wretched|hundred|wicked|hatred|kindred";
+  // Common adjectives/nouns ending in "ed"-like letters that are not past
+  // participles ("was tired", "there is need"). 'used' is deliberately
+  // absent: "was used by" is genuine passive.
+  const notParticiples =
+    "indeed|red|bed|naked|sacred|wretched|hundred|wicked|hatred|kindred|" +
+    "need|speed|greed|seed|deed|creed|feed|breed|tweed|" +
+    "tired|talented|gifted|excited|interested|supposed";
 
-  // \s+ (not literal spaces) so passives spanning a hard line wrap still match
+  // \s+ (not literal spaces) so passives spanning a hard line wrap still
+  // match. Up to two gap words (negation or -ly adverb) may sit between the
+  // auxiliary and the participle: "was not fully fixed".
   const passivePattern = new RegExp(
-    `\\b(${auxiliaryVerbs.join("|")})\\b\\s+(?!(?:${notParticiples})\\b)(${allVerbs})\\b`,
+    `\\b(${auxiliaryVerbs.join("|")})\\b\\s+(?:(?:not|never|\\w+ly)\\s+){0,2}(?!(?:${notParticiples})\\b)(${allVerbs})\\b`,
     "gi"
   );
 

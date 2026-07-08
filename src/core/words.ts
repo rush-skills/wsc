@@ -374,7 +374,7 @@ export const irregularVerbs = [
   "wrought",
 ];
 
-// Auxiliary verbs used in passive voice
+// Auxiliary verbs used in passive voice (be-forms plus get-passives)
 export const auxiliaryVerbs = [
   "am",
   "are",
@@ -384,6 +384,11 @@ export const auxiliaryVerbs = [
   "been",
   "was",
   "be",
+  "get",
+  "gets",
+  "got",
+  "gotten",
+  "getting",
 ];
 
 // Nominalizations: nouns that could be replaced with stronger verbs
