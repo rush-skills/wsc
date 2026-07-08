@@ -2,9 +2,10 @@ import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { analyzeText, getLineCol, getContext, createServer } from '../../mcp-server/server';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { writeFile, unlink, mkdir, rm } from 'node:fs/promises';
+import { writeFile, unlink, mkdir, rm, readFile as readFileAsync } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 
 // ============================================================================
 // getLineCol
@@ -164,6 +165,13 @@ describe('createServer — MCP integration', () => {
       await client.close();
       await server.close();
     };
+  });
+
+  it('reports the version from mcp-server/package.json (not a hardcoded string)', async () => {
+    const pkgPath = fileURLToPath(new URL('../../mcp-server/package.json', import.meta.url));
+    const pkg = JSON.parse(await readFileAsync(pkgPath, 'utf-8'));
+    const version = client.getServerVersion()?.version;
+    expect(version).toBe(pkg.version);
   });
 
   it('lists 4 tools including check_file', async () => {
@@ -394,6 +402,63 @@ describe('createServer — MCP integration', () => {
       });
       const text = (result.content as any)[0].text;
       expect(text).toContain('Error: Invalid config');
+    } finally {
+      await unlink(tmpFile);
+    }
+  });
+
+  // Markdown format support
+
+  it('check_text masks markdown when format is "markdown"', async () => {
+    const result = await client.callTool({
+      name: 'check_text',
+      arguments: {
+        text: 'Fine prose.\n```\nvery basically utilize\n```\n',
+        format: 'markdown',
+      },
+    });
+    const text = (result.content as any)[0].text;
+    expect(text).toContain('No issues found');
+  });
+
+  it('check_text does not mask markdown when format is "plain" (default)', async () => {
+    const result = await client.callTool({
+      name: 'check_text',
+      arguments: {
+        text: 'Fine prose.\n```\nvery basically utilize\n```\n',
+      },
+    });
+    const text = (result.content as any)[0].text;
+    expect(text).toContain('WEASEL WORDS');
+  });
+
+  it('check_file auto-masks a .md file by extension', async () => {
+    const tmpFile = join(tmpdir(), `wsc-test-md-${Date.now()}.md`);
+    await writeFile(tmpFile, 'Fine prose.\n```\nvery basically utilize\n```\n', 'utf-8');
+
+    try {
+      const result = await client.callTool({
+        name: 'check_file',
+        arguments: { path: tmpFile },
+      });
+      const text = (result.content as any)[0].text;
+      expect(text).toContain('No issues found');
+    } finally {
+      await unlink(tmpFile);
+    }
+  });
+
+  it('check_file does not mask a .txt file with the same content', async () => {
+    const tmpFile = join(tmpdir(), `wsc-test-txt-${Date.now()}.txt`);
+    await writeFile(tmpFile, 'Fine prose.\n```\nvery basically utilize\n```\n', 'utf-8');
+
+    try {
+      const result = await client.callTool({
+        name: 'check_file',
+        arguments: { path: tmpFile },
+      });
+      const text = (result.content as any)[0].text;
+      expect(text).toContain('WEASEL WORDS');
     } finally {
       await unlink(tmpFile);
     }

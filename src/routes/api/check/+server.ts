@@ -14,7 +14,7 @@ const CORS_HEADERS = {
 export const POST: RequestHandler = async ({ request }) => {
   const startTime = performance.now();
 
-  let body: { text?: string; config?: unknown };
+  let body: { text?: string; config?: unknown; format?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -38,7 +38,11 @@ export const POST: RequestHandler = async ({ request }) => {
     config = body.config as WscConfig;
   }
 
-  const result = analyzeText(text, config);
+  if (body.format !== undefined && body.format !== 'markdown' && body.format !== 'plain') {
+    return json({ error: 'Invalid "format": must be "markdown" or "plain"' }, { status: 400 });
+  }
+
+  const result = analyzeText(text, config, { markdown: body.format === 'markdown' });
 
   const getLineCol = (index: number) => {
     const lines = text.substring(0, index).split('\n');
@@ -88,6 +92,7 @@ export const GET: RequestHandler = async () => {
     parameters: {
       text: { type: 'string', required: true, maxLength: MAX_TEXT_LENGTH },
       config: { type: 'object', required: false, description: 'Optional WscConfig to customize detectors' },
+      format: { type: 'string', required: false, enum: ['plain', 'markdown'], description: 'Set to "markdown" to skip code blocks, tables, and headings' },
     },
     detectors: [
       'weaselWords', 'passiveVoice', 'duplicateWords',

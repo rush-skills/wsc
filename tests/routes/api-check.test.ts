@@ -195,6 +195,36 @@ describe('POST /api/check', () => {
     expect(data.summary.hedging).toBeGreaterThan(0);
     expect(data.summary.adverbs).toBeGreaterThan(0);
   });
+
+  // Markdown format support
+  it('masks markdown when format is "markdown"', async () => {
+    const request = makeRequest({
+      text: 'Fine prose.\n```\nvery basically utilize\n```\n',
+      format: 'markdown',
+    });
+    const response = await POST({ request } as any);
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.summary.weaselWords).toBe(0);
+  });
+
+  it('does not mask markdown when format is "plain" (default)', async () => {
+    const request = makeRequest({
+      text: 'Fine prose.\n```\nvery basically utilize\n```\n',
+    });
+    const response = await POST({ request } as any);
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.summary.weaselWords).toBeGreaterThan(0);
+  });
+
+  it('rejects an invalid format value', async () => {
+    const request = makeRequest({ text: 'hello', format: 'html' });
+    const response = await POST({ request } as any);
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toContain('Invalid "format"');
+  });
 });
 
 // ── GET /api/check ──

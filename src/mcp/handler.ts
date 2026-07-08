@@ -43,6 +43,11 @@ const TOOLS = [
           type: 'object',
           description: 'Optional WscConfig to customize which detectors run and their settings',
         },
+        format: {
+          type: 'string',
+          enum: ['plain', 'markdown'],
+          description: 'Set to "markdown" to skip code blocks, tables, and headings when analyzing',
+        },
       },
       required: ['text'],
     },
@@ -105,7 +110,12 @@ function handleCheckText(args: Record<string, unknown>): { content: Array<{ type
     config = args.config as WscConfig;
   }
 
-  const result = analyzeText(text, config);
+  const format = args.format;
+  if (format !== undefined && format !== 'markdown' && format !== 'plain') {
+    throw { code: -32602, message: 'Invalid "format": must be "markdown" or "plain"' };
+  }
+
+  const result = analyzeText(text, config, { markdown: format === 'markdown' });
   const { summary, issues, meta } = result;
 
   let output = `Writing Style Analysis\n======================\n`;
@@ -217,7 +227,8 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<JsonRpc
           },
           serverInfo: {
             name: 'writing-style-checker',
-            version: '1.0.0',
+            // keep in step with wsc-mcp releases
+            version: '2.2.0',
           },
         },
       };

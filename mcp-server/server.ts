@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import type { AnalyzeOptions } from '../src/core/index.js';
 import {
   detectDuplicateWords,
   removeDuplicateWord,
@@ -17,7 +18,8 @@ import {
   validateConfig,
 } from '../src/core/index.js';
 import type { WscConfig } from '../src/core/index.js';
-import { findConfigFile, loadConfigFromFile } from '../src/core/config-node.js';
+import { findConfigFile, loadConfigFromFile, readPackageVersion } from '../src/core/config-node.js';
+import { isMarkdownFile } from '../src/core/markdown.js';
 
 const MAX_TEXT_LENGTH = 100_000;
 
@@ -34,8 +36,8 @@ export function getContext(text: string, index: number, length: number) {
   return `${prefix}${text.substring(start, end)}${suffix}`;
 }
 
-export function formatAnalysis(text: string, config?: WscConfig): string {
-  const result = coreAnalyzeText(text, config);
+export function formatAnalysis(text: string, config?: WscConfig, options?: AnalyzeOptions): string {
+  const result = coreAnalyzeText(text, config, options);
   const { summary, issues, meta } = result;
 
   let output = `Writing Style Analysis\n======================\n`;
@@ -77,7 +79,8 @@ export const analyzeText = formatAnalysis;
 export function createServer(): McpServer {
   const server = new McpServer({
     name: 'writing-style-checker',
-    version: '2.0.0',
+    // keep in step with wsc-mcp releases
+    version: readPackageVersion(import.meta.url, 'wsc-mcp'),
   });
 
   server.tool(
@@ -86,8 +89,9 @@ export function createServer(): McpServer {
     {
       text: z.string().describe('The text to analyze for writing style issues'),
       config: z.any().optional().describe('Optional WscConfig JSON object to customize detectors'),
+      format: z.enum(['plain', 'markdown']).optional().describe('Set to "markdown" to skip code blocks, tables, and headings'),
     },
-    async ({ text, config: rawConfig }) => {
+    async ({ text, config: rawConfig, format }) => {
       if (text.length > MAX_TEXT_LENGTH) {
         return { content: [{ type: 'text', text: `Error: Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters` }] };
       }
@@ -99,7 +103,7 @@ export function createServer(): McpServer {
         }
         config = rawConfig as WscConfig;
       }
-      return { content: [{ type: 'text', text: formatAnalysis(text, config) }] };
+      return { content: [{ type: 'text', text: formatAnalysis(text, config, { markdown: format === 'markdown' }) }] };
     }
   );
 
@@ -186,7 +190,8 @@ export function createServer(): McpServer {
           }
         }
 
-        return { content: [{ type: 'text', text: `File: ${path}\n\n${formatAnalysis(text, config)}` }] };
+        const markdown = isMarkdownFile(path);
+        return { content: [{ type: 'text', text: `File: ${path}\n\n${formatAnalysis(text, config, { markdown })}` }] };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: 'text', text: `Error reading file: ${message}` }] };

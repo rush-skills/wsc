@@ -89,7 +89,7 @@ describe('handleMcpRequest — initialize', () => {
     expect(result.protocolVersion).toBe('2025-03-26');
     expect(result.capabilities).toEqual({ tools: {} });
     expect(result.serverInfo.name).toBe('writing-style-checker');
-    expect(result.serverInfo.version).toBe('1.0.0');
+    expect(result.serverInfo.version).toBe('2.2.0');
   });
 });
 
@@ -140,6 +140,8 @@ describe('handleMcpRequest — tools/list', () => {
     expect(checkText).toBeDefined();
     expect(checkText.inputSchema.type).toBe('object');
     expect(checkText.inputSchema.properties.text).toBeDefined();
+    expect(checkText.inputSchema.properties.format).toBeDefined();
+    expect(checkText.inputSchema.properties.format.enum).toEqual(['plain', 'markdown']);
     expect(checkText.inputSchema.required).toContain('text');
   });
 
@@ -386,6 +388,62 @@ describe('handleMcpRequest — tools/call check_text', () => {
     const contextLine = output.split('\n').find((l: string) => l.trim().startsWith('Context:'));
     expect(contextLine).toBeDefined();
     expect(contextLine).not.toContain('...');
+  });
+});
+
+// ============================================================================
+// tools/call — check_text with format
+// ============================================================================
+
+describe('handleMcpRequest — tools/call check_text with format', () => {
+  it('masks markdown when format is "markdown"', async () => {
+    const res = await handleMcpRequest({
+      jsonrpc: '2.0',
+      id: 70,
+      method: 'tools/call',
+      params: {
+        name: 'check_text',
+        arguments: {
+          text: 'Fine prose.\n```\nvery basically utilize\n```\n',
+          format: 'markdown',
+        },
+      },
+    });
+    expect(res.error).toBeUndefined();
+    const text = (res.result as any).content[0].text;
+    expect(text).toContain('No issues found');
+  });
+
+  it('does not mask markdown when format is "plain" (default)', async () => {
+    const res = await handleMcpRequest({
+      jsonrpc: '2.0',
+      id: 71,
+      method: 'tools/call',
+      params: {
+        name: 'check_text',
+        arguments: {
+          text: 'Fine prose.\n```\nvery basically utilize\n```\n',
+        },
+      },
+    });
+    expect(res.error).toBeUndefined();
+    const text = (res.result as any).content[0].text;
+    expect(text).toContain('WEASEL WORDS');
+  });
+
+  it('returns error for invalid format value', async () => {
+    const res = await handleMcpRequest({
+      jsonrpc: '2.0',
+      id: 72,
+      method: 'tools/call',
+      params: {
+        name: 'check_text',
+        arguments: { text: 'hello', format: 'html' },
+      },
+    });
+    expect(res.error).toBeDefined();
+    expect(res.error!.code).toBe(-32602);
+    expect(res.error!.message).toContain('format');
   });
 });
 
