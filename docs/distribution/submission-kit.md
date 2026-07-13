@@ -234,16 +234,18 @@ available for comments a few hours after posting.
 
 | Channel | Status | Date | Notes |
 |---|---|---|---|
-| GitHub Marketplace | ☐ | | |
-| npm wsc-mcp 2.2.1 | ☐ | | prerequisite for registry |
-| Official MCP registry | ☐ | | |
-| Smithery | ☐ | | |
+| GitHub Marketplace | ☐ | | draft release ready, tick the box |
+| npm wsc-mcp 2.2.1 | ✅ | 2026-07-13 | |
+| Official MCP registry | ✅ | 2026-07-14 | via publish-mcp.yml OIDC workflow |
+| Smithery | ✅ | 2026-07-14 | badge in README |
 | Glama | ☐ | | |
 | mcp.so | ☐ | | |
 | MCP Market | ☐ | | |
 | Cline marketplace | ☐ | | |
-| PulseMCP | ☐ | | auto after registry |
-| awesome-mcp-servers | ☐ | | |
-| awesome-slop | ☐ | | |
+| PulseMCP | ⏳ | | auto after registry, ~1 week |
+| awesome-mcp-servers | ⏳ | 2026-07-14 | [PR #10039](https://github.com/punkpeye/awesome-mcp-servers/pull/10039) |
+| awesome-slop | ⏳ | 2026-07-14 | [PR #2](https://github.com/hwajongpark/awesome-slop/pull/2) |
+| awesome-actions | ⏳ | 2026-07-14 | [PR #843](https://github.com/sdras/awesome-actions/pull/843), dormant list |
+| awesome-linters | ⏳ | 2026-07-14 | [PR #149](https://github.com/caramelomartins/awesome-linters/pull/149), dormant list |
 | Show HN | ☐ | | |
 | Product Hunt | ☐ | | |
