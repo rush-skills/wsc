@@ -21,7 +21,7 @@ npx wsc-lint check "**/*.md"
 
 ```yaml
 # .github/workflows/writing.yml
-- uses: theserverlessdev/wsc/action@master
+- uses: theserverlessdev/wsc@v1
   with:
     files: "**/*.md"
 ```

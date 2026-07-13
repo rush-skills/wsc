@@ -1,8 +1,8 @@
-# DEPRECATED: this action moved to the repository root for GitHub Marketplace
-# listing. Use `theserverlessdev/wsc@v1` instead of `theserverlessdev/wsc/action@master`.
-# This copy is kept for one release cycle and will be removed.
 name: 'Writing Style Checker'
 description: 'Check your writing for weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and AI tells'
+branding:
+  icon: 'edit-3'
+  color: 'purple'
 inputs:
   files:
     description: 'Glob pattern for files to check'
@@ -34,7 +34,7 @@ runs:
     - name: Build wsc-lint CLI
       shell: bash
       run: |
-        cd "$GITHUB_ACTION_PATH/../cli"
+        cd "$GITHUB_ACTION_PATH/cli"
         npm ci
         npm run build
 
@@ -69,7 +69,7 @@ runs:
 
         # Capture output (so we can read the issue count) without tripping
         # `set -e`, then re-emit it so ::warning annotations register.
-        output=$(node "$GITHUB_ACTION_PATH/../cli/dist/cli/index.js" "${args[@]}") || code=$?
+        output=$(node "$GITHUB_ACTION_PATH/cli/dist/cli/index.js" "${args[@]}") || code=$?
         : "${code:=0}"
         printf '%s\n' "$output"
 

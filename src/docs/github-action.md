@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: theserverlessdev/wsc/action@master
+      - uses: theserverlessdev/wsc@v1
         with:
           files: "**/*.md"
 ```
@@ -49,7 +49,7 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
-      - uses: theserverlessdev/wsc/action@master
+      - uses: theserverlessdev/wsc@v1
         with:
           only-changed: "true"
           max-warnings: "10"
@@ -58,7 +58,7 @@ jobs:
 ### With Custom Config
 
 ```yaml
-- uses: theserverlessdev/wsc/action@master
+- uses: theserverlessdev/wsc@v1
   with:
     files: "docs/**/*.md"
     config: ".wscrc.json"

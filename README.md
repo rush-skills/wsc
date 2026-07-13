@@ -212,7 +212,7 @@ See the [`wsc-lint` README](cli/README.md) for full documentation.
 ## GitHub Action
 
 ```yaml
-- uses: theserverlessdev/wsc/action@master
+- uses: theserverlessdev/wsc@v1
   with:
     files: '**/*.md'
     max-warnings: 20

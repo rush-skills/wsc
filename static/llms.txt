@@ -21,7 +21,7 @@ Writing Style Checker detects 8 types of writing issues:
 - Remote MCP server: https://wsc.theserverless.dev/mcp
 - Local MCP server: npx wsc-mcp (npm package)
 - CLI: npx wsc-lint check "**/*.md" (npm package)
-- GitHub Action: theserverlessdev/wsc/action@master
+- GitHub Action: theserverlessdev/wsc@v1
 
 ## Documentation
 

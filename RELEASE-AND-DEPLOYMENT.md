@@ -31,24 +31,23 @@ The deployment is configured in `wrangler.toml`:
 
 ```toml
 name = "wsc"
-account_id = "3f847e2fadeef3e583701e8fa25657b5"
-compatibility_date = "2025-03-01"
-workers_dev = true
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2026-03-26"
+compatibility_flags = ["nodejs_compat"]
 
-[build]
-command = "npm run build"
+[assets]
+directory = ".svelte-kit/cloudflare/assets"
+binding = "ASSETS"
 
-[observability.logs]
+[observability]
 enabled = true
 
-[site]
-bucket = ".svelte-kit/cloudflare"
-
-[env.production]
-route = "wsc.theserverless.dev/*"
+[[routes]]
+pattern = "wsc.theserverless.dev"
+custom_domain = true
 ```
 
-To deploy your own instance, update `account_id` to your Cloudflare account ID and `route` to your domain.
+There is a single environment — no `[env.*]` sections. Do **not** deploy with `--env production`: that creates a separate `wsc-production` Worker instead of updating `wsc`. To deploy your own instance, change the `[[routes]]` pattern to your domain (wrangler uses whichever Cloudflare account you're logged into).
 
 ### Pre-Deployment Checklist
 
@@ -69,26 +68,27 @@ npm run preview
 ### Deploy to Production
 
 ```bash
-npx wrangler deploy --env production
-```
-
-This will:
-1. Run `npm run build` (the SvelteKit build)
-2. Upload the Worker and static assets to Cloudflare
-3. Bind the Worker to the `wsc.theserverless.dev/*` route
-
-### Deploy to Workers Dev (Staging)
-
-```bash
+npm run build
 npx wrangler deploy
 ```
 
-This deploys without the production route binding. The app will be available at `https://wsc.<your-subdomain>.workers.dev`.
+This will:
+1. Upload the Worker and static assets to Cloudflare
+2. Attach the `wsc.theserverless.dev` custom domain to the `wsc` Worker
+
+Note that `wrangler deploy` does **not** run the build for you — always `npm run build` first, or you'll ship the previous build output.
+
+### Preview Locally
+
+```bash
+npm run dev        # Vite dev server at localhost:5173
+npm run preview    # Production build in the Workers runtime
+```
 
 ### View Logs
 
 ```bash
-npx wrangler tail --env production
+npx wrangler tail
 ```
 
 This streams real-time logs from the production Worker. Useful for debugging API or MCP endpoint issues.
@@ -112,7 +112,9 @@ curl -s -X POST https://wsc.theserverless.dev/api/check \
 curl -s -X POST https://wsc.theserverless.dev/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Tools: {len(d[\"result\"][\"tools\"])}')"
-# Expected: Tools: 4
+# Expected: Tools: 3
+# (check_text, fix_duplicates, list_word_lists — check_file is only in the
+# standalone wsc-mcp package, since the remote server has no filesystem)
 ```
 
 ---
@@ -291,7 +293,7 @@ echo "very good" | npx wsc-lint check --stdin
 
 ## GitHub Action
 
-The GitHub Action lives in `action/action.yml` and is a composite action that uses `wsc-lint` under the hood. Users reference it directly from the repo.
+The GitHub Action lives in `action.yml` at the repository root (required for GitHub Marketplace listing) and is a composite action that uses `wsc-lint` under the hood. Users reference it directly from the repo. `action/action.yml` is a deprecated copy kept for one release cycle so old `theserverlessdev/wsc/action@master` references keep working.
 
 ### How It Works
 
@@ -306,7 +308,7 @@ The action:
 Users add this to their workflow:
 
 ```yaml
-- uses: theserverlessdev/wsc@master
+- uses: theserverlessdev/wsc@v1
   with:
     files: "**/*.md"
 ```
@@ -328,11 +330,20 @@ Users add this to their workflow:
 
 ### Releasing Updates
 
-The action is referenced by branch (`@master`), not by npm version. Any changes to `action/action.yml`, `cli/`, or `src/core/` that affect the action's behavior are live as soon as they're pushed to `master`.
+Users reference the action by the moving major tag `@v1`. Any change to `action.yml`, `cli/`, or `src/core/` that affects the action's behavior ships by cutting a new release tag and moving `v1`:
 
-To pin a stable version, users can reference a tag:
+```bash
+git tag -a v1.2.0 -m "action v1.2.0: <what changed>"
+git tag -f v1 v1.2.0
+git push origin v1.2.0
+git push -f origin v1
+```
+
+To publish the release (and the Marketplace listing) create a GitHub release from the new `v1.x.y` tag. The "Publish this Action to the GitHub Marketplace" checkbox is only available in the web release UI, not via `gh` or the API.
+
+Users who want to pin an exact version can reference the full tag:
 ```yaml
-- uses: theserverlessdev/wsc@v2.0.0
+- uses: theserverlessdev/wsc@v1.1.0
 ```
 
 ### Testing the Action Locally
@@ -381,17 +392,17 @@ Wrangler keeps deployment versions. To rollback:
 
 ```bash
 # List recent deployments
-npx wrangler deployments list --env production
+npx wrangler deployments list
 
 # Rollback to a previous deployment
-npx wrangler rollback --env production
+npx wrangler rollback
 ```
 
 Or redeploy from a previous git commit:
 
 ```bash
 git checkout <previous-commit>
-npx wrangler deploy --env production
+npm run build && npx wrangler deploy
 git checkout master
 ```
 
@@ -426,7 +437,7 @@ cd mcp-server && npm run build && cd ..
 cd cli && npm run build && cd ..
 
 # 3. Deploy web app to Cloudflare
-npx wrangler deploy --env production
+npx wrangler deploy
 
 # 4. Verify deployment
 curl -s https://wsc.theserverless.dev/health | python3 -m json.tool
@@ -442,7 +453,9 @@ git add mcp-server/package.json mcp-server/package-lock.json cli/package.json cl
 git commit -m "release: wsc-mcp + wsc-lint"
 
 # 8. Tag and push
-# Note: pushing to master also updates the GitHub Action for all users
-git tag v$(node -p "require('./package.json').version")
+# Tag convention: per-package tags for npm releases, plain v-tags for the
+# repo/GitHub Action releases (moving major tag v1 → latest v1.x.y).
+git tag -a wsc-lint-v$(node -p "require('./cli/package.json').version") -m "wsc-lint release"
+git tag -a wsc-mcp-v$(node -p "require('./mcp-server/package.json').version") -m "wsc-mcp release"
 git push && git push --tags
 ```

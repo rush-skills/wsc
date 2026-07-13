@@ -1,11 +1,13 @@
 # Writing Style Checker GitHub Action
 
+> **Note:** the action now lives at the repository root (for GitHub Marketplace listing). Reference it as `theserverlessdev/wsc@v1`. The old `theserverlessdev/wsc/action@master` path still works for one more release cycle — switch now.
+
 Check your writing for style issues in CI. Detects weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging language, filler adverbs, and AI tells (words, phrases, and structures overrepresented in AI-generated text).
 
 ## Usage
 
 ```yaml
-- uses: theserverlessdev/wsc/action@master
+- uses: theserverlessdev/wsc@v1
   with:
     files: '**/*.md'
 ```
@@ -30,7 +32,7 @@ Check your writing for style issues in CI. Detects weasel words, passive voice, 
 ### Check all markdown files
 
 ```yaml
-- uses: theserverlessdev/wsc/action@master
+- uses: theserverlessdev/wsc@v1
   with:
     files: '**/*.md'
 ```
@@ -38,7 +40,7 @@ Check your writing for style issues in CI. Detects weasel words, passive voice, 
 ### Fail if more than 20 issues
 
 ```yaml
-- uses: theserverlessdev/wsc/action@master
+- uses: theserverlessdev/wsc@v1
   with:
     files: '**/*.md'
     max-warnings: 20
@@ -47,7 +49,7 @@ Check your writing for style issues in CI. Detects weasel words, passive voice, 
 ### Only check changed files in PRs
 
 ```yaml
-- uses: theserverlessdev/wsc/action@master
+- uses: theserverlessdev/wsc@v1
   with:
     files: '**/*.md'
     only-changed: true
@@ -56,7 +58,7 @@ Check your writing for style issues in CI. Detects weasel words, passive voice, 
 ### Use a custom config
 
 ```yaml
-- uses: theserverlessdev/wsc/action@master
+- uses: theserverlessdev/wsc@v1
   with:
     files: 'docs/**/*.md'
     config: .wscrc.json

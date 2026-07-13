@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check writing style in docs
-        uses: ./action
+        uses: ./
         with:
           files: "**/*.md"
           max-warnings: "0"
