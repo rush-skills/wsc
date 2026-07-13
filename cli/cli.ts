@@ -33,7 +33,12 @@ export async function run(argv: string[] = process.argv): Promise<number> {
         resultCode = 2;
         return;
       }
-      const useColor = options.color !== false && pico.isColorSupported;
+      // FORCE_COLOR is re-read here (not just at picocolors import time) so
+      // color can be forced per invocation; picocolors resolves separately
+      // under cli/node_modules and root node_modules, so its import-time
+      // detection is not reachable from the test suite.
+      const forceColor = !!process.env.FORCE_COLOR && process.env.FORCE_COLOR !== '0';
+      const useColor = options.color !== false && (forceColor || pico.isColorSupported);
       // json/github output must stay uncolored regardless of TTY/--no-color;
       // only the plain-text summary line gets painted.
       const summaryColor = options.format === 'text' && useColor;
