@@ -2,7 +2,7 @@
 # listing. Use `theserverlessdev/wsc@v1` instead of `theserverlessdev/wsc/action@master`.
 # This copy is kept for one release cycle and will be removed.
 name: 'Writing Style Checker'
-description: 'Check your writing for weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and AI tells'
+description: 'Flag AI tells, weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs'
 inputs:
   files:
     description: 'Glob pattern for files to check'

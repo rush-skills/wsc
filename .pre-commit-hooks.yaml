@@ -1,0 +1,21 @@
+# pre-commit hook definition (https://pre-commit.com)
+#
+# Usage in a consumer repo's .pre-commit-config.yaml:
+#
+#   repos:
+#     - repo: https://github.com/theserverlessdev/wsc
+#       rev: v1.1.0
+#       hooks:
+#         - id: wsc-lint
+#
+# The hook fails on any issue (--max-warnings 0). Relax it per-repo with:
+#         - id: wsc-lint
+#           args: [check, --max-warnings, "20"]
+- id: wsc-lint
+  name: Writing Style Checker (wsc-lint)
+  description: Flag AI tells, weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs
+  language: node
+  entry: wsc
+  args: [check, --max-warnings, "0"]
+  additional_dependencies: ["wsc-lint@1.3.0"]
+  files: '\.(md|markdown|txt|rst)$'

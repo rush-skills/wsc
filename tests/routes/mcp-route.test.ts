@@ -143,7 +143,7 @@ describe('GET /mcp', () => {
 
     const data = await response.json();
     expect(data.name).toBe('Writing Style Checker MCP Server');
-    expect(data.version).toBe('2.2.0');
+    expect(data.version).toBe('2.2.1');
     expect(data.tools).toEqual(['check_text', 'fix_duplicates', 'list_word_lists']);
     expect(data.protocol).toContain('MCP');
   });

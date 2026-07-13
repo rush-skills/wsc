@@ -89,7 +89,7 @@ describe('handleMcpRequest — initialize', () => {
     expect(result.protocolVersion).toBe('2025-03-26');
     expect(result.capabilities).toEqual({ tools: {} });
     expect(result.serverInfo.name).toBe('writing-style-checker');
-    expect(result.serverInfo.version).toBe('2.2.0');
+    expect(result.serverInfo.version).toBe('2.2.1');
   });
 });
 

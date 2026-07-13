@@ -228,7 +228,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<JsonRpc
           serverInfo: {
             name: 'writing-style-checker',
             // keep in step with wsc-mcp releases
-            version: '2.2.0',
+            version: '2.2.1',
           },
         },
       };

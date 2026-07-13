@@ -5,7 +5,8 @@
     "CONTRIBUTING.md",
     "TESTING.md",
     "RELEASE-AND-DEPLOYMENT.md",
-    "docs/superpowers/**"
+    "docs/superpowers/**",
+    "docs/distribution/**"
   ],
   "detectors": {
     "nominalizations": {

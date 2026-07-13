@@ -1,5 +1,6 @@
 name: 'Writing Style Checker'
-description: 'Check your writing for weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and AI tells'
+# Marketplace requires description < 125 chars.
+description: 'Flag AI tells, weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, and filler adverbs'
 branding:
   icon: 'edit-3'
   color: 'purple'
