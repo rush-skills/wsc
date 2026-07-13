@@ -81,6 +81,6 @@ Markdown files imported at build time: `getting-started.md`, `config.md`, `api.m
 
 ### Key Constraints
 - Default branch is `master`
-- CI runs type check, tests, and build on Node 20 + 22
+- CI runs type check, tests, and build on Node 22 + 24 (Node 20 is EOL; wrangler's deps require >=22)
 - `config-node.ts` must stay separate from `config.ts` to avoid Node.js imports in browser bundle
 - Coverage targets specific files in `vitest.config.ts`

@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20, 22]
+        # Node 20 went EOL 2026-04 and wrangler's transitive
+        # @cloudflare/kv-asset-handler@0.5.0 requires >=22.
+        node-version: [22, 24]
 
     steps:
       - uses: actions/checkout@v4
