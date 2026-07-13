@@ -1,0 +1,44 @@
+name: Publish to MCP Registry
+
+# Publishes mcp-server/server.json to the official MCP registry using
+# GitHub Actions OIDC. A workflow running in this repo proves org identity
+# to the registry, which grants the io.github.theserverlessdev/* namespace —
+# this sidesteps the CLI device-flow 403 (the registry's GitHub App cannot
+# see org memberships from a local login).
+#
+# Prerequisite: the wsc-mcp version referenced in server.json must already
+# be published to npm (the registry verifies mcpName inside that tarball).
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["wsc-mcp-v*"]
+
+permissions:
+  id-token: write # OIDC token for mcp-publisher login github-oidc
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp-server
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Authenticate to MCP Registry (OIDC)
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish server.json
+        run: ./mcp-publisher publish
+
+      - name: Verify listing
+        run: |
+          sleep 5
+          curl -sf "https://registry.modelcontextprotocol.io/v0/servers?search=io.github.theserverlessdev/wsc" | tee /tmp/registry.json
+          python3 -c "import json; d=json.load(open('/tmp/registry.json')); assert d.get('servers'), 'server not found in registry'; print('Published:', d['servers'][0]['server']['name'], d['servers'][0]['server']['version'])"

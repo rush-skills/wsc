@@ -69,12 +69,18 @@ npm view wsc-mcp@2.2.1 mcpName   # should print io.github.theserverlessdev/wsc
 PulseMCP and several other directories ingest from this automatically.
 `mcp-server/server.json` is already written (remote + npm package in one entry).
 
+Publishing runs through the `publish-mcp.yml` workflow (GitHub Actions OIDC),
+because the CLI device-flow login cannot see org memberships — it 403s with
+"You have permission to publish: io.github.rush-skills/*" no matter what the
+org/membership settings are. OIDC from a workflow in the org's repo grants
+`io.github.theserverlessdev/*` directly.
+
 ```bash
-brew install mcp-publisher
-cd mcp-server
-mcp-publisher login github     # device-code flow, grants io.github.theserverlessdev/*
-mcp-publisher publish
+gh workflow run publish-mcp.yml   # or Actions tab → Publish to MCP Registry → Run workflow
 ```
+
+It also runs automatically on future `wsc-mcp-v*` tags. The wsc-mcp version in
+`server.json` must already be on npm before the workflow runs.
 
 Verify: `curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=theserverlessdev"`
 
