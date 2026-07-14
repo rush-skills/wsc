@@ -91,7 +91,7 @@ export function createServer(): McpServer {
         'Analyze text for writing style issues: weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and research-cited AI tells. Read-only and stateless — text is analyzed in memory, never stored. Returns a plain-text report with each issue\'s line and column, the matched text, surrounding context, and the reason for AI tells; texts over 100,000 characters return an error message. Use this for text already in the conversation; use check_file for files on disk. It only reports issues — to auto-remove duplicate words, follow up with fix_duplicates.',
       inputSchema: {
         text: z.string().describe('The text to analyze for writing style issues'),
-        config: z.any().optional().describe('Optional config to enable/disable detectors or add/remove word-list entries; same schema as .wscrc.json (https://wsc.theserverless.dev/schema.json)'),
+        config: z.record(z.string(), z.unknown()).optional().describe('Optional config to enable/disable detectors or add/remove word-list entries; same schema as .wscrc.json (https://wsc.theserverless.dev/schema.json)'),
         format: z.enum(['plain', 'markdown']).optional().describe('Set to "markdown" to mask code blocks, inline code, tables, and headings so they are not linted as prose; default "plain" lints everything'),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -184,7 +184,7 @@ export function createServer(): McpServer {
         'Read a UTF-8 file from local disk and analyze it for the same writing style issues as check_text (weasel words, passive voice, hedging, AI tells, and more). Read-only: the file is never modified, and Markdown files are automatically masked so code blocks and tables are not linted as prose. A .wscrc.json config is auto-discovered from the file\'s directory upward unless config is passed explicitly. Returns the same line-and-column report as check_text, or an error message for unreadable or oversized (over 100,000 characters) files. Use when the text lives on disk; use check_text for text already in the conversation.',
       inputSchema: {
         path: z.string().describe('Absolute or relative path to the file to analyze; read as UTF-8'),
-        config: z.any().optional().describe('Optional config (same schema as .wscrc.json); when set, auto-discovery of .wscrc.json is skipped'),
+        config: z.record(z.string(), z.unknown()).optional().describe('Optional config (same schema as .wscrc.json); when set, auto-discovery of .wscrc.json is skipped'),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
