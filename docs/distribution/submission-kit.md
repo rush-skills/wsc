@@ -238,7 +238,7 @@ available for comments a few hours after posting.
 | npm wsc-mcp 2.2.1 | ✅ | 2026-07-13 | |
 | Official MCP registry | ✅ | 2026-07-14 | via publish-mcp.yml OIDC workflow |
 | Smithery | ✅ | 2026-07-14 | badge in README |
-| Glama | ☐ | | |
+| Glama | ⏳ | 2026-07-14 | auto-listed; glama.json on master — claim via "Login with GitHub" on the listing |
 | mcp.so | ☐ | | |
 | MCP Market | ☐ | | |
 | Cline marketplace | ☐ | | |
