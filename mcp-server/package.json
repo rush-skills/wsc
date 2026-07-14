@@ -1,7 +1,7 @@
 {
   "name": "wsc-mcp",
   "mcpName": "io.github.theserverlessdev/wsc",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "MCP server for prose linting + AI-slop detection: weasel words, passive voice, hedging, filler adverbs, and research-cited AI tells",
   "repository": {
     "type": "git",

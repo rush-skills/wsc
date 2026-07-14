@@ -7,7 +7,7 @@
     "url": "https://github.com/theserverlessdev/wsc",
     "source": "github"
   },
-  "version": "2.2.1",
+  "version": "2.2.2",
   "remotes": [
     {
       "type": "streamable-http",
@@ -18,7 +18,7 @@
     {
       "registryType": "npm",
       "identifier": "wsc-mcp",
-      "version": "2.2.1",
+      "version": "2.2.2",
       "transport": {
         "type": "stdio"
       }

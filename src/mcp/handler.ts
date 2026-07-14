@@ -31,7 +31,9 @@ interface JsonRpcResponse {
 const TOOLS = [
   {
     name: 'check_text',
-    description: 'Analyze text for writing style issues (weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, AI tells). Returns structured results with issue positions and context.',
+    title: 'Check text for writing style issues',
+    description:
+      'Analyze text for writing style issues: weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and research-cited AI tells. Read-only and stateless — text is analyzed in memory on the hosted server and never stored. Returns a plain-text report with each issue\'s line and column, the matched text, surrounding context, and the reason for AI tells; texts over 100,000 characters return an error message. This hosted server has no filesystem access — the wsc-mcp npm package adds a check_file tool for local files. It only reports issues — to auto-remove duplicate words, follow up with fix_duplicates.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -41,20 +43,23 @@ const TOOLS = [
         },
         config: {
           type: 'object',
-          description: 'Optional WscConfig to customize which detectors run and their settings',
+          description: 'Optional config to enable/disable detectors or add/remove word-list entries; same schema as .wscrc.json (https://wsc.theserverless.dev/schema.json)',
         },
         format: {
           type: 'string',
           enum: ['plain', 'markdown'],
-          description: 'Set to "markdown" to skip code blocks, tables, and headings when analyzing',
+          description: 'Set to "markdown" to mask code blocks, inline code, tables, and headings so they are not linted as prose; default "plain" lints everything',
         },
       },
       required: ['text'],
     },
+    annotations: { readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'fix_duplicates',
-    description: 'Remove all duplicate adjacent words from the text and return the cleaned version.',
+    title: 'Remove duplicate adjacent words',
+    description:
+      'Remove duplicate adjacent words (case-insensitive, including across line breaks) and return the cleaned text plus the list of words that were removed. Read-only with no side effects: the fix is returned in the response, nothing is written anywhere. Use after check_text reports duplicate words; other issue types are report-only and have no auto-fix.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -65,15 +70,19 @@ const TOOLS = [
       },
       required: ['text'],
     },
+    annotations: { readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'list_word_lists',
-    description: 'Return all word/phrase lists used by the detectors with their counts and sample entries.',
+    title: 'List detector word lists',
+    description:
+      'Return every detector word/phrase list with its entry count, config key, and sample entries, plus a link to the full browsable library. Read-only, takes no parameters, and returns the same catalog for a given release. Use it to see what the detectors match before tuning a config for check_text; not needed for ordinary checking.',
     inputSchema: {
       type: 'object',
       properties: {},
       required: [],
     },
+    annotations: { readOnlyHint: true, openWorldHint: false },
   },
 ];
 
@@ -228,7 +237,7 @@ export async function handleMcpRequest(request: JsonRpcRequest): Promise<JsonRpc
           serverInfo: {
             name: 'writing-style-checker',
             // keep in step with wsc-mcp releases
-            version: '2.2.1',
+            version: '2.2.2',
           },
         },
       };

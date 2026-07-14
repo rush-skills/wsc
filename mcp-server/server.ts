@@ -83,13 +83,18 @@ export function createServer(): McpServer {
     version: readPackageVersion(import.meta.url, 'wsc-mcp'),
   });
 
-  server.tool(
+  server.registerTool(
     'check_text',
-    'Analyze text for writing style issues (weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, AI tells). Returns structured results with issue positions and context.',
     {
-      text: z.string().describe('The text to analyze for writing style issues'),
-      config: z.any().optional().describe('Optional WscConfig JSON object to customize detectors'),
-      format: z.enum(['plain', 'markdown']).optional().describe('Set to "markdown" to skip code blocks, tables, and headings'),
+      title: 'Check text for writing style issues',
+      description:
+        'Analyze text for writing style issues: weasel words, passive voice, duplicate words, long sentences, nominalizations, hedging, filler adverbs, and research-cited AI tells. Read-only and stateless — text is analyzed in memory, never stored. Returns a plain-text report with each issue\'s line and column, the matched text, surrounding context, and the reason for AI tells; texts over 100,000 characters return an error message. Use this for text already in the conversation; use check_file for files on disk. It only reports issues — to auto-remove duplicate words, follow up with fix_duplicates.',
+      inputSchema: {
+        text: z.string().describe('The text to analyze for writing style issues'),
+        config: z.any().optional().describe('Optional config to enable/disable detectors or add/remove word-list entries; same schema as .wscrc.json (https://wsc.theserverless.dev/schema.json)'),
+        format: z.enum(['plain', 'markdown']).optional().describe('Set to "markdown" to mask code blocks, inline code, tables, and headings so they are not linted as prose; default "plain" lints everything'),
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ text, config: rawConfig, format }) => {
       if (text.length > MAX_TEXT_LENGTH) {
@@ -107,10 +112,15 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     'fix_duplicates',
-    'Remove all duplicate adjacent words from the text and return the cleaned version.',
-    { text: z.string().describe('The text to clean by removing duplicate adjacent words') },
+    {
+      title: 'Remove duplicate adjacent words',
+      description:
+        'Remove duplicate adjacent words (case-insensitive, including across line breaks) and return the cleaned text plus the list of words that were removed. Read-only with no side effects: the fix is returned in the response, nothing is written anywhere. Use after check_text or check_file reports duplicate words; other issue types are report-only and have no auto-fix.',
+      inputSchema: { text: z.string().describe('The text to clean by removing duplicate adjacent words') },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
     async ({ text }) => {
       let cleaned = text;
       const fixes: string[] = [];
@@ -134,10 +144,15 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     'list_word_lists',
-    'Return all word/phrase lists used by the detectors with their counts and sample entries.',
-    {},
+    {
+      title: 'List detector word lists',
+      description:
+        'Return every detector word/phrase list with its entry count, config key, and sample entries, plus a link to the full browsable library. Read-only, takes no parameters, and returns the same catalog for a given release. Use it to see what the detectors match before tuning a config for check_text or check_file; not needed for ordinary checking.',
+      inputSchema: {},
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
     async () => {
       const lists = [
         { name: 'Weasel Words', count: allWeaselWords.length, configKey: 'weaselWords', sample: allWeaselWords.slice(0, 10) },
@@ -161,12 +176,17 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     'check_file',
-    'Read a file from disk and analyze it for writing style issues. Auto-discovers .wscrc.json config from the file directory upward.',
     {
-      path: z.string().describe('Path to the file to analyze'),
-      config: z.any().optional().describe('Optional WscConfig JSON object (overrides auto-discovered .wscrc.json)'),
+      title: 'Check a file for writing style issues',
+      description:
+        'Read a UTF-8 file from local disk and analyze it for the same writing style issues as check_text (weasel words, passive voice, hedging, AI tells, and more). Read-only: the file is never modified, and Markdown files are automatically masked so code blocks and tables are not linted as prose. A .wscrc.json config is auto-discovered from the file\'s directory upward unless config is passed explicitly. Returns the same line-and-column report as check_text, or an error message for unreadable or oversized (over 100,000 characters) files. Use when the text lives on disk; use check_text for text already in the conversation.',
+      inputSchema: {
+        path: z.string().describe('Absolute or relative path to the file to analyze; read as UTF-8'),
+        config: z.any().optional().describe('Optional config (same schema as .wscrc.json); when set, auto-discovery of .wscrc.json is skipped'),
+      },
+      annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ path, config: rawConfig }) => {
       try {
