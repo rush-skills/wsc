@@ -274,16 +274,13 @@ For example:
 
     const { line, column } = getLineAndColumn(index);
 
-    const editorStyle = getComputedStyle(editor);
-    const paddingLeft = parseFloat(editorStyle.paddingLeft) || 8;
-    const paddingTop = parseFloat(editorStyle.paddingTop) || 1;
-
-    const characterOffset = 1.0;
-
+    // Highlights live inside the overlay's content box, whose padding matches
+    // the textarea's padding exactly (see .highlight-overlay / .editor-textarea
+    // in main.scss). So positions are pure content-box coordinates — the shared
+    // padding already aligns them with the text; adding it here would double-count.
     return {
-      left:
-        (column - 1) * charWidth + paddingLeft - characterOffset * charWidth,
-      top: (line - 1) * lineHeight + paddingTop,
+      left: (column - 1) * charWidth,
+      top: (line - 1) * lineHeight,
       width: length * charWidth,
       height: lineHeight,
     };
