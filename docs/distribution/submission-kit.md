@@ -239,8 +239,8 @@ available for comments a few hours after posting.
 | Official MCP registry | ✅ | 2026-07-14 | via publish-mcp.yml OIDC workflow |
 | Smithery | ✅ | 2026-07-14 | badge in README |
 | Glama | ✅ | 2026-07-14 | claimed; Docker build+release 2.2.1 published, quality A, 92% profile, 3 related servers |
-| mcp.so | ☐ | | |
-| MCP Market | ☐ | | |
+| mcp.so | ✅ | 2026-07-14 | live at mcp.so/servers/wsc (submitted by Ankur, auto-enriched) |
+| MCP Market | ✅ | 2026-07-14 | auto-ingested; live at mcpmarket.com/server/writing-style-checker |
 | Cline marketplace | ☐ | | |
 | PulseMCP | ⏳ | | auto after registry, ~1 week |
 | awesome-mcp-servers | ⏳ | 2026-07-14 | [PR #10039](https://github.com/punkpeye/awesome-mcp-servers/pull/10039) |
